@@ -7,7 +7,7 @@ import { invalid, identifier, text, choice, boolean, date, url, fields, memberFi
 import { recalculateAlerts } from './alerts.js'
 import { facebookTransmission } from './facebook.js'
 import { sendReport, discipleReportRows, discipleColumns } from './reports.js'
-import { canManageTraining, requireTraining, trainingBooks, validateTrainingBook } from './training.js'
+import { canManageTraining, requireTraining, trainingBooks, trainingBook, checkBookVersion, validateTrainingBook } from './training.js'
 import { parseProfilePhoto, saveProfilePhoto } from './profile-photo.js'
 import { mapRouter } from './map.js'
 import { applyGroupCoverage } from './group-coverage.js'
@@ -145,6 +145,39 @@ managementRouter.post('/training/books', requireTraining, async (req,res) => {
     return insert(connection,'libro_adiestramiento',{nombre:name,descripcion:description,id_usuario_creacion:actor.id})
   })
   res.status(201).json({id,nombre:name,descripcion:description})
+})
+managementRouter.get('/training/books/:id',requireTraining,async(req,res)=>{
+  const book=await trainingBook(pool,req.params.id)
+  const [counts]=await pool.execute('SELECT COUNT(*) AS total FROM miembro WHERE id_libro=?',[book.id_libro])
+  res.json({...book,asignaciones:counts[0].total})
+})
+managementRouter.patch('/training/books/:id',requireTraining,async(req,res)=>{
+  const values=fields(req.body,{nombre:value=>text(value,150,true),descripcion:value=>text(value,2000)})
+  const result=await transaction(async connection=>{
+    const actor=await currentActor(req,connection)
+    if(!canManageTraining(actor)) throw invalid('Ya no tienes permiso para actualizar libros.',403)
+    const book=await trainingBook(connection,req.params.id,true)
+    checkBookVersion(req.body,book)
+    if(Object.hasOwn(values,'nombre')) {
+      const [duplicates]=await connection.execute('SELECT id_libro FROM libro_adiestramiento WHERE nombre=? AND id_libro<>?',[values.nombre,book.id_libro])
+      if(duplicates.length) throw invalid('Ya existe otro libro con ese nombre.',409)
+    }
+    await update(connection,'libro_adiestramiento','id_libro',book.id_libro,values)
+    return {id:book.id_libro,nombre:values.nombre ?? book.nombre,descripcion:Object.hasOwn(values,'descripcion') ? values.descripcion : book.descripcion}
+  })
+  res.json(result)
+})
+managementRouter.delete('/training/books/:id',requireTraining,async(req,res)=>{
+  await transaction(async connection=>{
+    const actor=await currentActor(req,connection)
+    if(!canManageTraining(actor)) throw invalid('Ya no tienes permiso para eliminar libros.',403)
+    const book=await trainingBook(connection,req.params.id,true)
+    checkBookVersion(req.body,book)
+    const [counts]=await connection.execute('SELECT COUNT(*) AS total FROM miembro WHERE id_libro=?',[book.id_libro])
+    if(counts[0].total) throw invalid(`Este libro está asignado a ${counts[0].total} discípulo(s). Reasigna sus libros antes de eliminarlo.`,409)
+    await connection.execute('DELETE FROM libro_adiestramiento WHERE id_libro=?',[book.id_libro])
+  })
+  res.json({ok:true})
 })
 managementRouter.get('/catalogs',async (req,res) => {
   const [roles]=await pool.execute('SELECT * FROM rol_eclesiastico ORDER BY nivel_jerarquico')

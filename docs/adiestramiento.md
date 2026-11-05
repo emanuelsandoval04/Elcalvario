@@ -2,6 +2,8 @@
 
 La sección `/#gestion/training` permite crear libros con nombre y descripción opcional. Los cargos operativos, incluido Discipulador, reciben el permiso `adiestramiento.gestionar`. Las cuentas de discípulo básico (`Usuario`), pendientes, bloqueadas o inactivas no pueden crear libros. El catálogo no contiene registros inventados.
 
+Cada libro tiene **Editar** y **Eliminar**. Editar su nombre o descripción conserva la identidad y las asignaciones; las fichas y los Excel muestran el nombre actualizado. Eliminar pide confirmación y solo se permite cuando ninguna ficha lo tiene asignado, incluidas fichas archivadas. Si está en uso, se muestra la cantidad y es necesario reasignar esos libros primero. La API vuelve a comprobarlo dentro de la transacción y rechaza ediciones o eliminaciones basadas en una versión desactualizada.
+
 ## Registro y asignación
 
 En **Discípulos → Registrar discípulo**, el paso de información adicional incluye **Libro de adiestramiento** y **Crear libro aquí**. El editor está dentro del mismo formulario: conserva el borrador de la persona y selecciona el libro recién creado. Si el catálogo está vacío, se puede registrar al discípulo sin libro; cuando ya hay libros, el registro normal requiere elegir uno. El registro administrativo conserva su libro opcional.
@@ -24,6 +26,9 @@ La migración `014-training-books.sql` crea `libro_adiestramiento`, añade `miem
 | --- | --- | --- |
 | GET | `/training/books` | Consultar el catálogo operativo. |
 | POST | `/training/books` | Crear `{nombre,descripcion?}`; los nombres duplicados responden 409. |
+| GET | `/training/books/:id` | Consultar el libro y su cantidad de asignaciones. |
+| PATCH | `/training/books/:id` | Actualizar nombre/descripción; admite `expectedName` y `expectedDescription`. |
+| DELETE | `/training/books/:id` | Eliminar un libro sin asignaciones; 409 si está en uso o desactualizado. |
 | POST | `/members` | Incluye `id_libro`; obligatorio en registro normal cuando hay libros. |
 | PATCH | `/members/:id` | Conserva el libro si no se envía un cambio. |
 | PUT | `/members/:id/book` | Asigna `{id_libro,expectedId}` dentro del alcance actual. |
