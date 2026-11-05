@@ -1,0 +1,2650 @@
+{
+  "matched": [
+    {
+      "id": 45,
+      "name": "Conjunto Residencial La Juliana"
+    },
+    {
+      "id": 518,
+      "name": "Casera De Santillana"
+    },
+    {
+      "id": 519,
+      "name": "Gardenias De Montecarlo"
+    },
+    {
+      "id": 520,
+      "name": "Alamos Santa Rosa"
+    },
+    {
+      "id": 607,
+      "name": "Brasilia"
+    },
+    {
+      "id": 46,
+      "name": "Rondinella"
+    },
+    {
+      "id": 450,
+      "name": "Coralina"
+    },
+    {
+      "id": 451,
+      "name": "Santa Marta"
+    },
+    {
+      "id": 452,
+      "name": "Palmar"
+    },
+    {
+      "id": 102,
+      "name": "Villa Maria"
+    },
+    {
+      "id": 47,
+      "name": "Manaure"
+    },
+    {
+      "id": 453,
+      "name": "Diamante"
+    },
+    {
+      "id": 412,
+      "name": "Teusaca"
+    },
+    {
+      "id": 413,
+      "name": "Guatiquia"
+    },
+    {
+      "id": 454,
+      "name": "Rosa Blanca Oriental"
+    },
+    {
+      "id": 414,
+      "name": "San Benito"
+    },
+    {
+      "id": 455,
+      "name": "Rosalinda"
+    },
+    {
+      "id": 456,
+      "name": "Rosa Blanca"
+    },
+    {
+      "id": 415,
+      "name": "Nogal"
+    },
+    {
+      "id": 190,
+      "name": "Sauces"
+    },
+    {
+      "id": 191,
+      "name": "Cristales"
+    },
+    {
+      "id": 104,
+      "name": "Quintas De San Soucci"
+    },
+    {
+      "id": 256,
+      "name": "Paraiso"
+    },
+    {
+      "id": 192,
+      "name": "Rosales"
+    },
+    {
+      "id": 48,
+      "name": "Santa Josefa"
+    },
+    {
+      "id": 49,
+      "name": "Poblado"
+    },
+    {
+      "id": 193,
+      "name": "Delirio - Covisan"
+    },
+    {
+      "id": 51,
+      "name": "Panorama Del Campo"
+    },
+    {
+      "id": 416,
+      "name": "Sausalito"
+    },
+    {
+      "id": 152,
+      "name": "Nuevo Maizaro"
+    },
+    {
+      "id": 650,
+      "name": "Ciudadela San Antonio"
+    },
+    {
+      "id": 458,
+      "name": "Plenavida"
+    },
+    {
+      "id": 35,
+      "name": "Catalana"
+    },
+    {
+      "id": 178,
+      "name": "Alcala"
+    },
+    {
+      "id": 435,
+      "name": "Carulu"
+    },
+    {
+      "id": 436,
+      "name": "Piamonte"
+    },
+    {
+      "id": 437,
+      "name": "Acacias"
+    },
+    {
+      "id": 278,
+      "name": "Ceiba"
+    },
+    {
+      "id": 179,
+      "name": "Bastilla"
+    },
+    {
+      "id": 37,
+      "name": "Virrey"
+    },
+    {
+      "id": 439,
+      "name": "Villa Del Palmar"
+    },
+    {
+      "id": 440,
+      "name": "Sesquicentenario"
+    },
+    {
+      "id": 39,
+      "name": "Galan"
+    },
+    {
+      "id": 99,
+      "name": "Balcones De Toledo"
+    },
+    {
+      "id": 408,
+      "name": "Canaima"
+    },
+    {
+      "id": 409,
+      "name": "Brisas Del Caney"
+    },
+    {
+      "id": 410,
+      "name": "Amaral"
+    },
+    {
+      "id": 180,
+      "name": "Bambu"
+    },
+    {
+      "id": 42,
+      "name": "San Angel"
+    },
+    {
+      "id": 181,
+      "name": "Balcones De Pontevedra"
+    },
+    {
+      "id": 257,
+      "name": "Desmontadora"
+    },
+    {
+      "id": 470,
+      "name": "Brisas De La Esperanza"
+    },
+    {
+      "id": 183,
+      "name": "Castilla"
+    },
+    {
+      "id": 184,
+      "name": "Tulipanes"
+    },
+    {
+      "id": 185,
+      "name": "Canaan"
+    },
+    {
+      "id": 444,
+      "name": "Bosques De Los Centauros"
+    },
+    {
+      "id": 445,
+      "name": "Altagracia"
+    },
+    {
+      "id": 100,
+      "name": "Balcones De San Soucci"
+    },
+    {
+      "id": 446,
+      "name": "Villa Claudia"
+    },
+    {
+      "id": 447,
+      "name": "Serrania"
+    },
+    {
+      "id": 448,
+      "name": "Torres De San Juan"
+    },
+    {
+      "id": 101,
+      "name": "Villa Codem"
+    },
+    {
+      "id": 188,
+      "name": "Manantial"
+    },
+    {
+      "id": 270,
+      "name": "Prados De Hierbabuena"
+    },
+    {
+      "id": 194,
+      "name": "Gaitana"
+    },
+    {
+      "id": 280,
+      "name": "Milagro"
+    },
+    {
+      "id": 105,
+      "name": "Trapiche"
+    },
+    {
+      "id": 195,
+      "name": "Morichal"
+    },
+    {
+      "id": 196,
+      "name": "Prados De Siberia"
+    },
+    {
+      "id": 197,
+      "name": "Santa Catalina"
+    },
+    {
+      "id": 198,
+      "name": "Ciudad Salitre"
+    },
+    {
+      "id": 106,
+      "name": "Nueva Andalucia"
+    },
+    {
+      "id": 107,
+      "name": "Portal De Los Ocobos"
+    },
+    {
+      "id": 52,
+      "name": "Puerta Del Sol"
+    },
+    {
+      "id": 403,
+      "name": "Bulevar Codem"
+    },
+    {
+      "id": 521,
+      "name": "Llano Lindo"
+    },
+    {
+      "id": 522,
+      "name": "Heroes"
+    },
+    {
+      "id": 523,
+      "name": "Serramonte"
+    },
+    {
+      "id": 524,
+      "name": "Villa Lorena"
+    },
+    {
+      "id": 630,
+      "name": "San Agustin"
+    },
+    {
+      "id": 525,
+      "name": "Tigana"
+    },
+    {
+      "id": 526,
+      "name": "Villa Milena"
+    },
+    {
+      "id": 529,
+      "name": "Santillana Del Llano"
+    },
+    {
+      "id": 530,
+      "name": "Nuevo Horizonte"
+    },
+    {
+      "id": 533,
+      "name": "Nueva Jerusalen"
+    },
+    {
+      "id": 609,
+      "name": "Darien"
+    },
+    {
+      "id": 24,
+      "name": "Paulina Casas Viejas"
+    },
+    {
+      "id": 417,
+      "name": "Retiro"
+    },
+    {
+      "id": 610,
+      "name": "Villas Del Ocoa"
+    },
+    {
+      "id": 108,
+      "name": "Portales Del Trapiche"
+    },
+    {
+      "id": 109,
+      "name": "Saint Nicolas"
+    },
+    {
+      "id": 54,
+      "name": "Altos De Panorama"
+    },
+    {
+      "id": 535,
+      "name": "Maranatha"
+    },
+    {
+      "id": 199,
+      "name": "Copecal"
+    },
+    {
+      "id": 461,
+      "name": "Villa Bolivar"
+    },
+    {
+      "id": 200,
+      "name": "Villa Del Sol"
+    },
+    {
+      "id": 611,
+      "name": "Pinares De Oriente"
+    },
+    {
+      "id": 612,
+      "name": "Alcaravan"
+    },
+    {
+      "id": 539,
+      "name": "Quintas De Montecarlo"
+    },
+    {
+      "id": 540,
+      "name": "Maria Paz"
+    },
+    {
+      "id": 614,
+      "name": "Rincon De Las Lomas"
+    },
+    {
+      "id": 110,
+      "name": "Balata"
+    },
+    {
+      "id": 157,
+      "name": "Ferias"
+    },
+    {
+      "id": 111,
+      "name": "Favorita"
+    },
+    {
+      "id": 112,
+      "name": "Espejo"
+    },
+    {
+      "id": 114,
+      "name": "Salle"
+    },
+    {
+      "id": 543,
+      "name": "Araguaney"
+    },
+    {
+      "id": 254,
+      "name": "Girasol"
+    },
+    {
+      "id": 615,
+      "name": "Sector La Playa De Ciudad Porfia"
+    },
+    {
+      "id": 248,
+      "name": "Vencedores"
+    },
+    {
+      "id": 115,
+      "name": "Mesetas"
+    },
+    {
+      "id": 544,
+      "name": "Nuevo Amanecer"
+    },
+    {
+      "id": 260,
+      "name": "Portales Del Llano"
+    },
+    {
+      "id": 251,
+      "name": "Topacio"
+    },
+    {
+      "id": 463,
+      "name": "Villa Hermosa"
+    },
+    {
+      "id": 545,
+      "name": "Villa Sonia"
+    },
+    {
+      "id": 616,
+      "name": "Gramalote"
+    },
+    {
+      "id": 617,
+      "name": "Habitat"
+    },
+    {
+      "id": 116,
+      "name": "Hacienda El Trapiche"
+    },
+    {
+      "id": 170,
+      "name": "San Marcos"
+    },
+    {
+      "id": 419,
+      "name": "Marsella"
+    },
+    {
+      "id": 420,
+      "name": "San Cristobal"
+    },
+    {
+      "id": 432,
+      "name": "Embudo"
+    },
+    {
+      "id": 171,
+      "name": "Brisas Del Pastrana"
+    },
+    {
+      "id": 172,
+      "name": "Simon Bolivar"
+    },
+    {
+      "id": 159,
+      "name": "Vainilla"
+    },
+    {
+      "id": 173,
+      "name": "Antonio Ricaurte"
+    },
+    {
+      "id": 201,
+      "name": "Bosque"
+    },
+    {
+      "id": 202,
+      "name": "Llano Grande"
+    },
+    {
+      "id": 203,
+      "name": "Santa Lucia"
+    },
+    {
+      "id": 433,
+      "name": "Nuevo Ricaurte"
+    },
+    {
+      "id": 464,
+      "name": "Jose Otter"
+    },
+    {
+      "id": 265,
+      "name": "Santa Helena"
+    },
+    {
+      "id": 268,
+      "name": "Villa Suarez"
+    },
+    {
+      "id": 204,
+      "name": "Malvinas"
+    },
+    {
+      "id": 546,
+      "name": "Teusaquillo"
+    },
+    {
+      "id": 547,
+      "name": "Alamos Sur"
+    },
+    {
+      "id": 548,
+      "name": "Caminos De Montecarlo"
+    },
+    {
+      "id": 465,
+      "name": "Refugio"
+    },
+    {
+      "id": 148,
+      "name": "Santa Ines"
+    },
+    {
+      "id": 150,
+      "name": "San Isidro"
+    },
+    {
+      "id": 160,
+      "name": "San Gregorio"
+    },
+    {
+      "id": 167,
+      "name": "Santander"
+    },
+    {
+      "id": 162,
+      "name": "Brisas Del Guatiquia"
+    },
+    {
+      "id": 117,
+      "name": "Centro"
+    },
+    {
+      "id": 174,
+      "name": "Jorge Eliecer Gaitan"
+    },
+    {
+      "id": 401,
+      "name": "Cantarrana"
+    },
+    {
+      "id": 466,
+      "name": "Remansos De Rosa Blanca"
+    },
+    {
+      "id": 467,
+      "name": "Quintas De Las Acacias"
+    },
+    {
+      "id": 468,
+      "name": "Villa Humberto"
+    },
+    {
+      "id": 56,
+      "name": "Chorrera"
+    },
+    {
+      "id": 57,
+      "name": "Tejares Del Norte"
+    },
+    {
+      "id": 58,
+      "name": "Andes"
+    },
+    {
+      "id": 59,
+      "name": "Chapinerito"
+    },
+    {
+      "id": 84,
+      "name": "Villa Patricia"
+    },
+    {
+      "id": 62,
+      "name": "Doce De Octubre"
+    },
+    {
+      "id": 63,
+      "name": "Balcones De Sain Nicolas"
+    },
+    {
+      "id": 121,
+      "name": "Bosque Alto"
+    },
+    {
+      "id": 122,
+      "name": "Buganbiles"
+    },
+    {
+      "id": 123,
+      "name": "Balcones De La Calleja"
+    },
+    {
+      "id": 125,
+      "name": "Pinos"
+    },
+    {
+      "id": 126,
+      "name": "San Jose"
+    },
+    {
+      "id": 127,
+      "name": "Maizaro Alto"
+    },
+    {
+      "id": 128,
+      "name": "Buque"
+    },
+    {
+      "id": 129,
+      "name": "Barzal Bajo"
+    },
+    {
+      "id": 205,
+      "name": "Antonio Villavicencio"
+    },
+    {
+      "id": 65,
+      "name": "Nueva Granada"
+    },
+    {
+      "id": 66,
+      "name": "Bosques De San Francisco"
+    },
+    {
+      "id": 67,
+      "name": "Prados De San Francisco"
+    },
+    {
+      "id": 68,
+      "name": "Poblado De San Pablo"
+    },
+    {
+      "id": 69,
+      "name": "Torres De Marsella"
+    },
+    {
+      "id": 71,
+      "name": "Recuerdo"
+    },
+    {
+      "id": 95,
+      "name": "Rosal"
+    },
+    {
+      "id": 73,
+      "name": "Playa De Caño Parrado"
+    },
+    {
+      "id": 132,
+      "name": "Pozo Veinte"
+    },
+    {
+      "id": 207,
+      "name": "Parcelas Del Progreso"
+    },
+    {
+      "id": 210,
+      "name": "Consuelo"
+    },
+    {
+      "id": 213,
+      "name": "Barlovento"
+    },
+    {
+      "id": 469,
+      "name": "Casibarito"
+    },
+    {
+      "id": 214,
+      "name": "Villa Cristina"
+    },
+    {
+      "id": 215,
+      "name": "Villa Karina"
+    },
+    {
+      "id": 153,
+      "name": "Primavera Urbana"
+    },
+    {
+      "id": 136,
+      "name": "Mirador Del Llano"
+    },
+    {
+      "id": 137,
+      "name": "Estacion Piscicola"
+    },
+    {
+      "id": 163,
+      "name": "Santa Fe"
+    },
+    {
+      "id": 151,
+      "name": "San Isidro Bajo"
+    },
+    {
+      "id": 175,
+      "name": "Vainilla Bajo"
+    },
+    {
+      "id": 266,
+      "name": "Calamar"
+    },
+    {
+      "id": 216,
+      "name": "Hierbabuena"
+    },
+    {
+      "id": 217,
+      "name": "Prados De Castilla"
+    },
+    {
+      "id": 218,
+      "name": "Parques De Castilla"
+    },
+    {
+      "id": 219,
+      "name": "Almeria Palma Real"
+    },
+    {
+      "id": 221,
+      "name": "Camino Real"
+    },
+    {
+      "id": 223,
+      "name": "Barcelona"
+    },
+    {
+      "id": 224,
+      "name": "Rincon De Los Rosales"
+    },
+    {
+      "id": 225,
+      "name": "Prados De Abajam"
+    },
+    {
+      "id": 96,
+      "name": "Emporio Bajo"
+    },
+    {
+      "id": 77,
+      "name": "Grama"
+    },
+    {
+      "id": 78,
+      "name": "Villa Del Rosario"
+    },
+    {
+      "id": 154,
+      "name": "Santa Maria Del Buque"
+    },
+    {
+      "id": 139,
+      "name": "Camoa"
+    },
+    {
+      "id": 228,
+      "name": "Jordan"
+    },
+    {
+      "id": 269,
+      "name": "Rincon De Santa Helena"
+    },
+    {
+      "id": 255,
+      "name": "Villa Fabiola"
+    },
+    {
+      "id": 551,
+      "name": "Rubi"
+    },
+    {
+      "id": 423,
+      "name": "Caney"
+    },
+    {
+      "id": 442,
+      "name": "Brisas Del Buque"
+    },
+    {
+      "id": 424,
+      "name": "Garcia Bohorquez"
+    },
+    {
+      "id": 425,
+      "name": "Lomonaco"
+    },
+    {
+      "id": 476,
+      "name": "Portal De Casibare"
+    },
+    {
+      "id": 80,
+      "name": "Distrito"
+    },
+    {
+      "id": 484,
+      "name": "Rincon De Las Acacias"
+    },
+    {
+      "id": 485,
+      "name": "Vega"
+    },
+    {
+      "id": 331,
+      "name": "Buenos Aires"
+    },
+    {
+      "id": 332,
+      "name": "Cataluña"
+    },
+    {
+      "id": 333,
+      "name": "Ay Mi Llanura"
+    },
+    {
+      "id": 334,
+      "name": "Aranjuez I"
+    },
+    {
+      "id": 337,
+      "name": "Hacaritama"
+    },
+    {
+      "id": 338,
+      "name": "Bosques De Vizcaya"
+    },
+    {
+      "id": 339,
+      "name": "Bosques De Morelia"
+    },
+    {
+      "id": 340,
+      "name": "Cavivir"
+    },
+    {
+      "id": 342,
+      "name": "Villa Ortiz"
+    },
+    {
+      "id": 343,
+      "name": "Doña Luz"
+    },
+    {
+      "id": 380,
+      "name": "Toscana"
+    },
+    {
+      "id": 382,
+      "name": "Balcones Del Danubio"
+    },
+    {
+      "id": 383,
+      "name": "Quintas De Santa Clara"
+    },
+    {
+      "id": 384,
+      "name": "Quintas De Morelia"
+    },
+    {
+      "id": 488,
+      "name": "Barcelona Veredal II"
+    },
+    {
+      "id": 388,
+      "name": "Gracielita"
+    },
+    {
+      "id": 292,
+      "name": "Dos Mil"
+    },
+    {
+      "id": 345,
+      "name": "Menegua"
+    },
+    {
+      "id": 293,
+      "name": "Villa Helena"
+    },
+    {
+      "id": 295,
+      "name": "Sindamanoy"
+    },
+    {
+      "id": 296,
+      "name": "Macunayma"
+    },
+    {
+      "id": 297,
+      "name": "Vizcaya"
+    },
+    {
+      "id": 299,
+      "name": "Remanso"
+    },
+    {
+      "id": 300,
+      "name": "Danubio"
+    },
+    {
+      "id": 301,
+      "name": "San Ignacio"
+    },
+    {
+      "id": 302,
+      "name": "Nueva Floresta"
+    },
+    {
+      "id": 303,
+      "name": "Maracos"
+    },
+    {
+      "id": 304,
+      "name": "Marco Antonio Pinilla"
+    },
+    {
+      "id": 305,
+      "name": "Nueva Esperanza"
+    },
+    {
+      "id": 307,
+      "name": "Pacande"
+    },
+    {
+      "id": 309,
+      "name": "Valles De Aragon"
+    },
+    {
+      "id": 310,
+      "name": "Fikus"
+    },
+    {
+      "id": 311,
+      "name": "Villa Melida"
+    },
+    {
+      "id": 363,
+      "name": "Villa Samper"
+    },
+    {
+      "id": 364,
+      "name": "Kirpas"
+    },
+    {
+      "id": 365,
+      "name": "Villa Valeria"
+    },
+    {
+      "id": 394,
+      "name": "Santa Cecilia"
+    },
+    {
+      "id": 366,
+      "name": "Santa Isabel"
+    },
+    {
+      "id": 367,
+      "name": "Villavento"
+    },
+    {
+      "id": 368,
+      "name": "Palmas De Vallarta"
+    },
+    {
+      "id": 369,
+      "name": "Conquista"
+    },
+    {
+      "id": 370,
+      "name": "Ciudad Real"
+    },
+    {
+      "id": 372,
+      "name": "Rincon De La Maria"
+    },
+    {
+      "id": 373,
+      "name": "Alameda Del Bosque"
+    },
+    {
+      "id": 374,
+      "name": "Camelias"
+    },
+    {
+      "id": 375,
+      "name": "Portales De La Primavera"
+    },
+    {
+      "id": 376,
+      "name": "Nueva Esperanza II"
+    },
+    {
+      "id": 377,
+      "name": "Parque De Canaguay"
+    },
+    {
+      "id": 564,
+      "name": "Cuadro"
+    },
+    {
+      "id": 489,
+      "name": "Bosques De Rosablanca"
+    },
+    {
+      "id": 490,
+      "name": "San Sebastian"
+    },
+    {
+      "id": 565,
+      "name": "Loma Linda"
+    },
+    {
+      "id": 567,
+      "name": "Playa Rica"
+    },
+    {
+      "id": 569,
+      "name": "Villa Union"
+    },
+    {
+      "id": 570,
+      "name": "Brisas De Caño Grande"
+    },
+    {
+      "id": 572,
+      "name": "Ciudad Del Campo"
+    },
+    {
+      "id": 624,
+      "name": "Saman De La Rivera"
+    },
+    {
+      "id": 643,
+      "name": "Ciudad Jardin"
+    },
+    {
+      "id": 625,
+      "name": "Piedemonte"
+    },
+    {
+      "id": 405,
+      "name": "Rosita"
+    },
+    {
+      "id": 406,
+      "name": "Aguas Claras"
+    },
+    {
+      "id": 491,
+      "name": "Alborada Baja"
+    },
+    {
+      "id": 626,
+      "name": "Atlantida"
+    },
+    {
+      "id": 234,
+      "name": "Mi Ranchito"
+    },
+    {
+      "id": 290,
+      "name": "Bosques De Santiago"
+    },
+    {
+      "id": 291,
+      "name": "Calasanz"
+    },
+    {
+      "id": 627,
+      "name": "Mariana"
+    },
+    {
+      "id": 639,
+      "name": "Villa Juliana"
+    },
+    {
+      "id": 636,
+      "name": "Camelia IV"
+    },
+    {
+      "id": 378,
+      "name": "Parque Lineal Vizcaya"
+    },
+    {
+      "id": 314,
+      "name": "Almendros"
+    },
+    {
+      "id": 315,
+      "name": "Estero"
+    },
+    {
+      "id": 318,
+      "name": "Sector Terminal"
+    },
+    {
+      "id": 319,
+      "name": "Torres Del Mediterraneo"
+    },
+    {
+      "id": 325,
+      "name": "Aranjuez II"
+    },
+    {
+      "id": 326,
+      "name": "Ariguani"
+    },
+    {
+      "id": 322,
+      "name": "Bochica"
+    },
+    {
+      "id": 348,
+      "name": "Brisas Del Ocoa Tercer Milenio"
+    },
+    {
+      "id": 349,
+      "name": "Guadalajara"
+    },
+    {
+      "id": 350,
+      "name": "Portal Del Molino"
+    },
+    {
+      "id": 351,
+      "name": "Bifamiliares La Primavera"
+    },
+    {
+      "id": 354,
+      "name": "Villa Encanto"
+    },
+    {
+      "id": 355,
+      "name": "Caminos De Sevilla"
+    },
+    {
+      "id": 656,
+      "name": "Ciudadela Carlos Javier Savogal"
+    },
+    {
+      "id": 284,
+      "name": "Maria II"
+    },
+    {
+      "id": 357,
+      "name": "Ciudadela La Maria"
+    },
+    {
+      "id": 285,
+      "name": "Galicia"
+    },
+    {
+      "id": 358,
+      "name": "Leticia"
+    },
+    {
+      "id": 359,
+      "name": "Camino Del Sol"
+    },
+    {
+      "id": 360,
+      "name": "Ciudadela Del Prado"
+    },
+    {
+      "id": 286,
+      "name": "Juanambu"
+    },
+    {
+      "id": 361,
+      "name": "Quintas De Aguas Claras"
+    },
+    {
+      "id": 229,
+      "name": "Ceiba B"
+    },
+    {
+      "id": 230,
+      "name": "Ceiba A"
+    },
+    {
+      "id": 231,
+      "name": "Gemelos"
+    },
+    {
+      "id": 233,
+      "name": "Forestal"
+    },
+    {
+      "id": 287,
+      "name": "San Gerardo V"
+    },
+    {
+      "id": 288,
+      "name": "San Gerardo III"
+    },
+    {
+      "id": 513,
+      "name": "Mp1-Mp2-Mp3"
+    },
+    {
+      "id": 552,
+      "name": "Campo Alegre"
+    },
+    {
+      "id": 514,
+      "name": "O&L"
+    },
+    {
+      "id": 486,
+      "name": "Guayuriba"
+    },
+    {
+      "id": 487,
+      "name": "Gran Airico"
+    },
+    {
+      "id": 618,
+      "name": "San Bernardino"
+    },
+    {
+      "id": 619,
+      "name": "Charrascal"
+    },
+    {
+      "id": 620,
+      "name": "Riviera"
+    },
+    {
+      "id": 621,
+      "name": "Cucharon"
+    },
+    {
+      "id": 622,
+      "name": "Brisas Del Ocoa"
+    },
+    {
+      "id": 585,
+      "name": "Buenos Aires Sector Americas"
+    },
+    {
+      "id": 379,
+      "name": "Parcelas De Kirpas"
+    },
+    {
+      "id": 140,
+      "name": "Colinas"
+    },
+    {
+      "id": 628,
+      "name": "Madrid"
+    },
+    {
+      "id": 559,
+      "name": "Monte Real"
+    },
+    {
+      "id": 561,
+      "name": "Portales De San Jorge"
+    },
+    {
+      "id": 562,
+      "name": "Alpes"
+    },
+    {
+      "id": 587,
+      "name": "Prados De Caño Grande"
+    },
+    {
+      "id": 563,
+      "name": "Quintas De San Jorge"
+    },
+    {
+      "id": 142,
+      "name": "Camilo Torres"
+    },
+    {
+      "id": 143,
+      "name": "Libertadores"
+    },
+    {
+      "id": 427,
+      "name": "Villa Adriana"
+    },
+    {
+      "id": 494,
+      "name": "Santa Maria"
+    },
+    {
+      "id": 407,
+      "name": "Sector Chorillano"
+    },
+    {
+      "id": 387,
+      "name": "Mirador Del Llano II"
+    },
+    {
+      "id": 177,
+      "name": "Dos Mil Alto"
+    },
+    {
+      "id": 584,
+      "name": "Santa Librada"
+    },
+    {
+      "id": 507,
+      "name": "Prados de Mavicure"
+    },
+    {
+      "id": 657,
+      "name": "Trece de Mayo"
+    }
+  ],
+  "unmatched": [
+    {
+      "name": "Las Americas"
+    },
+    {
+      "name": "Tercer Sector De Montecarlo"
+    },
+    {
+      "name": "La Rosita"
+    },
+    {
+      "name": "Triangulo"
+    },
+    {
+      "name": "La Campiña"
+    },
+    {
+      "name": "Ca0o Fistoles"
+    },
+    {
+      "name": "Nacional De Chocolates"
+    },
+    {
+      "name": "Esperanza 2000"
+    },
+    {
+      "name": "La Macarena"
+    },
+    {
+      "name": "Prados De Sevilla"
+    },
+    {
+      "name": "Urbanizacion Ocoa 1"
+    },
+    {
+      "name": "Caudal Norte Y Oriental"
+    },
+    {
+      "name": "Coovizora"
+    },
+    {
+      "name": "Guatape"
+    },
+    {
+      "name": "Ciudadela San Jorge"
+    },
+    {
+      "name": "Centro Comercial Viva"
+    },
+    {
+      "name": "Centro Comercial Llano Centro"
+    },
+    {
+      "name": "Parque Infantil"
+    },
+    {
+      "name": "Leon XIII Sur"
+    },
+    {
+      "name": "Nueva Colombia"
+    },
+    {
+      "name": "Primera De Mayo"
+    },
+    {
+      "name": "Sd 1"
+    },
+    {
+      "name": "Parque Cofrem"
+    },
+    {
+      "name": "Carcel"
+    },
+    {
+      "name": "Septima Brigada"
+    },
+    {
+      "name": "Los Centauros"
+    },
+    {
+      "name": "Postobon"
+    },
+    {
+      "name": "Cementerio Central"
+    },
+    {
+      "name": "Parque Los Fundadores"
+    },
+    {
+      "name": "Parque De Banderas"
+    },
+    {
+      "name": "Complejo Deportivo"
+    },
+    {
+      "name": "Parque de la memoria historica"
+    },
+    {
+      "name": "Colegio Industrial"
+    },
+    {
+      "name": "Casd"
+    },
+    {
+      "name": "Colegios"
+    },
+    {
+      "name": "Club Meta"
+    },
+    {
+      "name": "Hotel Del Llano"
+    },
+    {
+      "name": "Sd 32"
+    },
+    {
+      "name": "Sd"
+    },
+    {
+      "name": "Policia"
+    },
+    {
+      "name": "Lote"
+    },
+    {
+      "name": "Cedros"
+    },
+    {
+      "name": "Lote"
+    },
+    {
+      "name": "Colegio"
+    },
+    {
+      "name": "Venecia"
+    },
+    {
+      "name": "Carmen Bajo"
+    },
+    {
+      "name": "Villas Del Buque"
+    },
+    {
+      "name": "Portales De Los Girasoles"
+    },
+    {
+      "name": "Desmotadora"
+    },
+    {
+      "name": "Sd"
+    },
+    {
+      "name": "Nueva Granada Sector Uno"
+    },
+    {
+      "name": "Sd 2"
+    },
+    {
+      "name": "Institucional"
+    },
+    {
+      "name": "Institucional"
+    },
+    {
+      "name": "Emsa"
+    },
+    {
+      "name": "Corporacion Club Los Llaneros"
+    },
+    {
+      "name": "Sd 3"
+    },
+    {
+      "name": "Guayabal"
+    },
+    {
+      "name": "Alkosto"
+    },
+    {
+      "name": "Lote"
+    },
+    {
+      "name": "Narciso Matus"
+    },
+    {
+      "name": "Lote"
+    },
+    {
+      "name": "Condominio Los Girasoles"
+    },
+    {
+      "name": "Lote"
+    },
+    {
+      "name": "Lote"
+    },
+    {
+      "name": "Lote"
+    },
+    {
+      "name": "Lote"
+    },
+    {
+      "name": "Centro Comercial Unico"
+    },
+    {
+      "name": "Universidad San Martin"
+    },
+    {
+      "name": "La Campiña"
+    },
+    {
+      "name": "Desmotadora"
+    },
+    {
+      "name": "Desmotadora"
+    },
+    {
+      "name": "Desmotadora"
+    },
+    {
+      "name": "Lote"
+    },
+    {
+      "name": "Lote"
+    },
+    {
+      "name": "Tanques Acueducto"
+    },
+    {
+      "name": "Betty Camacho"
+    },
+    {
+      "name": "Brillante"
+    },
+    {
+      "name": "Colegios"
+    },
+    {
+      "name": "Portal De Alameda"
+    },
+    {
+      "name": "Sd 4"
+    },
+    {
+      "name": "Lote"
+    },
+    {
+      "name": "Lote"
+    },
+    {
+      "name": "La Cabaña"
+    },
+    {
+      "name": "Sd 5"
+    },
+    {
+      "name": "Nueva Granada Sector Dos"
+    },
+    {
+      "name": "Institucional"
+    },
+    {
+      "name": "Lote"
+    },
+    {
+      "name": "Emsa"
+    },
+    {
+      "name": "Sd"
+    },
+    {
+      "name": "Parque De Montebello"
+    },
+    {
+      "name": "Home Center"
+    },
+    {
+      "name": "Molino Semeragro"
+    },
+    {
+      "name": "Almaviva"
+    },
+    {
+      "name": "Cerro Campestre"
+    },
+    {
+      "name": "Bosques De Morelia III"
+    },
+    {
+      "name": "Popular"
+    },
+    {
+      "name": "Lote"
+    },
+    {
+      "name": "Lote"
+    },
+    {
+      "name": "Cemerca"
+    },
+    {
+      "name": "Morgue"
+    },
+    {
+      "name": "Institucional"
+    },
+    {
+      "name": "Lote"
+    },
+    {
+      "name": "Lote"
+    },
+    {
+      "name": "Molino"
+    },
+    {
+      "name": "Patios  Stm"
+    },
+    {
+      "name": "Centro Comercial La Primavera"
+    },
+    {
+      "name": "Lote"
+    },
+    {
+      "name": "Bodegas Comerciales"
+    },
+    {
+      "name": "Makro"
+    },
+    {
+      "name": "Alpina"
+    },
+    {
+      "name": "E.S."
+    },
+    {
+      "name": "Correccional De Menores"
+    },
+    {
+      "name": "Universidad Santo Tomas"
+    },
+    {
+      "name": "Barcelona Veredal I"
+    },
+    {
+      "name": "Lote"
+    },
+    {
+      "name": "Club"
+    },
+    {
+      "name": "Sd 6"
+    },
+    {
+      "name": "Sd 7"
+    },
+    {
+      "name": "Lote"
+    },
+    {
+      "name": "Escuela Militar"
+    },
+    {
+      "name": "Lote"
+    },
+    {
+      "name": "La Islita"
+    },
+    {
+      "name": "Lote"
+    },
+    {
+      "name": "Lote"
+    },
+    {
+      "name": "Sd 8"
+    },
+    {
+      "name": "Lote"
+    },
+    {
+      "name": "Nueva Era"
+    },
+    {
+      "name": "Templo"
+    },
+    {
+      "name": "Lote"
+    },
+    {
+      "name": "La Carolina"
+    },
+    {
+      "name": "Villa Del Alcaravan"
+    },
+    {
+      "name": "Olimpico"
+    },
+    {
+      "name": "Terminal De Transporte"
+    },
+    {
+      "name": "Parque Sikuani"
+    },
+    {
+      "name": "La Rosita"
+    },
+    {
+      "name": "Sd 23"
+    },
+    {
+      "name": "Sd 24"
+    },
+    {
+      "name": "Sd 25"
+    },
+    {
+      "name": "Sd 26"
+    },
+    {
+      "name": "Sd 27"
+    },
+    {
+      "name": "Lote"
+    },
+    {
+      "name": "Sd 28"
+    },
+    {
+      "name": "Parque Cementerio"
+    },
+    {
+      "name": "Sd 29"
+    },
+    {
+      "name": "Sd 30"
+    },
+    {
+      "name": "Molino Montecarlo"
+    },
+    {
+      "name": "Camelia III"
+    },
+    {
+      "name": "Fortaleza"
+    },
+    {
+      "name": "Sd 31"
+    },
+    {
+      "name": "Lote"
+    },
+    {
+      "name": "Lote"
+    },
+    {
+      "name": "Lote"
+    },
+    {
+      "name": "Lote"
+    },
+    {
+      "name": "Lote"
+    },
+    {
+      "name": "Reserva De Viscaya"
+    },
+    {
+      "name": "Bochica II"
+    },
+    {
+      "name": "Coca Cola"
+    },
+    {
+      "name": "Lote"
+    },
+    {
+      "name": "Villa Del Mar"
+    },
+    {
+      "name": "Lote"
+    },
+    {
+      "name": "Olimpico"
+    },
+    {
+      "name": "La Carolina"
+    },
+    {
+      "name": "Sd9"
+    },
+    {
+      "name": "Sd10"
+    },
+    {
+      "name": "Lote"
+    },
+    {
+      "name": "Lote"
+    },
+    {
+      "name": "Estadio Macal"
+    },
+    {
+      "name": "Catatumbo"
+    },
+    {
+      "name": "Santo Domingo"
+    },
+    {
+      "name": "Universidad Cooperativa"
+    },
+    {
+      "name": "Lote"
+    },
+    {
+      "name": "Pastos Y Leguminosas"
+    },
+    {
+      "name": "Lote"
+    },
+    {
+      "name": "Lote"
+    },
+    {
+      "name": "Colegio Neil Armstrong"
+    },
+    {
+      "name": "Club Campestre De Los Llanos"
+    },
+    {
+      "name": "Los Nogales"
+    },
+    {
+      "name": "Lote"
+    },
+    {
+      "name": "Lote"
+    },
+    {
+      "name": "Lote"
+    },
+    {
+      "name": "Lote"
+    },
+    {
+      "name": "Lote"
+    },
+    {
+      "name": "Lote"
+    },
+    {
+      "name": "Lote"
+    },
+    {
+      "name": "Lote"
+    },
+    {
+      "name": "Desmotadora"
+    },
+    {
+      "name": "Sd 11"
+    },
+    {
+      "name": "Sd 12"
+    },
+    {
+      "name": "Sd 13"
+    },
+    {
+      "name": "Sd 14"
+    },
+    {
+      "name": "E.S."
+    },
+    {
+      "name": "Lote"
+    },
+    {
+      "name": "Lote"
+    },
+    {
+      "name": "Sd 15"
+    },
+    {
+      "name": "Sd 16"
+    },
+    {
+      "name": "Sd 17"
+    },
+    {
+      "name": "Quebrada Honda"
+    },
+    {
+      "name": "Sd 18"
+    },
+    {
+      "name": "Sd 19"
+    },
+    {
+      "name": "Centro Comercial Villacentro"
+    },
+    {
+      "name": "Lote"
+    },
+    {
+      "name": "Templo"
+    },
+    {
+      "name": "Sd 20"
+    },
+    {
+      "name": "Lote"
+    },
+    {
+      "name": "Sd 21"
+    },
+    {
+      "name": "Leon XIII Norte"
+    },
+    {
+      "name": "Patarroyo"
+    },
+    {
+      "name": "Sd 22"
+    },
+    {
+      "name": "Sinay"
+    },
+    {
+      "name": "Cecilia"
+    },
+    {
+      "name": "Lote"
+    },
+    {
+      "name": "Movistar"
+    },
+    {
+      "name": "Multifamiliares Los Centauros"
+    },
+    {
+      "name": "Amarilo"
+    },
+    {
+      "name": "Bosques de la Riviera"
+    }
+  ],
+  "ambiguous": [
+    {
+      "name": "Cambulos",
+      "ids": [
+        44,
+        642
+      ]
+    },
+    {
+      "name": "Recreo",
+      "ids": [
+        232,
+        279
+      ]
+    },
+    {
+      "name": "Cedritos",
+      "ids": [
+        70,
+        236
+      ]
+    },
+    {
+      "name": "Esperanza",
+      "ids": [
+        431,
+        443
+      ]
+    },
+    {
+      "name": "San Felipe",
+      "ids": [
+        83,
+        281
+      ]
+    },
+    {
+      "name": "Villa Marina",
+      "ids": [
+        527,
+        658
+      ]
+    },
+    {
+      "name": "Rincon De Las Margaritas",
+      "ids": [
+        119,
+        531
+      ]
+    },
+    {
+      "name": "Pradera",
+      "ids": [
+        55,
+        534
+      ]
+    },
+    {
+      "name": "Florida",
+      "ids": [
+        422,
+        541
+      ]
+    },
+    {
+      "name": "San Fernando",
+      "ids": [
+        23,
+        113
+      ]
+    },
+    {
+      "name": "Pradera",
+      "ids": [
+        55,
+        534
+      ]
+    },
+    {
+      "name": "San Francisco",
+      "ids": [
+        26,
+        418
+      ]
+    },
+    {
+      "name": "Florida",
+      "ids": [
+        422,
+        541
+      ]
+    },
+    {
+      "name": "San Luis",
+      "ids": [
+        156,
+        262
+      ]
+    },
+    {
+      "name": "Villa Oriente",
+      "ids": [
+        344,
+        549
+      ]
+    },
+    {
+      "name": "Delicias",
+      "ids": [
+        161,
+        362
+      ]
+    },
+    {
+      "name": "Cerezos",
+      "ids": [
+        60,
+        477
+      ]
+    },
+    {
+      "name": "Rincon De Las Margaritas",
+      "ids": [
+        119,
+        531
+      ]
+    },
+    {
+      "name": "Maizaro",
+      "ids": [
+        124,
+        662
+      ]
+    },
+    {
+      "name": "Margaritas",
+      "ids": [
+        130,
+        575
+      ]
+    },
+    {
+      "name": "Girasoles",
+      "ids": [
+        61,
+        220,
+        222
+      ]
+    },
+    {
+      "name": "Villas Del Progreso",
+      "ids": [
+        267,
+        583
+      ]
+    },
+    {
+      "name": "Esperanza",
+      "ids": [
+        431,
+        443
+      ]
+    },
+    {
+      "name": "Esperanza",
+      "ids": [
+        431,
+        443
+      ]
+    },
+    {
+      "name": "Esperanza",
+      "ids": [
+        431,
+        443
+      ]
+    },
+    {
+      "name": "Cerezos",
+      "ids": [
+        60,
+        477
+      ]
+    },
+    {
+      "name": "Villa Oriente",
+      "ids": [
+        344,
+        549
+      ]
+    },
+    {
+      "name": "Villa Alejandra",
+      "ids": [
+        276,
+        298
+      ]
+    },
+    {
+      "name": "Sociego",
+      "ids": [
+        312,
+        506
+      ]
+    },
+    {
+      "name": "Oasis",
+      "ids": [
+        371,
+        429
+      ]
+    },
+    {
+      "name": "San Diego",
+      "ids": [
+        396,
+        660
+      ]
+    },
+    {
+      "name": "Oasis",
+      "ids": [
+        371,
+        429
+      ]
+    },
+    {
+      "name": "Maporal",
+      "ids": [
+        492,
+        493
+      ]
+    },
+    {
+      "name": "Altamira",
+      "ids": [
+        146,
+        590
+      ]
+    },
+    {
+      "name": "Margaritas",
+      "ids": [
+        130,
+        575
+      ]
+    },
+    {
+      "name": "Maporal",
+      "ids": [
+        492,
+        493
+      ]
+    },
+    {
+      "name": "Recreo",
+      "ids": [
+        232,
+        279
+      ]
+    },
+    {
+      "name": "Delicias",
+      "ids": [
+        161,
+        362
+      ]
+    },
+    {
+      "name": "Recreo",
+      "ids": [
+        232,
+        279
+      ]
+    },
+    {
+      "name": "Cedritos",
+      "ids": [
+        70,
+        236
+      ]
+    },
+    {
+      "name": "Isla",
+      "ids": [
+        141,
+        568
+      ]
+    },
+    {
+      "name": "Girasoles",
+      "ids": [
+        61,
+        220,
+        222
+      ]
+    },
+    {
+      "name": "San Felipe",
+      "ids": [
+        83,
+        281
+      ]
+    },
+    {
+      "name": "Villas del Progreso",
+      "ids": [
+        267,
+        583
+      ]
+    },
+    {
+      "id": 189,
+      "names": [
+        "Seis De Abril",
+        "Seis De Abril"
+      ],
+      "reason": "Varias geometrías para el mismo barrio."
+    },
+    {
+      "id": 449,
+      "names": [
+        "Jardin",
+        "Jardin"
+      ],
+      "reason": "Varias geometrías para el mismo barrio."
+    },
+    {
+      "id": 64,
+      "names": [
+        "Triunfo",
+        "Triunfo"
+      ],
+      "reason": "Varias geometrías para el mismo barrio."
+    },
+    {
+      "id": 103,
+      "names": [
+        "Siete De Agosto",
+        "Siete De Agosto"
+      ],
+      "reason": "Varias geometrías para el mismo barrio."
+    },
+    {
+      "id": 50,
+      "names": [
+        "Panorama",
+        "Panorama",
+        "Panorama"
+      ],
+      "reason": "Varias geometrías para el mismo barrio."
+    },
+    {
+      "id": 155,
+      "names": [
+        "Porvenir",
+        "Porvenir"
+      ],
+      "reason": "Varias geometrías para el mismo barrio."
+    },
+    {
+      "id": 651,
+      "names": [
+        "Reliquia",
+        "Reliquia",
+        "Reliquia"
+      ],
+      "reason": "Varias geometrías para el mismo barrio."
+    },
+    {
+      "id": 36,
+      "names": [
+        "Alcazares",
+        "Alcazares"
+      ],
+      "reason": "Varias geometrías para el mismo barrio."
+    },
+    {
+      "id": 434,
+      "names": [
+        "Alborada",
+        "Alborada"
+      ],
+      "reason": "Varias geometrías para el mismo barrio."
+    },
+    {
+      "id": 263,
+      "names": [
+        "Florencia",
+        "Florencia"
+      ],
+      "reason": "Varias geometrías para el mismo barrio."
+    },
+    {
+      "id": 186,
+      "names": [
+        "Bosques De Abajam",
+        "Bosques De Abajam"
+      ],
+      "reason": "Varias geometrías para el mismo barrio."
+    },
+    {
+      "id": 187,
+      "names": [
+        "Madrigal",
+        "Madrigal"
+      ],
+      "reason": "Varias geometrías para el mismo barrio."
+    },
+    {
+      "id": 550,
+      "names": [
+        "Catumare",
+        "Catumare"
+      ],
+      "reason": "Varias geometrías para el mismo barrio."
+    },
+    {
+      "id": 538,
+      "names": [
+        "Montecarlo",
+        "Montecarlo"
+      ],
+      "reason": "Varias geometrías para el mismo barrio."
+    },
+    {
+      "id": 532,
+      "names": [
+        "Rochela",
+        "Rochela"
+      ],
+      "reason": "Varias geometrías para el mismo barrio."
+    },
+    {
+      "id": 608,
+      "names": [
+        "Ciudad Porfia",
+        "Ciudad Porfia"
+      ],
+      "reason": "Varias geometrías para el mismo barrio."
+    },
+    {
+      "id": 459,
+      "names": [
+        "Juan Pablo II",
+        "Juan Pablo II"
+      ],
+      "reason": "Varias geometrías para el mismo barrio."
+    },
+    {
+      "id": 97,
+      "names": [
+        "Emporio",
+        "Emporio"
+      ],
+      "reason": "Varias geometrías para el mismo barrio."
+    },
+    {
+      "id": 536,
+      "names": [
+        "Villa Del Rio",
+        "Villa Del Rio"
+      ],
+      "reason": "Varias geometrías para el mismo barrio."
+    },
+    {
+      "id": 164,
+      "names": [
+        "Industrial",
+        "industrial"
+      ],
+      "reason": "Varias geometrías para el mismo barrio."
+    },
+    {
+      "id": 158,
+      "names": [
+        "Veinte De Julio",
+        "Veinte De Julio"
+      ],
+      "reason": "Varias geometrías para el mismo barrio."
+    },
+    {
+      "id": 149,
+      "names": [
+        "Villa Julia",
+        "Villa Julia"
+      ],
+      "reason": "Varias geometrías para el mismo barrio."
+    },
+    {
+      "id": 118,
+      "names": [
+        "Azotea",
+        "Azotea"
+      ],
+      "reason": "Varias geometrías para el mismo barrio."
+    },
+    {
+      "id": 120,
+      "names": [
+        "Barzal",
+        "Barzal"
+      ],
+      "reason": "Varias geometrías para el mismo barrio."
+    },
+    {
+      "id": 76,
+      "names": [
+        "Esmeralda",
+        "Esmeralda",
+        "Esmeralda",
+        "Esmeralda"
+      ],
+      "reason": "Varias geometrías para el mismo barrio."
+    },
+    {
+      "id": 212,
+      "names": [
+        "Parques De Sevilla",
+        "Parques De Sevilla"
+      ],
+      "reason": "Varias geometrías para el mismo barrio."
+    },
+    {
+      "id": 573,
+      "names": [
+        "Guaduales",
+        "Guaduales"
+      ],
+      "reason": "Varias geometrías para el mismo barrio."
+    },
+    {
+      "id": 474,
+      "names": [
+        "Comuneros",
+        "Comuneros"
+      ],
+      "reason": "Varias geometrías para el mismo barrio."
+    },
+    {
+      "id": 335,
+      "names": [
+        "Bello Horizonte",
+        "Bello Horizonte"
+      ],
+      "reason": "Varias geometrías para el mismo barrio."
+    },
+    {
+      "id": 341,
+      "names": [
+        "Villa Johanna",
+        "Villa Johanna"
+      ],
+      "reason": "Varias geometrías para el mismo barrio."
+    },
+    {
+      "id": 294,
+      "names": [
+        "Villa Nieves",
+        "Villa Nieves"
+      ],
+      "reason": "Varias geometrías para el mismo barrio."
+    },
+    {
+      "id": 385,
+      "names": [
+        "Gaviotas",
+        "Gaviotas"
+      ],
+      "reason": "Varias geometrías para el mismo barrio."
+    },
+    {
+      "id": 553,
+      "names": [
+        "Divino Niño",
+        "Divino Niño"
+      ],
+      "reason": "Varias geometrías para el mismo barrio."
+    },
+    {
+      "id": 306,
+      "names": [
+        "Rodeo",
+        "Rodeo"
+      ],
+      "reason": "Varias geometrías para el mismo barrio."
+    },
+    {
+      "id": 308,
+      "names": [
+        "Sabana",
+        "Sabana"
+      ],
+      "reason": "Varias geometrías para el mismo barrio."
+    },
+    {
+      "id": 352,
+      "names": [
+        "Primavera",
+        "Primavera"
+      ],
+      "reason": "Varias geometrías para el mismo barrio."
+    },
+    {
+      "id": 324,
+      "names": [
+        "Acapulco",
+        "Acapulco"
+      ],
+      "reason": "Varias geometrías para el mismo barrio."
+    },
+    {
+      "id": 346,
+      "names": [
+        "Ciudadela Divino Niño",
+        "Ciudadela Divino Niño"
+      ],
+      "reason": "Varias geometrías para el mismo barrio."
+    },
+    {
+      "id": 356,
+      "names": [
+        "San Carlos",
+        "San Carlos"
+      ],
+      "reason": "Varias geometrías para el mismo barrio."
+    }
+  ],
+  "invalid": [
+    {
+      "name": "",
+      "reason": "Nombre ausente."
+    }
+  ],
+  "retired": [],
+  "applied": false
+}

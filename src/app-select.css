@@ -1,0 +1,45 @@
+.app-select { display: block; position: relative; min-width: 0; width: 100%; }
+.app-select > select[hidden] { display: none !important; }
+html body .app-select .app-select-trigger { display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; min-width: 0; min-height: 46px; padding: 11px 12px; border: 1px solid #dfe3ea; border-radius: 10px; background: #fff; color: #222b3b; font: inherit; font-size: 14px; font-weight: 400; line-height: 1.4; text-align: left; box-shadow: none; cursor: pointer; }
+.app-select-value { min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.app-select-trigger > svg { flex: 0 0 18px; width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.6; transition: transform .18s; }
+.app-select-trigger[aria-expanded=true] > svg { transform: rotate(180deg); }
+html body .app-select .app-select-trigger:hover:not(:disabled) { border-color: #ff9c69; background: #fffaf6; box-shadow: none; }
+html body .app-select .app-select-trigger:is(:focus-visible,[aria-expanded=true]) { outline: 2px solid #ff7524; outline-offset: 2px; }
+html body .app-select .app-select-trigger[aria-invalid=true] { border-color: #df3548; }
+html body .app-select .app-select-trigger:disabled { opacity: .5; cursor: default; }
+html body .app-select-dialog { position: fixed; inset: auto; box-sizing: border-box; margin: 0; padding: 14px; max-width: calc(100vw - 24px); max-height: min(430px,calc(100dvh - 32px)); border: 1px solid #e8ebf0; border-radius: 19px; background: #fff; color: #222b3b; box-shadow: 0 20px 70px #17203330; overflow: hidden; font: inherit; }
+.app-select-dialog[open] { display: flex; flex-direction: column; gap: 12px; }
+.app-select-dialog::backdrop { background: #17203338; }
+.app-select-handle { display: none; }
+.app-select-heading { display: flex; align-items: center; justify-content: space-between; gap: 14px; flex: 0 0 auto; }
+html body .app-select-dialog .app-select-heading h2 { margin: 0; padding: 0; color: #222b3b; font-size: 14px; font-weight: 750; line-height: 1.4; letter-spacing: -.02em; overflow-wrap: anywhere; }
+html body .app-select-dialog .app-select-close { display: grid; place-items: center; flex: 0 0 32px; width: 32px; height: 32px; min-height: 0; border: 0; border-radius: 50%; padding: 0; background: #f1f3f6; color: #6c7585; box-shadow: none; font: inherit; font-size: 24px; cursor: pointer; }
+html body .app-select-dialog .app-select-search { flex: 0 0 auto; box-sizing: border-box; width: 100%; min-width: 0; min-height: 44px; padding: 11px 13px; border: 1px solid #e5e8ed; border-radius: 11px; background: #f6f7f9; color: #222b3b; font: inherit; font-size: 16px; }
+.app-select-options { min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; border-radius: 11px; padding: 2px; }
+.app-select-option { display: flex; align-items: center; justify-content: space-between; gap: 14px; min-height: 46px; box-sizing: border-box; padding: 12px; border-radius: 10px; font-size: 14px; line-height: 1.4; cursor: pointer; overflow-wrap: anywhere; }
+.app-select-option > span { min-width: 0; }
+.app-select-option > svg { width: 19px; height: 19px; flex: 0 0 19px; fill: none; stroke: currentColor; stroke-width: 2; visibility: hidden; }
+.app-select-option.is-active { background: #f4f5f8; }
+.app-select-option[aria-selected=true] { background: #fff0e5; color: #ed570b; font-weight: 650; }
+.app-select-option[aria-selected=true] > svg { visibility: visible; }
+.app-select-option[aria-disabled=true] { color: #9da4b0; cursor: default; }
+.app-select-empty { margin: 10px 0; padding: 16px; color: #7a8493; font-size: 14px; text-align: center; }
+.app-select-dialog :is(button,input,[role=listbox]):focus-visible { outline: 2px solid #ff7524; outline-offset: 2px; }
+.attendance-person > .app-select { flex: 0 0 130px; width: 130px; }
+html body .attendance-person .app-select-trigger { min-height: 42px; padding: 9px; background: #e9edf3; border-color: transparent; color: #657083; font-size: 12px; font-weight: 650; }
+html body .attendance-person .app-select-trigger[data-state=presente] { background: #13b653; color: #fff; }
+html body .attendance-person .app-select-trigger[data-state=ausente] { background: #f13346; color: #fff; }
+html body .attendance-person .app-select-trigger[data-state=justificado] { background: #008fff; color: #fff; }
+.manage-permission > .app-select { width: 180px; }
+@media(max-width:600px) {
+  html body .app-select-dialog { inset: auto 10px 10px; bottom: max(10px,env(safe-area-inset-bottom)); width: calc(100% - 20px); max-width: none; max-height: min(70dvh,560px); padding: 10px 14px 14px; border-radius: 24px; animation: select-appear .18s ease-out; }
+  .app-select-handle { display: block; flex: 0 0 4px; width: 36px; margin: 0 auto 2px; border-radius: 3px; background: #dfe3e9; }
+  html body .app-select .app-select-trigger { font-size: 16px; }
+  .app-select-option { min-height: 50px; font-size: 15px; }
+  .attendance-person > .app-select { flex-basis: 112px; width: 112px; }
+  html body .attendance-person .app-select-trigger { font-size: 12px; gap: 6px; }
+  .manage-permission > .app-select { width: 100%; }
+}
+@keyframes select-appear { from { opacity: 0; translate: 0 12px; } to { opacity: 1; translate: 0 0; } }
+@media(prefers-reduced-motion:reduce) { html body .app-select-dialog { animation: none; } .app-select-trigger > svg { transition: none; } }

@@ -1,0 +1,1924 @@
+{
+  "matched": [
+    {
+      "id": 437,
+      "name": "ACACIAS"
+    },
+    {
+      "id": 324,
+      "name": "ACAPULCO"
+    },
+    {
+      "id": 323,
+      "name": "ACAPULCO SUBNORMAL"
+    },
+    {
+      "id": 406,
+      "name": "AGUAS CLARAS"
+    },
+    {
+      "id": 520,
+      "name": "ALAMOS SANTA ROSA"
+    },
+    {
+      "id": 547,
+      "name": "ALAMOS SUR"
+    },
+    {
+      "id": 434,
+      "name": "ALBORADA"
+    },
+    {
+      "id": 491,
+      "name": "ALBORADA BAJA"
+    },
+    {
+      "id": 178,
+      "name": "ALCALA"
+    },
+    {
+      "id": 612,
+      "name": "ALCARAVAN"
+    },
+    {
+      "id": 36,
+      "name": "ALCAZARES"
+    },
+    {
+      "id": 314,
+      "name": "ALMENDROS"
+    },
+    {
+      "id": 562,
+      "name": "ALPES"
+    },
+    {
+      "id": 445,
+      "name": "ALTAGRACIA"
+    },
+    {
+      "id": 410,
+      "name": "AMARAL"
+    },
+    {
+      "id": 517,
+      "name": "AMERICAS"
+    },
+    {
+      "id": 661,
+      "name": "AMISTAD"
+    },
+    {
+      "id": 173,
+      "name": "ANTONIO RICAURTE"
+    },
+    {
+      "id": 205,
+      "name": "ANTONIO VILLAVICENCIO"
+    },
+    {
+      "id": 206,
+      "name": "ANTONIO VILLAVICENCIO SUBNORMAL"
+    },
+    {
+      "id": 543,
+      "name": "ARAGUANEY"
+    },
+    {
+      "id": 334,
+      "name": "ARANJUEZ I"
+    },
+    {
+      "id": 326,
+      "name": "ARIGUANI"
+    },
+    {
+      "id": 333,
+      "name": "AY MI LLANURA"
+    },
+    {
+      "id": 118,
+      "name": "AZOTEA"
+    },
+    {
+      "id": 133,
+      "name": "AZOTEA SUBNORMAL"
+    },
+    {
+      "id": 110,
+      "name": "BALATA"
+    },
+    {
+      "id": 501,
+      "name": "BALCONES DE GRATAMIRA"
+    },
+    {
+      "id": 181,
+      "name": "BALCONES DE PONTEVEDRA"
+    },
+    {
+      "id": 63,
+      "name": "BALCONES DE SAIN NICOLAS"
+    },
+    {
+      "id": 100,
+      "name": "BALCONES DE SAN SOUCCI"
+    },
+    {
+      "id": 99,
+      "name": "BALCONES DE TOLEDO"
+    },
+    {
+      "id": 180,
+      "name": "BAMBU"
+    },
+    {
+      "id": 488,
+      "name": "BARCELONA VEREDAL II"
+    },
+    {
+      "id": 213,
+      "name": "BARLOVENTO"
+    },
+    {
+      "id": 120,
+      "name": "BARZAL"
+    },
+    {
+      "id": 129,
+      "name": "BARZAL BAJO"
+    },
+    {
+      "id": 135,
+      "name": "BARZAL SUBNORMAL"
+    },
+    {
+      "id": 179,
+      "name": "BASTILLA"
+    },
+    {
+      "id": 335,
+      "name": "BELLO HORIZONTE"
+    },
+    {
+      "id": 327,
+      "name": "BELLO HORIZONTE SUBNORMAL"
+    },
+    {
+      "id": 316,
+      "name": "BIFAMILIAR HACARITAMA"
+    },
+    {
+      "id": 351,
+      "name": "BIFAMILIARES LA PRIMAVERA"
+    },
+    {
+      "id": 201,
+      "name": "BOSQUE"
+    },
+    {
+      "id": 121,
+      "name": "BOSQUE ALTO"
+    },
+    {
+      "id": 237,
+      "name": "BOSQUE DE PALMA"
+    },
+    {
+      "id": 186,
+      "name": "BOSQUES DE ABAJAM"
+    },
+    {
+      "id": 444,
+      "name": "BOSQUES DE LOS CENTAUROS"
+    },
+    {
+      "id": 339,
+      "name": "BOSQUES DE MORELIA"
+    },
+    {
+      "id": 489,
+      "name": "BOSQUES DE ROSABLANCA"
+    },
+    {
+      "id": 290,
+      "name": "BOSQUES DE SANTIAGO"
+    },
+    {
+      "id": 338,
+      "name": "BOSQUES DE VIZCAYA"
+    },
+    {
+      "id": 607,
+      "name": "BRASILIA"
+    },
+    {
+      "id": 570,
+      "name": "BRISAS DE CAÑO GRANDE"
+    },
+    {
+      "id": 470,
+      "name": "BRISAS DE LA ESPERANZA"
+    },
+    {
+      "id": 442,
+      "name": "BRISAS DEL BUQUE"
+    },
+    {
+      "id": 409,
+      "name": "BRISAS DEL CANEY"
+    },
+    {
+      "id": 162,
+      "name": "BRISAS DEL GUATIQUIA"
+    },
+    {
+      "id": 622,
+      "name": "BRISAS DEL OCOA"
+    },
+    {
+      "id": 348,
+      "name": "BRISAS DEL OCOA TERCER MILENIO"
+    },
+    {
+      "id": 171,
+      "name": "BRISAS DEL PASTRANA"
+    },
+    {
+      "id": 331,
+      "name": "BUENOS AIRES"
+    },
+    {
+      "id": 585,
+      "name": "BUENOS AIRES SECTOR AMERICAS"
+    },
+    {
+      "id": 122,
+      "name": "BUGANBILES"
+    },
+    {
+      "id": 403,
+      "name": "BULEVAR CODEM"
+    },
+    {
+      "id": 128,
+      "name": "BUQUE"
+    },
+    {
+      "id": 266,
+      "name": "CALAMAR"
+    },
+    {
+      "id": 291,
+      "name": "CALASANZ"
+    },
+    {
+      "id": 640,
+      "name": "CAMELIA I"
+    },
+    {
+      "id": 636,
+      "name": "CAMELIA IV"
+    },
+    {
+      "id": 374,
+      "name": "CAMELIAS"
+    },
+    {
+      "id": 142,
+      "name": "CAMILO TORRES"
+    },
+    {
+      "id": 359,
+      "name": "CAMINO DEL SOL"
+    },
+    {
+      "id": 221,
+      "name": "CAMINO REAL"
+    },
+    {
+      "id": 548,
+      "name": "CAMINOS DE MONTECARLO"
+    },
+    {
+      "id": 355,
+      "name": "CAMINOS DE SEVILLA"
+    },
+    {
+      "id": 139,
+      "name": "CAMOA"
+    },
+    {
+      "id": 40,
+      "name": "CAMPIÑA"
+    },
+    {
+      "id": 75,
+      "name": "CAMPIÑA SUBNORMAL"
+    },
+    {
+      "id": 552,
+      "name": "CAMPO ALEGRE"
+    },
+    {
+      "id": 185,
+      "name": "CANAAN"
+    },
+    {
+      "id": 408,
+      "name": "CANAIMA"
+    },
+    {
+      "id": 423,
+      "name": "CANEY"
+    },
+    {
+      "id": 401,
+      "name": "CANTARRANA"
+    },
+    {
+      "id": 582,
+      "name": "CAÑITO"
+    },
+    {
+      "id": 41,
+      "name": "CAÑO FISTOLES"
+    },
+    {
+      "id": 313,
+      "name": "CAROLINA"
+    },
+    {
+      "id": 435,
+      "name": "CARULU"
+    },
+    {
+      "id": 518,
+      "name": "CASERA DE SANTILLANA"
+    },
+    {
+      "id": 469,
+      "name": "CASIBARITO"
+    },
+    {
+      "id": 183,
+      "name": "CASTILLA"
+    },
+    {
+      "id": 35,
+      "name": "CATALANA"
+    },
+    {
+      "id": 332,
+      "name": "CATALUÑA"
+    },
+    {
+      "id": 402,
+      "name": "CATATUMBO SUBNORMAL"
+    },
+    {
+      "id": 550,
+      "name": "CATUMARE"
+    },
+    {
+      "id": 340,
+      "name": "CAVIVIR"
+    },
+    {
+      "id": 509,
+      "name": "CECILIA SUBNORMAL"
+    },
+    {
+      "id": 86,
+      "name": "CEDROS"
+    },
+    {
+      "id": 278,
+      "name": "CEIBA"
+    },
+    {
+      "id": 230,
+      "name": "CEIBA A"
+    },
+    {
+      "id": 229,
+      "name": "CEIBA B"
+    },
+    {
+      "id": 438,
+      "name": "CENTAUROS"
+    },
+    {
+      "id": 117,
+      "name": "CENTRO"
+    },
+    {
+      "id": 87,
+      "name": "CEREZOS SUBNORMAL"
+    },
+    {
+      "id": 85,
+      "name": "CERRO CAMPESTRE"
+    },
+    {
+      "id": 336,
+      "name": "CERRO CAMPESTRE ALTO"
+    },
+    {
+      "id": 59,
+      "name": "CHAPINERITO"
+    },
+    {
+      "id": 619,
+      "name": "CHARRASCAL"
+    },
+    {
+      "id": 56,
+      "name": "CHORRERA"
+    },
+    {
+      "id": 572,
+      "name": "CIUDAD DEL CAMPO"
+    },
+    {
+      "id": 643,
+      "name": "CIUDAD JARDIN"
+    },
+    {
+      "id": 608,
+      "name": "CIUDAD PORFIA"
+    },
+    {
+      "id": 623,
+      "name": "CIUDAD PORFIA SUBNORMAL"
+    },
+    {
+      "id": 370,
+      "name": "CIUDAD REAL"
+    },
+    {
+      "id": 198,
+      "name": "CIUDAD SALITRE"
+    },
+    {
+      "id": 656,
+      "name": "CIUDADELA CARLOS JAVIER SAVOGAL"
+    },
+    {
+      "id": 480,
+      "name": "CIUDADELA CENTAUROS"
+    },
+    {
+      "id": 346,
+      "name": "CIUDADELA DIVINO NIÑO"
+    },
+    {
+      "id": 347,
+      "name": "CIUDADELA DIVINO NIÑO SUBNORMAL"
+    },
+    {
+      "id": 357,
+      "name": "CIUDADELA LA MARIA"
+    },
+    {
+      "id": 140,
+      "name": "COLINAS"
+    },
+    {
+      "id": 474,
+      "name": "COMUNEROS"
+    },
+    {
+      "id": 481,
+      "name": "COMUNEROS SUBNORMAL"
+    },
+    {
+      "id": 45,
+      "name": "CONJUNTO RESIDENCIAL LA JULIANA"
+    },
+    {
+      "id": 369,
+      "name": "CONQUISTA"
+    },
+    {
+      "id": 210,
+      "name": "CONSUELO"
+    },
+    {
+      "id": 450,
+      "name": "CORALINA"
+    },
+    {
+      "id": 191,
+      "name": "CRISTALES"
+    },
+    {
+      "id": 564,
+      "name": "CUADRO"
+    },
+    {
+      "id": 621,
+      "name": "CUCHARON"
+    },
+    {
+      "id": 300,
+      "name": "DANUBIO"
+    },
+    {
+      "id": 609,
+      "name": "DARIEN"
+    },
+    {
+      "id": 193,
+      "name": "DELIRIO - COVISAN"
+    },
+    {
+      "id": 182,
+      "name": "DESMOTADORA SECTOR CUATRO"
+    },
+    {
+      "id": 208,
+      "name": "DESMOTADORA SECTOR DOS"
+    },
+    {
+      "id": 453,
+      "name": "DIAMANTE"
+    },
+    {
+      "id": 553,
+      "name": "DIVINO NIÑO"
+    },
+    {
+      "id": 62,
+      "name": "DOCE DE OCTUBRE"
+    },
+    {
+      "id": 343,
+      "name": "DOÑA LUZ"
+    },
+    {
+      "id": 292,
+      "name": "DOS MIL"
+    },
+    {
+      "id": 432,
+      "name": "EMBUDO"
+    },
+    {
+      "id": 97,
+      "name": "EMPORIO"
+    },
+    {
+      "id": 96,
+      "name": "EMPORIO BAJO"
+    },
+    {
+      "id": 81,
+      "name": "EMPORIO SUBNORMAL"
+    },
+    {
+      "id": 76,
+      "name": "ESMERALDA"
+    },
+    {
+      "id": 72,
+      "name": "ESMERALDA NORTE SUBNORMAL"
+    },
+    {
+      "id": 112,
+      "name": "ESPEJO"
+    },
+    {
+      "id": 441,
+      "name": "ESPERANZA 2001"
+    },
+    {
+      "id": 315,
+      "name": "ESTERO"
+    },
+    {
+      "id": 111,
+      "name": "FAVORITA"
+    },
+    {
+      "id": 157,
+      "name": "FERIAS"
+    },
+    {
+      "id": 263,
+      "name": "FLORENCIA"
+    },
+    {
+      "id": 426,
+      "name": "FLORIDA BAJA"
+    },
+    {
+      "id": 233,
+      "name": "FORESTAL"
+    },
+    {
+      "id": 238,
+      "name": "FORTALEZA"
+    },
+    {
+      "id": 194,
+      "name": "GAITANA"
+    },
+    {
+      "id": 240,
+      "name": "GAITANA SUBNORMAL"
+    },
+    {
+      "id": 39,
+      "name": "GALAN"
+    },
+    {
+      "id": 285,
+      "name": "GALICIA"
+    },
+    {
+      "id": 424,
+      "name": "GARCIA BOHORQUEZ"
+    },
+    {
+      "id": 519,
+      "name": "GARDENIAS DE MONTECARLO"
+    },
+    {
+      "id": 385,
+      "name": "GAVIOTAS"
+    },
+    {
+      "id": 231,
+      "name": "GEMELOS"
+    },
+    {
+      "id": 254,
+      "name": "GIRASOL"
+    },
+    {
+      "id": 242,
+      "name": "GIRASOLES DEL TURPIAL"
+    },
+    {
+      "id": 388,
+      "name": "GRACIELITA"
+    },
+    {
+      "id": 77,
+      "name": "GRAMA"
+    },
+    {
+      "id": 616,
+      "name": "GRAMALOTE"
+    },
+    {
+      "id": 487,
+      "name": "GRAN AIRICO"
+    },
+    {
+      "id": 349,
+      "name": "GUADALAJARA"
+    },
+    {
+      "id": 573,
+      "name": "GUADUALES"
+    },
+    {
+      "id": 138,
+      "name": "GUADUALES CONDOMINIO"
+    },
+    {
+      "id": 413,
+      "name": "GUATIQUIA"
+    },
+    {
+      "id": 165,
+      "name": "GUAYABAL I"
+    },
+    {
+      "id": 168,
+      "name": "GUAYABAL II"
+    },
+    {
+      "id": 486,
+      "name": "GUAYURIBA"
+    },
+    {
+      "id": 617,
+      "name": "HABITAT"
+    },
+    {
+      "id": 337,
+      "name": "HACARITAMA"
+    },
+    {
+      "id": 116,
+      "name": "HACIENDA EL TRAPICHE"
+    },
+    {
+      "id": 512,
+      "name": "HACIENDA ROSA BLANCA"
+    },
+    {
+      "id": 522,
+      "name": "HEROES"
+    },
+    {
+      "id": 216,
+      "name": "HIERBABUENA"
+    },
+    {
+      "id": 164,
+      "name": "INDUSTRIAL"
+    },
+    {
+      "id": 449,
+      "name": "JARDIN"
+    },
+    {
+      "id": 228,
+      "name": "JORDAN"
+    },
+    {
+      "id": 245,
+      "name": "JORDAN ALTO"
+    },
+    {
+      "id": 244,
+      "name": "JORDAN RESERVADO"
+    },
+    {
+      "id": 174,
+      "name": "JORGE ELIECER GAITAN"
+    },
+    {
+      "id": 464,
+      "name": "JOSE OTTER"
+    },
+    {
+      "id": 459,
+      "name": "JUAN PABLO II"
+    },
+    {
+      "id": 483,
+      "name": "JUAN PABLO II SUBNORMAL"
+    },
+    {
+      "id": 286,
+      "name": "JUANAMBU"
+    },
+    {
+      "id": 364,
+      "name": "KIRPAS"
+    },
+    {
+      "id": 317,
+      "name": "LAGUNA"
+    },
+    {
+      "id": 515,
+      "name": "LEON XIII SECTOR NORTE"
+    },
+    {
+      "id": 511,
+      "name": "LEON XIII SECTOR SUR"
+    },
+    {
+      "id": 358,
+      "name": "LETICIA"
+    },
+    {
+      "id": 143,
+      "name": "LIBERTADORES"
+    },
+    {
+      "id": 521,
+      "name": "LLANO LINDO"
+    },
+    {
+      "id": 566,
+      "name": "LOMA AZUL"
+    },
+    {
+      "id": 565,
+      "name": "LOMA LINDA"
+    },
+    {
+      "id": 425,
+      "name": "LOMONACO"
+    },
+    {
+      "id": 411,
+      "name": "MACARENA"
+    },
+    {
+      "id": 296,
+      "name": "MACUNAYMA"
+    },
+    {
+      "id": 628,
+      "name": "MADRID"
+    },
+    {
+      "id": 187,
+      "name": "MADRIGAL"
+    },
+    {
+      "id": 127,
+      "name": "MAIZARO ALTO"
+    },
+    {
+      "id": 204,
+      "name": "MALVINAS"
+    },
+    {
+      "id": 188,
+      "name": "MANANTIAL"
+    },
+    {
+      "id": 47,
+      "name": "MANAURE"
+    },
+    {
+      "id": 613,
+      "name": "MAPORITA"
+    },
+    {
+      "id": 303,
+      "name": "MARACOS"
+    },
+    {
+      "id": 535,
+      "name": "MARANATHA"
+    },
+    {
+      "id": 304,
+      "name": "MARCO ANTONIO PINILLA"
+    },
+    {
+      "id": 284,
+      "name": "MARIA II"
+    },
+    {
+      "id": 540,
+      "name": "MARIA PAZ"
+    },
+    {
+      "id": 345,
+      "name": "MENEGUA"
+    },
+    {
+      "id": 115,
+      "name": "MESETAS"
+    },
+    {
+      "id": 280,
+      "name": "MILAGRO"
+    },
+    {
+      "id": 387,
+      "name": "MIRADOR DEL LLANO II"
+    },
+    {
+      "id": 635,
+      "name": "MIRAMAR"
+    },
+    {
+      "id": 578,
+      "name": "MONTE VERDE"
+    },
+    {
+      "id": 495,
+      "name": "MONTEARROYO"
+    },
+    {
+      "id": 538,
+      "name": "MONTECARLO"
+    },
+    {
+      "id": 579,
+      "name": "MONTECARLO ALTO"
+    },
+    {
+      "id": 560,
+      "name": "MONTECARLO AVENIDA"
+    },
+    {
+      "id": 528,
+      "name": "MONTECARLO SUBNORMAL"
+    },
+    {
+      "id": 195,
+      "name": "MORICHAL"
+    },
+    {
+      "id": 513,
+      "name": "MP1-MP2-MP3"
+    },
+    {
+      "id": 415,
+      "name": "NOGAL"
+    },
+    {
+      "id": 558,
+      "name": "NUEVA ERA AMOR Y VIDA"
+    },
+    {
+      "id": 305,
+      "name": "NUEVA ESPERANZA"
+    },
+    {
+      "id": 376,
+      "name": "NUEVA ESPERANZA II"
+    },
+    {
+      "id": 302,
+      "name": "NUEVA FLORESTA"
+    },
+    {
+      "id": 65,
+      "name": "NUEVA GRANADA"
+    },
+    {
+      "id": 533,
+      "name": "NUEVA JERUSALEN"
+    },
+    {
+      "id": 544,
+      "name": "NUEVO AMANECER"
+    },
+    {
+      "id": 530,
+      "name": "NUEVO HORIZONTE"
+    },
+    {
+      "id": 152,
+      "name": "NUEVO MAIZARO"
+    },
+    {
+      "id": 433,
+      "name": "NUEVO RICAURTE"
+    },
+    {
+      "id": 514,
+      "name": "O&L"
+    },
+    {
+      "id": 460,
+      "name": "OCOA I"
+    },
+    {
+      "id": 307,
+      "name": "PACANDE"
+    },
+    {
+      "id": 452,
+      "name": "PALMAR"
+    },
+    {
+      "id": 368,
+      "name": "PALMAS DE VALLARTA"
+    },
+    {
+      "id": 50,
+      "name": "PANORAMA"
+    },
+    {
+      "id": 256,
+      "name": "PARAISO"
+    },
+    {
+      "id": 379,
+      "name": "PARCELAS DE KIRPAS"
+    },
+    {
+      "id": 207,
+      "name": "PARCELAS DEL PROGRESO"
+    },
+    {
+      "id": 377,
+      "name": "PARQUE DE CANAGUAY"
+    },
+    {
+      "id": 212,
+      "name": "PARQUES DE SEVILLA"
+    },
+    {
+      "id": 93,
+      "name": "PATARROYO"
+    },
+    {
+      "id": 436,
+      "name": "PIAMONTE"
+    },
+    {
+      "id": 625,
+      "name": "PIEDEMONTE"
+    },
+    {
+      "id": 611,
+      "name": "PINARES DE ORIENTE"
+    },
+    {
+      "id": 125,
+      "name": "PINOS"
+    },
+    {
+      "id": 73,
+      "name": "PLAYA DE CAÑO PARRADO"
+    },
+    {
+      "id": 567,
+      "name": "PLAYA RICA"
+    },
+    {
+      "id": 49,
+      "name": "POBLADO"
+    },
+    {
+      "id": 289,
+      "name": "POPULAR OLIMPICO"
+    },
+    {
+      "id": 329,
+      "name": "POPULAR OLIMPICO SUBNORMAL"
+    },
+    {
+      "id": 476,
+      "name": "PORTAL DE CASIBARE"
+    },
+    {
+      "id": 107,
+      "name": "PORTAL DE LOS OCOBOS"
+    },
+    {
+      "id": 350,
+      "name": "PORTAL DEL MOLINO"
+    },
+    {
+      "id": 239,
+      "name": "PORTALES DE COVISAN"
+    },
+    {
+      "id": 500,
+      "name": "PORTALES DE GRATAMIRA"
+    },
+    {
+      "id": 561,
+      "name": "PORTALES DE SAN JORGE"
+    },
+    {
+      "id": 260,
+      "name": "PORTALES DEL LLANO"
+    },
+    {
+      "id": 108,
+      "name": "PORTALES DEL TRAPICHE"
+    },
+    {
+      "id": 155,
+      "name": "PORVENIR"
+    },
+    {
+      "id": 176,
+      "name": "PORVENIR EL HUECO"
+    },
+    {
+      "id": 132,
+      "name": "POZO VEINTE"
+    },
+    {
+      "id": 270,
+      "name": "PRADOS DE HIERBABUENA"
+    },
+    {
+      "id": 196,
+      "name": "PRADOS DE SIBERIA"
+    },
+    {
+      "id": 352,
+      "name": "PRIMAVERA"
+    },
+    {
+      "id": 153,
+      "name": "PRIMAVERA URBANA"
+    },
+    {
+      "id": 462,
+      "name": "PRIMERO DE MAYO"
+    },
+    {
+      "id": 580,
+      "name": "PUENTE CAIDO"
+    },
+    {
+      "id": 361,
+      "name": "QUINTAS DE AGUAS CLARAS"
+    },
+    {
+      "id": 467,
+      "name": "QUINTAS DE LAS ACACIAS"
+    },
+    {
+      "id": 539,
+      "name": "QUINTAS DE MONTECARLO"
+    },
+    {
+      "id": 384,
+      "name": "QUINTAS DE MORELIA"
+    },
+    {
+      "id": 502,
+      "name": "QUINTAS DE SAN FERNANDO"
+    },
+    {
+      "id": 104,
+      "name": "QUINTAS DE SAN SOUCCI"
+    },
+    {
+      "id": 383,
+      "name": "QUINTAS DE SANTA CLARA"
+    },
+    {
+      "id": 235,
+      "name": "RECREO SUBNORMAL"
+    },
+    {
+      "id": 465,
+      "name": "REFUGIO"
+    },
+    {
+      "id": 651,
+      "name": "RELIQUIA"
+    },
+    {
+      "id": 299,
+      "name": "REMANSO"
+    },
+    {
+      "id": 466,
+      "name": "REMANSOS DE ROSA BLANCA"
+    },
+    {
+      "id": 389,
+      "name": "REMANSOS DEL LLANO"
+    },
+    {
+      "id": 496,
+      "name": "RESERVA"
+    },
+    {
+      "id": 417,
+      "name": "RETIRO"
+    },
+    {
+      "id": 574,
+      "name": "RINCON DE ALAMOS"
+    },
+    {
+      "id": 372,
+      "name": "RINCON DE LA MARIA"
+    },
+    {
+      "id": 614,
+      "name": "RINCON DE LAS LOMAS"
+    },
+    {
+      "id": 269,
+      "name": "RINCON DE SANTA HELENA"
+    },
+    {
+      "id": 94,
+      "name": "RINCON DEL PARAISO"
+    },
+    {
+      "id": 620,
+      "name": "RIVIERA"
+    },
+    {
+      "id": 532,
+      "name": "ROCHELA"
+    },
+    {
+      "id": 556,
+      "name": "ROCHELA SUBNORMAL"
+    },
+    {
+      "id": 554,
+      "name": "ROCHELA SUBNORMAL SECTOR UNO"
+    },
+    {
+      "id": 306,
+      "name": "RODEO"
+    },
+    {
+      "id": 283,
+      "name": "RODEO SUBNORMAL"
+    },
+    {
+      "id": 46,
+      "name": "RONDINELLA"
+    },
+    {
+      "id": 456,
+      "name": "ROSA BLANCA"
+    },
+    {
+      "id": 454,
+      "name": "ROSA BLANCA ORIENTAL"
+    },
+    {
+      "id": 95,
+      "name": "ROSAL"
+    },
+    {
+      "id": 192,
+      "name": "ROSALES"
+    },
+    {
+      "id": 455,
+      "name": "ROSALINDA"
+    },
+    {
+      "id": 405,
+      "name": "ROSITA"
+    },
+    {
+      "id": 457,
+      "name": "ROSITA SUBNORMAL"
+    },
+    {
+      "id": 404,
+      "name": "ROSITA SUBNORMAL COOPERATIVA"
+    },
+    {
+      "id": 551,
+      "name": "RUBI"
+    },
+    {
+      "id": 308,
+      "name": "SABANA"
+    },
+    {
+      "id": 114,
+      "name": "SALLE"
+    },
+    {
+      "id": 624,
+      "name": "SAMAN DE LA RIVERA"
+    },
+    {
+      "id": 630,
+      "name": "SAN AGUSTIN"
+    },
+    {
+      "id": 42,
+      "name": "SAN ANGEL"
+    },
+    {
+      "id": 414,
+      "name": "SAN BENITO"
+    },
+    {
+      "id": 618,
+      "name": "SAN BERNARDINO"
+    },
+    {
+      "id": 356,
+      "name": "SAN CARLOS"
+    },
+    {
+      "id": 282,
+      "name": "SAN CARLOS SUB NORMAL"
+    },
+    {
+      "id": 516,
+      "name": "SAN CAYETANO"
+    },
+    {
+      "id": 420,
+      "name": "SAN CRISTOBAL"
+    },
+    {
+      "id": 160,
+      "name": "SAN GREGORIO"
+    },
+    {
+      "id": 301,
+      "name": "SAN IGNACIO"
+    },
+    {
+      "id": 150,
+      "name": "SAN ISIDRO"
+    },
+    {
+      "id": 151,
+      "name": "SAN ISIDRO BAJO"
+    },
+    {
+      "id": 126,
+      "name": "SAN JOSE"
+    },
+    {
+      "id": 170,
+      "name": "SAN MARCOS"
+    },
+    {
+      "id": 490,
+      "name": "SAN SEBASTIAN"
+    },
+    {
+      "id": 499,
+      "name": "SANTA ANA"
+    },
+    {
+      "id": 197,
+      "name": "SANTA CATALINA"
+    },
+    {
+      "id": 394,
+      "name": "SANTA CECILIA"
+    },
+    {
+      "id": 163,
+      "name": "SANTA FE"
+    },
+    {
+      "id": 265,
+      "name": "SANTA HELENA"
+    },
+    {
+      "id": 148,
+      "name": "SANTA INES"
+    },
+    {
+      "id": 366,
+      "name": "SANTA ISABEL"
+    },
+    {
+      "id": 48,
+      "name": "SANTA JOSEFA"
+    },
+    {
+      "id": 584,
+      "name": "SANTA LIBRADA"
+    },
+    {
+      "id": 494,
+      "name": "SANTA MARIA"
+    },
+    {
+      "id": 154,
+      "name": "SANTA MARIA DEL BUQUE"
+    },
+    {
+      "id": 451,
+      "name": "SANTA MARTA"
+    },
+    {
+      "id": 167,
+      "name": "SANTANDER"
+    },
+    {
+      "id": 529,
+      "name": "SANTILLANA DEL LLANO"
+    },
+    {
+      "id": 190,
+      "name": "SAUCES"
+    },
+    {
+      "id": 416,
+      "name": "SAUSALITO"
+    },
+    {
+      "id": 407,
+      "name": "SECTOR CHORILLANO"
+    },
+    {
+      "id": 577,
+      "name": "SECTOR PALMAR"
+    },
+    {
+      "id": 318,
+      "name": "SECTOR TERMINAL"
+    },
+    {
+      "id": 189,
+      "name": "SEIS DE ABRIL"
+    },
+    {
+      "id": 523,
+      "name": "SERRAMONTE"
+    },
+    {
+      "id": 447,
+      "name": "SERRANIA"
+    },
+    {
+      "id": 440,
+      "name": "SESQUICENTENARIO"
+    },
+    {
+      "id": 103,
+      "name": "SIETE DE AGOSTO"
+    },
+    {
+      "id": 144,
+      "name": "SIETE DE AGOSTO SUBNORMAL"
+    },
+    {
+      "id": 172,
+      "name": "SIMON BOLIVAR"
+    },
+    {
+      "id": 295,
+      "name": "SINDAMANOY"
+    },
+    {
+      "id": 412,
+      "name": "TEUSACA"
+    },
+    {
+      "id": 546,
+      "name": "TEUSAQUILLO"
+    },
+    {
+      "id": 525,
+      "name": "TIGANA"
+    },
+    {
+      "id": 251,
+      "name": "TOPACIO"
+    },
+    {
+      "id": 448,
+      "name": "TORRES DE SAN JUAN"
+    },
+    {
+      "id": 319,
+      "name": "TORRES DEL MEDITERRANEO"
+    },
+    {
+      "id": 380,
+      "name": "TOSCANA"
+    },
+    {
+      "id": 105,
+      "name": "TRAPICHE"
+    },
+    {
+      "id": 657,
+      "name": "TRECE DE MAYO"
+    },
+    {
+      "id": 64,
+      "name": "TRIUNFO"
+    },
+    {
+      "id": 43,
+      "name": "TRIUNFO SUBNORMAL"
+    },
+    {
+      "id": 184,
+      "name": "TULIPANES"
+    },
+    {
+      "id": 261,
+      "name": "UNIPORTALES"
+    },
+    {
+      "id": 159,
+      "name": "VAINILLA"
+    },
+    {
+      "id": 175,
+      "name": "VAINILLA BAJO"
+    },
+    {
+      "id": 309,
+      "name": "VALLES DE ARAGON"
+    },
+    {
+      "id": 485,
+      "name": "VEGA"
+    },
+    {
+      "id": 158,
+      "name": "VEINTE DE JULIO"
+    },
+    {
+      "id": 248,
+      "name": "VENCEDORES"
+    },
+    {
+      "id": 131,
+      "name": "VENECIA SUBNORMAL"
+    },
+    {
+      "id": 427,
+      "name": "VILLA ADRIANA"
+    },
+    {
+      "id": 461,
+      "name": "VILLA BOLIVAR"
+    },
+    {
+      "id": 446,
+      "name": "VILLA CLAUDIA"
+    },
+    {
+      "id": 101,
+      "name": "VILLA CODEM"
+    },
+    {
+      "id": 439,
+      "name": "VILLA DEL PALMAR"
+    },
+    {
+      "id": 536,
+      "name": "VILLA DEL RIO"
+    },
+    {
+      "id": 200,
+      "name": "VILLA DEL SOL"
+    },
+    {
+      "id": 354,
+      "name": "VILLA ENCANTO"
+    },
+    {
+      "id": 293,
+      "name": "VILLA HELENA"
+    },
+    {
+      "id": 463,
+      "name": "VILLA HERMOSA"
+    },
+    {
+      "id": 468,
+      "name": "VILLA HUMBERTO"
+    },
+    {
+      "id": 341,
+      "name": "VILLA JOHANNA"
+    },
+    {
+      "id": 149,
+      "name": "VILLA JULIA"
+    },
+    {
+      "id": 524,
+      "name": "VILLA LORENA"
+    },
+    {
+      "id": 102,
+      "name": "VILLA MARIA"
+    },
+    {
+      "id": 311,
+      "name": "VILLA MELIDA"
+    },
+    {
+      "id": 526,
+      "name": "VILLA MILENA"
+    },
+    {
+      "id": 241,
+      "name": "VILLA MONICA"
+    },
+    {
+      "id": 294,
+      "name": "VILLA NIEVES"
+    },
+    {
+      "id": 342,
+      "name": "VILLA ORTIZ"
+    },
+    {
+      "id": 243,
+      "name": "VILLA PAULINA"
+    },
+    {
+      "id": 363,
+      "name": "VILLA SAMPER"
+    },
+    {
+      "id": 545,
+      "name": "VILLA SONIA"
+    },
+    {
+      "id": 268,
+      "name": "VILLA SUAREZ"
+    },
+    {
+      "id": 365,
+      "name": "VILLA VALERIA"
+    },
+    {
+      "id": 632,
+      "name": "VILLAS DE PAZ"
+    },
+    {
+      "id": 629,
+      "name": "VILLAS DEL LAGO"
+    },
+    {
+      "id": 610,
+      "name": "VILLAS DEL OCOA"
+    },
+    {
+      "id": 367,
+      "name": "VILLAVENTO"
+    },
+    {
+      "id": 328,
+      "name": "VIÑA DEL MAR"
+    },
+    {
+      "id": 37,
+      "name": "VIRREY"
+    },
+    {
+      "id": 297,
+      "name": "VIZCAYA"
+    }
+  ],
+  "unmatched": [
+    {
+      "name": "ANILLO VIAL"
+    },
+    {
+      "name": "BALMORAL"
+    },
+    {
+      "name": "BOCHICA 2"
+    },
+    {
+      "name": "BOCHICA 2"
+    },
+    {
+      "name": "BOSQUES DE LA PROVIDENCIA"
+    },
+    {
+      "name": "BRILLANTE"
+    },
+    {
+      "name": "CAMELIA III"
+    },
+    {
+      "name": "CAUDAL"
+    },
+    {
+      "name": "CIUDADELA SAN JORGE"
+    },
+    {
+      "name": "EL CAMPANARIO"
+    },
+    {
+      "name": "EL SOCIEGO"
+    },
+    {
+      "name": "FUNDADORES"
+    },
+    {
+      "name": "GUATAPE"
+    },
+    {
+      "name": "LA VAINILLA"
+    },
+    {
+      "name": "MADRIGAL SUBNORMAL"
+    },
+    {
+      "name": "MALOCAS"
+    },
+    {
+      "name": "NUEVA COLOMBIA 1"
+    },
+    {
+      "name": "PARQUE HABITACIONAL LA ESMERALDA"
+    },
+    {
+      "name": "PORTALES EL TOTUMO"
+    },
+    {
+      "name": "RELIQUIA LA UNIÓN (BETTY CAMACHO)"
+    },
+    {
+      "name": "SAN PABLO"
+    },
+    {
+      "name": "SANTA LIBRADA ALTO"
+    },
+    {
+      "name": "SANTA PAULA"
+    },
+    {
+      "name": "TERCER SECTOR DE MONTECARLO"
+    },
+    {
+      "name": "TRIANGULO"
+    },
+    {
+      "name": "VILLA DEL ALCARAVAN"
+    }
+  ],
+  "ambiguous": [
+    {
+      "name": "ALTAMIRA",
+      "ids": [
+        146,
+        590
+      ]
+    },
+    {
+      "name": "CAMBULOS",
+      "ids": [
+        44,
+        642
+      ]
+    },
+    {
+      "name": "CEDRITOS",
+      "ids": [
+        70,
+        236
+      ]
+    },
+    {
+      "name": "CEREZOS",
+      "ids": [
+        60,
+        477
+      ]
+    },
+    {
+      "name": "DELICIAS",
+      "ids": [
+        161,
+        362
+      ]
+    },
+    {
+      "name": "ESPERANZA",
+      "ids": [
+        431,
+        443
+      ]
+    },
+    {
+      "name": "FLORIDA",
+      "ids": [
+        422,
+        541
+      ]
+    },
+    {
+      "name": "FLORIDA SUBNORMAL",
+      "ids": [
+        421,
+        430
+      ]
+    },
+    {
+      "name": "GIRASOLES",
+      "ids": [
+        61,
+        220,
+        222
+      ]
+    },
+    {
+      "name": "ISLA",
+      "ids": [
+        141,
+        568
+      ]
+    },
+    {
+      "name": "MAIZARO",
+      "ids": [
+        124,
+        662
+      ]
+    },
+    {
+      "name": "OASIS",
+      "ids": [
+        371,
+        429
+      ]
+    },
+    {
+      "name": "PRADERA",
+      "ids": [
+        55,
+        534
+      ]
+    },
+    {
+      "name": "PRIMAVERA SUBNORMAL",
+      "ids": [
+        321,
+        353
+      ]
+    },
+    {
+      "name": "RECREO",
+      "ids": [
+        232,
+        279
+      ]
+    },
+    {
+      "name": "RINCON DE LAS MARGARITAS",
+      "ids": [
+        119,
+        531
+      ]
+    },
+    {
+      "name": "SAN DIEGO",
+      "ids": [
+        396,
+        660
+      ]
+    },
+    {
+      "name": "SAN FELIPE",
+      "ids": [
+        83,
+        281
+      ]
+    },
+    {
+      "name": "SAN FERNANDO",
+      "ids": [
+        23,
+        113
+      ]
+    },
+    {
+      "name": "SAN FRANCISCO",
+      "ids": [
+        26,
+        418
+      ]
+    },
+    {
+      "name": "SAN LUIS",
+      "ids": [
+        156,
+        262
+      ]
+    },
+    {
+      "name": "SOCIEGO",
+      "ids": [
+        312,
+        506
+      ]
+    },
+    {
+      "name": "VILLA ALEJANDRA",
+      "ids": [
+        276,
+        298
+      ]
+    },
+    {
+      "name": "VILLA MARINA",
+      "ids": [
+        527,
+        658
+      ]
+    },
+    {
+      "name": "VILLA ORIENTE",
+      "ids": [
+        344,
+        549
+      ]
+    },
+    {
+      "name": "VILLAS DEL PROGRESO",
+      "ids": [
+        267,
+        583
+      ]
+    }
+  ],
+  "invalid": [
+    {
+      "name": "ANDES",
+      "reason": "Anillo sin área."
+    },
+    {
+      "name": "CIUDADELA SAN ANTONIO",
+      "reason": "Anillo sin área."
+    }
+  ],
+  "applied": true
+}

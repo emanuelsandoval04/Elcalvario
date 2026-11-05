@@ -1,0 +1,32 @@
+html[data-display-size=normal] { font-size: 100%; }
+html[data-display-size=large] { font-size: 115%; }
+html[data-display-size=extra-large] { font-size: 130%; }
+.display-size-options { display: grid; gap: 10px; margin: 0; padding: 0; border: 0; min-width: 0; }
+.display-size-options legend { margin-bottom: 12px; padding: 0; color: #3b4250; font-size: 14px; font-weight: 700; }
+.account-form .display-size-choice { display: flex; align-items: center; gap: 12px; min-width: 0; padding: 14px 12px; border: 1px solid #e4e7ee; border-radius: 12px; background: #fff; cursor: pointer; }
+.account-form .display-size-choice:has(input:checked) { border-color: #ff985b; background: #fff6ed; }
+.account-form .display-size-choice input { flex: 0 0 18px; width: 18px; height: 18px; min-height: 0; margin: 0; padding: 0; accent-color: #ff650b; }
+.display-size-choice > span { display: grid; gap: 5px; min-width: 0; }
+.display-size-choice strong { font-size: 14px; }
+.display-size-choice small { font-size: 11px; color: #737d8d; font-weight: 400; line-height: 1.5; }
+.display-size-choice .display-size-example { display: block; margin-left: auto; color: #ed610e; font-size: 22px; line-height: 1; }
+.display-size-example[data-size=large] { font-size: 25px; }
+.display-size-example[data-size=extra-large] { font-size: 29px; }
+.account-tabs { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); }
+.account-tabs button { min-width: 0; padding: 9px 6px; overflow-wrap: anywhere; }
+html[data-display-size]:not([data-display-size=normal]) .site-header .nav-brand { min-width: 0; flex-shrink: 1; }
+
+/* Give enlarged content room to reflow on phones and smaller tablet layouts. */
+@media(max-width:900px) {
+  html[data-display-size]:not([data-display-size=normal]) .dashboard-shortcuts { grid-template-columns: 1fr; }
+  html[data-display-size]:not([data-display-size=normal]) .manage-form-fields,
+  html[data-display-size]:not([data-display-size=normal]) .manage-details { grid-template-columns: 1fr; }
+  html[data-display-size]:not([data-display-size=normal]) .attendance-person { flex-wrap: wrap; }
+  html[data-display-size]:not([data-display-size=normal]) .attendance-person > .app-select { flex-basis: 100%; width: 100%; }
+  html[data-display-size]:not([data-display-size=normal]) .attendance-person .app-select-trigger { justify-content: center; }
+  html[data-display-size]:not([data-display-size=normal]) .today-heading { flex-wrap: wrap; }
+  html[data-display-size]:not([data-display-size=normal]) .events-column-heading { flex-wrap: wrap; }
+  html[data-display-size]:not([data-display-size=normal]) .welcome { grid-template-columns: minmax(0,1fr); }
+  html[data-display-size]:not([data-display-size=normal]) .hero-copy { min-width: 0; overflow-wrap: anywhere; }
+  html[data-display-size]:not([data-display-size=normal]) .app-bottom-nav :is(a,button,.app-nav-disabled) { font-size: min(.5625rem,3.25vw); }
+}

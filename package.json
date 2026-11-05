@@ -1,0 +1,64 @@
+{
+  "name": "iglesia-web",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "engines": {
+    "node": "24.x"
+  },
+  "scripts": {
+    "dev": "node scripts/dev.mjs",
+    "dev:web": "vite --host 127.0.0.1",
+    "build": "tsc -b && vite build",
+    "build:vercel": "node scripts/build-vercel.mjs",
+    "preview": "vite preview --host 127.0.0.1",
+    "typecheck": "tsc --noEmit",
+    "dev:api": "node --watch server/index.js",
+    "start:api": "node server/index.js",
+    "start": "node server/index.js",
+    "start:deploy": "node scripts/start-deploy.mjs",
+    "db:init": "node server/database.js --init",
+    "db:check": "node server/database.js",
+    "db:check:aiven": "node --env-file=.env.aiven.local server/database.js",
+    "db:migrate:aiven": "node --env-file=.env.aiven.local server/migrate.js",
+    "db:transfer:aiven": "node scripts/transfer-aiven.mjs",
+    "db:migrate": "node server/migrate.js",
+    "test:church": "node checks/church-check.mjs",
+    "test:church:ui": "node checks/church-ui-check.mjs",
+    "test:account": "node checks/account-check.mjs",
+    "test:display": "node checks/display-size-check.mjs",
+    "test:pwa": "node checks/pwa-check.mjs",
+    "test:pastoral": "node checks/pastoral-check.mjs",
+    "test:unit": "node --test --test-isolation=none checks/origin.test.mjs checks/facebook.test.mjs",
+    "test:deploy": "node --test --test-isolation=none checks/deployment.test.mjs",
+    "test:deploy:integration": "node checks/deployment-check.mjs",
+    "test:map": "node checks/map-check.mjs",
+    "test:map:ui": "node checks/map-check.mjs --ui",
+    "db:import:barrios": "node scripts/import-neighborhood-catalog.mjs",
+    "db:import:geodata": "node scripts/import-geodata.mjs"
+  },
+  "dependencies": {
+    "@gsap/react": "^2.1.2",
+    "@vercel/functions": "^3.10.6",
+    "dotenv": "^18.0.5",
+    "exceljs": "^4.4.0",
+    "express": "^5.2.1",
+    "gsap": "^3.15.0",
+    "mysql2": "^3.24.5",
+    "pdfkit": "^0.20.2",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0"
+  },
+  "overrides": {
+    "exceljs": {
+      "uuid": "^11.1.1"
+    }
+  },
+  "devDependencies": {
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.1.1",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.2"
+  }
+}

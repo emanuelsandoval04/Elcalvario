@@ -1,0 +1,83 @@
+.admin-workspace .dashboard-intro { margin-bottom: 28px; }
+.admin-workspace .dashboard-intro h2 { margin-top: 4px; margin-bottom: 10px; }
+.admin-workspace .dashboard-intro p { margin: 0; }
+.dashboard-shortcuts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px; }
+.admin-workspace .dashboard-shortcuts .dashboard-shortcut {
+  --shortcut-accent: #527794;
+  --shortcut-tint: #e5f0f8;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  min-width: 0;
+  min-height: 258px;
+  padding: 30px;
+  overflow: hidden;
+  border: 1px solid #c4cfdf73;
+  border-radius: 28px;
+  background: linear-gradient(145deg, #fffffff5 15%, #ffffff91 65%, #edf2f9a6);
+  color: var(--glass-ink);
+  box-shadow: 0 15px 30px -22px #4b648d59, inset 0 1px 0 #fff, inset 0 -1px 0 #ffffffd9;
+  -webkit-backdrop-filter: blur(20px) saturate(140%);
+  backdrop-filter: blur(20px) saturate(140%);
+  font: inherit;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+  transition: border-color .25s, box-shadow .25s;
+}
+.admin-workspace .dashboard-shortcuts [data-shortcut=falls] { --shortcut-accent: #8b7351; --shortcut-tint: #f4ecdf; }
+.admin-workspace .dashboard-shortcuts [data-shortcut=activities] { --shortcut-accent: #7c719e; --shortcut-tint: #eee9f8; }
+.admin-workspace .dashboard-shortcuts [data-shortcut=reports] { --shortcut-accent: #527e74; --shortcut-tint: #e4f2ed; }
+.dashboard-shortcut::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(110deg, transparent 25%, #ffffffb3 46%, #ffffff00 65%);
+  transform: translateX(-110%);
+  transition: transform .8s cubic-bezier(.2,.7,.2,1);
+}
+.admin-workspace .dashboard-shortcuts .dashboard-shortcut:hover:not(:disabled),
+.admin-workspace .dashboard-shortcuts .dashboard-shortcut:focus-visible {
+  border-color: #92a9c28c;
+  background: linear-gradient(145deg, #fff 15%, #ffffffab 65%, #edf2f9cc);
+  box-shadow: 0 24px 44px -25px #4b648d66, inset 0 1px 0 #fff, inset 0 0 0 1px #ffffffa6;
+}
+.dashboard-shortcut:is(:hover, :focus-visible):not(:disabled)::before { transform: translateX(110%); }
+.dashboard-card-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+.dashboard-card-icon { display: grid; place-items: center; width: 58px; height: 58px; border: 1px solid #ffffffed; border-radius: 19px; background: linear-gradient(145deg, #fff, var(--shortcut-tint)); color: var(--shortcut-accent); box-shadow: 0 5px 12px -6px #536b8b33, inset 0 1px 0 #fff; }
+.dashboard-card-icon svg { width: 27px; height: 27px; }
+.dashboard-card-arrow { display: grid; place-items: center; width: 40px; height: 40px; border: 1px solid #cfdae773; border-radius: 50%; background: #ffffff8c; color: #788ba3; transition: transform .25s, color .25s, background-color .25s; }
+.dashboard-shortcut:is(:hover, :focus-visible) .dashboard-card-arrow { transform: translate(2px, -2px); background: #fff; color: var(--shortcut-accent); }
+.dashboard-card-eyebrow { margin-bottom: 8px; color: #6b7d93; font-size: 9px; font-weight: 650; letter-spacing: .12em; text-transform: uppercase; }
+.dashboard-shortcut strong { font-size: clamp(26px, 2.4vw, 34px); font-weight: 750; letter-spacing: -.045em; line-height: 1.15; }
+.dashboard-card-description { max-width: 380px; margin-top: 10px; color: #63758b; font-size: 13px; line-height: 1.8; }
+.dashboard-card-footer { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: auto; padding-top: 24px; color: var(--shortcut-accent); font-size: 11px; font-weight: 650; }
+.dashboard-card-footer > span { font-size: 20px; line-height: 1; }
+.admin-workspace .dashboard-shortcuts .dashboard-shortcut:disabled { opacity: .55; cursor: default; }
+.falls-tabs { display: flex; flex-wrap: wrap; gap: 10px; margin: 24px 0 30px; padding-bottom: 22px; border-bottom: 1px solid var(--glass-line); }
+.falls-tabs a { display: inline-flex; align-items: center; gap: 10px; min-height: 46px; padding: 12px 18px; border: 1px solid var(--glass-line); border-radius: 999px; background: #ffffff80; color: #607086; font-size: 12px; font-weight: 600; text-decoration: none; transition: background-color .2s, box-shadow .2s; }
+.falls-tabs a:hover { background: #ffffffe6; box-shadow: var(--glass-button-shadow); }
+.falls-tabs a[aria-current=page] { background: var(--glass-control); border-color: #aebed180; color: #314b68; box-shadow: var(--glass-button-shadow); }
+.falls-content { min-width: 0; }
+
+@media (min-width: 901px) {
+  .admin-workspace[data-navigation-compact=true] .panel-sidebar-inner { width: 80px; padding: 28px 12px 22px; }
+  .admin-workspace[data-navigation-compact=true] :is(.panel-sidebar-heading, .panel-sidebar-signature) { display: none; }
+  .admin-workspace[data-navigation-compact=true] .panel-nav :is(button, a) { justify-content: center; padding: 14px; gap: 0; }
+  .admin-workspace[data-navigation-compact=true] .panel-nav :is(button, a) > span:not(.panel-click-wave) { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .admin-workspace[data-navigation-compact=true] .panel-nav [aria-current=page]::after { display: none; }
+}
+@media (max-width: 639px) {
+  .dashboard-shortcuts { grid-template-columns: 1fr; gap: 16px; }
+  .admin-workspace .dashboard-shortcuts .dashboard-shortcut { min-height: 245px; padding: 24px; border-radius: 24px; }
+  .dashboard-card-top { margin-bottom: 20px; }
+  .dashboard-card-description { font-size: 12px; }
+  .falls-tabs { gap: 8px; }
+  .falls-tabs a { padding: 12px 14px; font-size: 11px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .dashboard-shortcut::before { display: none; }
+  .dashboard-shortcut:is(:hover, :focus-visible) .dashboard-card-arrow { transform: none; }
+}

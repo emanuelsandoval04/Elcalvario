@@ -1,0 +1,564 @@
+import AppSelect from './AppSelect'
+import ProfilePhoto from './ProfilePhoto'
+import { lazy, Suspense, useEffect, useId, useRef, useState } from 'react'
+import type { FormEvent } from 'react'
+import { authRequest, hasPermission, useAuthSession } from './auth'
+import type { AuthUser } from './auth'
+import { managementRequest as api } from './management-api'
+import './management.css'
+import './app-dashboard.css'
+import AdminFrame, { AdminIcon } from './AdminFrame'
+import AdminNavigation, { allowedModules, currentModule } from './admin-navigation'
+import { CoverageAssignments, GroupTerritory, canManageCoverage } from './CoverageAssignments'
+import GroupNeighborhoodField from './GroupNeighborhoodField'
+import type { Barrio } from './GroupNeighborhoodField'
+const CoverageMap = lazy(() => import('./CoverageMap'))
+
+type Row = Record<string, string | number | null>
+type Catalogs = { roles: Row[]; ministerios: Row[]; grupos: Row[]; registrationGroups?: Row[]; barrios?: Barrio[] }
+type Option = { value: string | number; label: string }
+type Field = { key: string; label: string; type?: string; required?: boolean; max?: number; options?: Option[]; step?: string }
+type Message = (message: string) => void
+const errorMessage = (error: unknown) => error instanceof Error ? error.message : 'No pudimos completar la operación.'
+const searchable = (value: string) => value.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase()
+const has = hasPermission
+const emptyCatalogs: Catalogs = { roles: [], ministerios: [], grupos: [] }
+const options = (values: string[]) => values.map(value => ({ value, label: value }))
+const catalogOptions = (rows: Row[], id: string) => rows.map(row => ({ value: Number(row[id]), label: String(row.nombre) }))
+const attendanceStates = ['presente', 'ausente', 'justificado', 'visitante']
+const typeNames: Record<string, string> = { culto: 'Culto', evento: 'Evento especial', reunion_grupo: 'Reunión de grupo' }
+
+function DataForm({ fields, initial = {}, onSave, onCancel, label = 'Guardar', memberWizard = false, groupNeighborhoods = false, availableBarrios }: { fields: Field[]; initial?: Row; onSave: (values: Row) => Promise<void>; onCancel?: () => void; label?: string; memberWizard?: boolean; groupNeighborhoods?: boolean; availableBarrios?: Barrio[] }) {
+  const formId = useId()
+  const [busy, setBusy] = useState(false)
+  const [photoBusy, setPhotoBusy] = useState(false)
+  const [neighborhoodBusy, setNeighborhoodBusy] = useState(groupNeighborhoods)
+  const [message, setMessage] = useState('')
+  const [page, setPage] = useState(0)
+  const [review, setReview] = useState<Record<string, string>>({})
+  const heading = useRef<HTMLHeadingElement>(null)
+  const basic = ['nombres', 'apellidos', 'tipo_identificacion', 'numero_identificacion', 'celular', 'fecha_nacimiento']
+  const emergency = ['contacto_emergencia_nombre', 'contacto_emergencia_celular', 'account_email', 'account_password', 'account_confirmation', 'account_photo']
+  const steps = memberWizard ? [
+    { title: 'Datos básicos', fields: fields.filter(field => basic.includes(field.key)) },
+    { title: 'Información adicional', fields: fields.filter(field => !basic.includes(field.key) && !emergency.includes(field.key)) },
+    { title: fields.some(field => field.key === 'account_email') ? 'Cuenta de acceso' : fields.some(field => emergency.includes(field.key)) ? 'Contacto de emergencia' : 'Revisar y guardar', fields: fields.filter(field => emergency.includes(field.key)) },
+  ] : [{ title: '', fields }]
+  useEffect(() => { if (memberWizard) heading.current?.focus({ preventScroll: true }) }, [page, memberWizard])
+  async function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    if (busy || photoBusy || neighborhoodBusy) return
+    const form = event.currentTarget
+    if (memberWizard) {
+      const activeFields = form.querySelectorAll<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>(`[data-form-step="${page}"] input, [data-form-step="${page}"] select, [data-form-step="${page}"] textarea`)
+      for (const field of activeFields) if (!field.reportValidity()) return
+      if (page < steps.length - 1) { setReview(Object.fromEntries([...new FormData(form)].map(([key, value]) => [key, String(value)]))); setPage(page + 1); setMessage(''); return }
+    }
+    const data = new FormData(form)
+    const values: Row = {}
+    for (const field of fields) {
+      const raw = String(data.get(field.key) || '')
+      values[field.key] = field.type === 'checkbox' ? Number(data.has(field.key)) : field.key.startsWith('id_') || field.type === 'number' ? (raw ? Number(raw) : null) : raw || null
+    }
+    if (groupNeighborhoods) values.barrios_seleccion = String(data.get('barrios_seleccion') || '')
+    setBusy(true); setMessage('')
+    try { await onSave(values) } catch (error) { setMessage(errorMessage(error)) } finally { setBusy(false) }
+  }
+  return <form className={`manage-form${memberWizard ? ' member-wizard' : ''}`} onSubmit={submit} onChange={() => { if (message) setMessage('') }} aria-busy={busy} noValidate={memberWizard}>
+    {memberWizard && <div className="wizard-progress manage-wide"><span>Paso {page + 1} de {steps.length}</span><span>{['Lo esencial', 'Un poco más de ti', 'Último paso'][page]}</span><progress value={page + 1} max={steps.length} aria-label="Progreso del registro"/></div>}
+    {steps.map((group, index) => <fieldset key={index} data-form-step={index} hidden={index !== page} className="manage-form-fields manage-wide">
+    {memberWizard && <div className="wizard-step-heading manage-wide"><h3 ref={index === page ? heading : undefined} tabIndex={-1}>{group.title}</h3><p>{['Empecemos por conocer a la persona.', 'Completa los datos que tengas disponibles.', 'Ya casi está. Revisa y guarda su información.'][index]}</p></div>}
+    {group.fields.map(field => field.type === 'photo' ? <div key={field.key} className="manage-wide"><ProfilePhoto name={field.key} defaultValue={initial[field.key] ? String(initial[field.key]) : null} onBusyChange={setPhotoBusy} disabled={busy}/></div> : <label key={field.key} className={field.type === 'textarea' ? 'manage-wide' : ''}>
+      <span id={`${formId}-${field.key}`}>{field.label}{field.required && <span className="field-required"> *</span>}</span>
+      {field.options ? <AppSelect aria-labelledby={`${formId}-${field.key}`} name={field.key} required={field.required} defaultValue={String(initial[field.key] ?? '')} disabled={busy}>
+        <option value="">{field.required ? 'Selecciona…' : 'Sin asignar'}</option>
+        {initial[field.key] != null && initial[field.key] !== '' && !field.options.some(option => String(option.value) === String(initial[field.key])) && <option value={String(initial[field.key])}>Asignación actual · {initial[field.key]}</option>}
+        {field.options.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
+      </AppSelect> : field.type === 'textarea' ? <textarea aria-labelledby={`${formId}-${field.key}`} name={field.key} defaultValue={String(initial[field.key] ?? '')} maxLength={field.max} disabled={busy} />
+        : field.type === 'checkbox' ? <input name={field.key} type="checkbox" defaultChecked={Boolean(initial[field.key])} disabled={busy} />
+          : <input name={field.key} type={field.type || 'text'} autoComplete={field.type === 'password' ? 'new-password' : undefined} minLength={field.type === 'password' ? 10 : undefined} required={field.required} maxLength={field.max} step={field.step} placeholder={field.type === 'date' || field.type === 'time' ? undefined : `Ingresa ${field.label.toLowerCase()}`} defaultValue={String(initial[field.key] ?? '')} disabled={busy} />}
+    </label>)}
+    {memberWizard && index === 2 && <><div className="wizard-review manage-wide"><span className="member-avatar" aria-hidden="true">{review.nombres?.[0]}{review.apellidos?.[0]}</span><div><strong>{review.nombres} {review.apellidos}</strong><span>{review.tipo_identificacion} {review.numero_identificacion}</span><span>{review.celular}</span></div></div><p className="wizard-note manage-wide"><AdminIcon name="warning"/><span>Los campos marcados con <b>*</b> son obligatorios. La información adicional puede completarse después.</span></p></>}
+    </fieldset>)}
+    {groupNeighborhoods && <GroupNeighborhoodField groupId={initial.id_grupo ? Number(initial.id_grupo) : null} legacyText={String(initial.barrio || '')} disabled={busy} onBusy={setNeighborhoodBusy} availableBarrios={availableBarrios}/>}
+    <div className="manage-wide manage-actions form-footer">
+      {memberWizard && page > 0 ? <button type="button" className="secondary" disabled={busy} onClick={() => { setPage(page - 1); setMessage('') }}><AdminIcon name="back"/>Atrás</button> : onCancel && <button type="button" className="secondary" disabled={busy} onClick={onCancel}>Cancelar</button>}
+      <button disabled={busy || photoBusy || neighborhoodBusy}>{busy ? 'Guardando…' : memberWizard && page < 2 ? <>Continuar <span aria-hidden="true">→</span></> : label}</button>
+    </div>
+    {message && <p className="manage-wide manage-message" role="alert">{message}</p>}
+  </form>
+}
+
+function Records({ resource, user, catalogs, reloadCatalogs, notify }: { resource: 'members' | 'groups' | 'activities'; user: AuthUser; catalogs: Catalogs; reloadCatalogs: () => Promise<void>; notify: Message }) {
+  const [items, setItems] = useState<Row[]>([])
+  const [members, setMembers] = useState<Row[]>([])
+  const [edit, setEdit] = useState<Row | null>(null)
+  const [detail, setDetail] = useState<Row | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [search, setSearch] = useState('')
+  const [filter, setFilter] = useState('todos')
+  const titleRef = useRef<HTMLHeadingElement>(null)
+  const listRequest = useRef(0)
+  const [activityType, setActivityType] = useState('evento')
+  const [registrationType, setRegistrationType] = useState<'discipulo' | 'administrativo'>('discipulo')
+  const editorRef = useRef<HTMLDivElement>(null)
+  const canServices = Boolean(user.registration?.canAssignServices)
+  const canAdministrative = Boolean(user.registration?.canCreateAdministrative)
+  useEffect(() => {
+    const openNewGroup = () => {
+      if (resource === 'groups' && window.location.hash === '#gestion/groups/nuevo' && canServices && has(user, 'grupos.editar')) {
+        setDetail(null)
+        setEdit(current => current || { estado_grupo: 'activo', id_discipulador: user.permissions['grupos.editar'] === 'grupo' ? user.memberId : null })
+      }
+    }
+    openNewGroup()
+    window.addEventListener('hashchange', openNewGroup)
+    return () => window.removeEventListener('hashchange', openNewGroup)
+  }, [resource, canServices, user])
+  const titles = { members: 'Discípulos', groups: 'Grupos de Comunión', activities: 'Eventos y Cultos' }
+  const ids = { members: 'id_miembro', groups: 'id_grupo', activities: 'id_actividad' }
+  const write = { members: 'miembros.editar', groups: 'grupos.editar', activities: activityType === 'reunion_grupo' ? 'grupos.editar' : 'eventos.editar' }
+  const registrationPermission = has(user, 'miembros.registrar') ? 'miembros.registrar' : 'miembros.editar'
+  const remove = { members: 'miembros.eliminar', groups: 'grupos.eliminar', activities: 'eventos.eliminar' }
+  const memberOptions = (resource === 'members' ? items : members).map(row => ({ value: Number(row.id_miembro), label: `${row.nombres} ${row.apellidos || ''}`.trim() }))
+  if (user.memberId && !memberOptions.some(option => option.value === user.memberId)) memberOptions.push({ value: user.memberId, label: 'Mi ficha de discípulo' })
+  async function load() {
+    const request = ++listRequest.current
+    setLoading(true)
+    try {
+      if (resource === 'members' && !has(user, 'miembros.ver')) { setItems([]); return }
+      const result = await api<{ items: Row[] }>(`${resource}${resource === 'members' ? `?q=${encodeURIComponent(search)}` : ''}`)
+      if (request !== listRequest.current) return
+      setItems(result.items)
+      const detailId = window.location.hash.split('/')[2] === 'ficha' ? Number(window.location.hash.split('/')[3]) : null
+      if (detailId) setDetail(result.items.find(row => Number(row[ids[resource]]) === detailId) || null)
+      if (resource === 'groups' && has(user, 'miembros.ver')) setMembers((await api<{ items: Row[] }>('members')).items)
+    } catch (error) { if (request === listRequest.current) notify(errorMessage(error)) } finally { if (request === listRequest.current) setLoading(false) }
+  }
+  useEffect(() => {
+    const timer = window.setTimeout(() => void load(), resource === 'members' && search ? 250 : 0)
+    return () => { window.clearTimeout(timer); listRequest.current++ }
+  }, [resource, resource === 'members' ? search : ''])
+  useEffect(() => {
+    titleRef.current?.focus({ preventScroll: true })
+    if (edit || detail) titleRef.current?.scrollIntoView({ block: 'start', behavior: 'instant' })
+  }, [Boolean(edit), Boolean(detail)])
+  let formFields: Field[] = []
+  if (resource === 'members') {
+    formFields = [
+      { key: 'nombres', label: 'Nombres', required: true, max: 100 }, { key: 'apellidos', label: 'Apellidos', max: 100 },
+      { key: 'tipo_identificacion', label: 'Tipo de identificación', required: true, options: [{ value: 'CC', label: 'Cédula de ciudadanía' }, { value: 'TI', label: 'Tarjeta de identidad' }, { value: 'CE', label: 'Cédula de extranjería' }, { value: 'PA', label: 'Pasaporte' }, { value: 'RC', label: 'Registro civil' }, { value: 'PPT', label: 'Permiso por protección temporal' }, { value: 'Otro', label: 'Otro documento' }] }, { key: 'numero_identificacion', label: 'Número de identificación', required: true, max: 30 },
+      { key: 'celular', label: 'Celular', type: 'tel', required: true, max: 20 }, { key: 'correo', label: 'Correo', type: 'email', max: 120 },
+      { key: 'fecha_nacimiento', label: 'Fecha de nacimiento / cumpleaños', type: 'date', required: true },
+      { key: 'id_grupo', label: 'Grupo de Comunión Familiar (opcional)', options: catalogOptions(catalogs.registrationGroups || catalogs.grupos, 'id_grupo') },
+    ]
+    if (canServices && (edit?.id_miembro || registrationType === 'administrativo')) formFields.push({ key: 'funcion_iglesia', label: 'Función o servicio en la iglesia', max: 150 }, { key: 'id_cobertura_pastoral', label: 'Cobertura pastoral', options: memberOptions.filter(option => option.value !== edit?.id_miembro) })
+    if (canAdministrative && registrationType === 'administrativo' && !edit?.id_miembro) formFields.push(
+      { key: 'id_rol_eclesiastico', label: 'Cargo pastoral', required: true, options: catalogOptions(catalogs.roles, 'id_rol_eclesiastico') },
+      { key: 'account_email', label: 'Correo de acceso', type: 'email', required: true, max: 120 },
+      { key: 'account_password', label: 'Contraseña de acceso', type: 'password', required: true, max: 128 },
+      { key: 'account_confirmation', label: 'Confirmar contraseña de acceso', type: 'password', required: true, max: 128 },
+      { key: 'account_photo', label: 'Foto de perfil', type: 'photo' },
+      ...(has(user, 'grupos.editar') && (catalogs.registrationGroups || catalogs.grupos).length ? [{ key: 'responsable_grupo', label: 'Asignar como responsable del grupo seleccionado', type: 'checkbox' }] : []),
+    )
+    if (canServices && has(user, 'ministerios.gestionar') && !edit?.id_miembro) formFields.push({ key: 'id_ministerio', label: 'Servicio en ministerio', options: catalogOptions(catalogs.ministerios, 'id_ministerio') })
+    if (has(user, 'miembros.sensibles')) formFields.push(
+      { key: 'grupo_sanguineo_rh', label: 'Grupo sanguíneo / RH', options: options(['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-']) },
+      { key: 'eps', label: 'EPS', max: 100 }, { key: 'contacto_emergencia_nombre', label: 'Contacto de emergencia', max: 150 },
+      { key: 'contacto_emergencia_celular', label: 'Celular de emergencia', type: 'tel', max: 20 },
+    )
+  } else if (resource === 'groups') formFields = [
+    { key: 'codigo_grupo', label: 'Código del grupo', required: true, max: 30 }, { key: 'nombre', label: 'Nombre', required: true, max: 150 },
+    { key: 'id_discipulador', label: 'Discipulador', options: user.permissions['grupos.editar'] === 'grupo' ? memberOptions.filter(option => option.value === user.memberId) : memberOptions },
+    { key: 'estado_grupo', label: 'Estado del grupo', required: true, options: options(['activo', 'inactivo']) },
+  ]
+  else {
+    formFields = [
+      { key: 'titulo', label: 'Título', required: true, max: 150 }, { key: 'fecha', label: 'Fecha', type: 'date', required: true },
+      { key: 'hora', label: 'Hora (Colombia)', type: 'time', required: true }, { key: 'lugar', label: 'Lugar', required: true, max: 200 },
+      { key: 'imagen', label: 'Imagen: URL HTTPS o archivo del sitio', max: 500 }, { key: 'descripcion', label: 'Descripción', type: 'textarea', max: 10000 },
+      { key: 'estado_actividad', label: 'Estado', required: true, options: options(['programada', 'cancelada']) },
+    ]
+    if (activityType === 'reunion_grupo') formFields.push({ key: 'id_grupo', label: 'Grupo', required: true, options: catalogOptions(catalogs.grupos, 'id_grupo') })
+    else if (has(user, 'eventos.publicar')) formFields.push({ key: 'publicado', label: 'Visible en la web pública', type: 'checkbox' })
+    if (activityType === 'evento') formFields.push({ key: 'requiere_inscripcion', label: 'Requiere inscripción', type: 'checkbox' }, { key: 'url_inscripcion', label: 'Enlace de inscripción', type: 'url', max: 500 })
+  }
+  if (resource === 'groups' && !canServices) formFields = formFields.filter(field => field.key !== 'id_discipulador')
+  if (resource === 'groups' && !edit?.id_grupo) formFields = formFields.filter(field => !['id_grupo_origen', 'direccion', 'dia_reunion', 'hora_reunion'].includes(field.key))
+  async function save(values: Row) {
+    const id = edit?.[ids[resource]]
+    const { barrios_seleccion, ...recordValues } = values
+    const selection = barrios_seleccion ? JSON.parse(String(barrios_seleccion)) : null
+    if (selection?.removedNames?.length && !window.confirm(`¿Quitar estos barrios del grupo: ${selection.removedNames.join(', ')}?`)) throw new Error('Guardado cancelado. Se conservan tus cambios en el formulario.')
+    const groupValues = { ...recordValues, ...(selection ? { barrios: { ...selection, confirmRemoval: Boolean(selection.removedNames?.length) } } : {}) }
+    if (resource === 'members' && registrationType === 'administrativo' && !id && values.account_password !== values.account_confirmation) throw new Error('Las contraseñas de la cuenta no coinciden.')
+    const result = await api<{ id?: number; accountCreated?: boolean }>(id ? `${resource}/${id}` : resource, resource === 'groups' ? groupValues : resource === 'activities' ? { ...values, tipo_actividad: activityType } : resource === 'members' && !id ? { ...values, tipo_registro: registrationType } : values, id ? 'PATCH' : 'POST')
+    if (resource === 'groups') window.dispatchEvent(new Event('calvario-coverage-updated'))
+    if (resource === 'groups' && !id && result.id) {
+      window.location.hash = `#gestion/groups/ficha/${result.id}`
+      setEdit(null); notify('Grupo de Comunión creado. Los barrios seleccionados ya están vinculados al mapa.'); await load(); await reloadCatalogs(); return
+    }
+    setEdit(null); notify(result.accountCreated ? 'Administrativo y cuenta de acceso creados. Ya puede iniciar sesión con sus credenciales.' : resource === 'members' && !has(user, 'miembros.ver') ? values.id_grupo ? 'Discípulo registrado y asignado al Grupo de Comunión Familiar.' : 'Discípulo registrado. El grupo puede asignarse después.' : 'Cambios guardados.'); await load(); await reloadCatalogs()
+  }
+  async function archive(row: Row) {
+    try { await api(`${resource}/${row[ids[resource]]}`, {}, 'DELETE'); setDetail(null); notify('Registro archivado. Se conserva su historial.'); await load(); await reloadCatalogs() } catch (error) { notify(errorMessage(error)) }
+  }
+  const createLabels = { members: 'Registrar discípulo', groups: 'Nuevo grupo', activities: 'Nuevo evento' }
+  const groupId = window.location.hash.split('/')[2] === 'grupo' ? Number(window.location.hash.split('/')[3]) : null
+  const scopedItems = resource === 'members' && groupId ? items.filter(item => Number(item.id_grupo) === groupId) : items
+  const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Bogota', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date())
+  const visibleItems = scopedItems.filter(row => {
+    const matches = searchable(`${row.nombres || ''} ${row.apellidos || ''} ${row.numero_identificacion || ''} ${row.nombre || ''} ${row.titulo || ''}`).includes(searchable(search))
+    if (!matches) return false
+    if (resource === 'members') return filter === 'todos' || row.estado_miembro === filter
+    if (resource === 'activities') return filter === 'pasados' ? String(row.fecha) < today : String(row.fecha) >= today
+    return true
+  })
+  const openEdit = (row: Row) => { setRegistrationType(row.id_rol_eclesiastico ? 'administrativo' : 'discipulo'); setActivityType(String(row.tipo_actividad || 'evento')); setEdit(row); setDetail(null) }
+  const canEdit = (row: Row) => has(user, resource === 'activities' ? row.tipo_actividad === 'reunion_grupo' ? 'grupos.editar' : 'eventos.editar' : write[resource])
+  const createOnly = resource === 'members' && !has(user, 'miembros.ver')
+  return <section className={`records-page records-${resource}`}>
+    <div className="manage-section-heading"><div><h2 ref={titleRef} tabIndex={-1}>{edit ? edit[ids[resource]] ? 'Editar registro' : createLabels[resource] : detail ? 'Detalle' : titles[resource]}</h2>{!edit && !detail && <p className="section-caption">{resource === 'members' ? 'Cada persona, parte de nuestra familia.' : resource === 'groups' ? 'La fe se vive en comunidad.' : 'Nos encontramos para crecer juntos.'}</p>}</div>
+    {!edit && !detail && (resource !== 'groups' || canServices) && (has(user, resource === 'members' ? registrationPermission : write[resource]) || resource === 'activities' && has(user, 'grupos.editar')) && <button className="record-create" onClick={() => { setRegistrationType('discipulo'); setActivityType(has(user, 'eventos.editar') ? 'evento' : 'reunion_grupo'); setEdit(resource === 'groups' ? { estado_grupo: 'activo', id_discipulador: user.permissions['grupos.editar'] === 'grupo' ? user.memberId : null } : resource === 'activities' ? { estado_actividad: 'programada' } : {}) }}><AdminIcon name="plus"/>{createLabels[resource]}</button>}
+    {detail && <button className="secondary" onClick={() => setDetail(null)}><AdminIcon name="back"/>Volver</button>}
+    </div>
+    {!edit && !detail && <>
+      {groupId && <p className="group-filter">Mostrando discípulos del grupo seleccionado. <a href="#gestion/members">Ver todos</a></p>}
+      {!createOnly && <form className="record-search" onSubmit={event => { event.preventDefault() }}><AdminIcon name="search"/><label className="sr-only" htmlFor={`search-${resource}`}>Buscar {resource === 'members' ? 'por nombre o identificación' : titles[resource].toLowerCase()}</label><input id={`search-${resource}`} value={search} type="search" placeholder={resource === 'members' ? 'Buscar por nombre o identificación' : resource === 'groups' ? 'Buscar grupo' : 'Buscar evento o culto'} maxLength={100} onChange={event => setSearch(event.target.value)} /></form>}
+      {resource === 'members' && !createOnly && <div className="record-filters" role="group" aria-label="Filtrar discípulos">{[['todos', 'Todos'], ['activo', 'Activos'], ['inactivo', 'Inactivos'], ['retirado', 'Retirados']].map(([value, label]) => <button key={value} type="button" aria-pressed={filter === value} onClick={() => setFilter(value)}>{label} <span>({value === 'todos' ? scopedItems.length : scopedItems.filter(item => item.estado_miembro === value).length})</span></button>)}</div>}
+      {resource === 'activities' && <div className="record-filters event-filters" role="group" aria-label="Filtrar eventos"><button type="button" aria-pressed={filter !== 'pasados'} onClick={() => setFilter('proximos')}>Próximos</button><button type="button" aria-pressed={filter === 'pasados'} onClick={() => setFilter('pasados')}>Pasados</button></div>}
+    </>}
+    {edit && <div className="manage-editor record-editor" ref={editorRef}>
+      {resource === 'members' && !edit.id_miembro && <div className="registration-choice">
+        {canAdministrative ? <><label htmlFor="registration-type">Tipo de registro</label><AppSelect id="registration-type" value={registrationType} onChange={event => {
+          const form = editorRef.current?.querySelector('form')
+          if (form) {
+            const draft = Object.fromEntries(new FormData(form)) as Row
+            for (const checkbox of form.querySelectorAll<HTMLInputElement>('input[type=checkbox]')) draft[checkbox.name] = Number(checkbox.checked)
+            setEdit(previous => ({ ...previous, ...draft }))
+          }
+          setRegistrationType(event.target.value as 'discipulo' | 'administrativo')
+        }}><option value="discipulo">Discípulo normal</option><option value="administrativo">Administrativo con cuenta de acceso</option></AppSelect><p>{registrationType === 'administrativo' ? 'Se crearán la ficha, el cargo pastoral y una cuenta activa para la persona.' : 'Registra la ficha y selecciona su Grupo de Comunión Familiar.'}</p></> : <p>Tu cargo permite registrar discípulos para sus Grupos de Comunión Familiar. La asignación de cargos y servicios corresponde a los niveles pastorales 1 al 5.</p>}
+      </div>}
+      {resource === 'activities' && !edit.id_actividad && <label>Tipo de actividad <AppSelect value={activityType} onChange={event => setActivityType(event.target.value)}>{(has(user, 'eventos.editar') ? ['culto', 'evento'] : []).concat(has(user, 'grupos.editar') ? ['reunion_grupo'] : []).map(type => <option key={type} value={type}>{typeNames[type]}</option>)}</AppSelect></label>}
+      <DataForm key={`${edit[ids[resource]] || 'new'}-${activityType}-${registrationType}`} fields={formFields} initial={edit} onSave={save} onCancel={() => { setEdit(null); if (resource === 'groups' && window.location.hash === '#gestion/groups/nuevo') window.location.hash = '#gestion/groups' }} memberWizard={resource === 'members'} groupNeighborhoods={resource === 'groups' && Boolean(canManageCoverage(user))} availableBarrios={catalogs.barrios} label={resource === 'members' ? registrationType === 'administrativo' && !edit.id_miembro ? 'Crear administrativo y cuenta' : 'Guardar discípulo' : resource === 'groups' ? 'Guardar grupo' : 'Guardar'} />
+    </div>}
+    {!edit && !detail && (loading ? <div className="app-empty" role="status"><span className="auth-spinner"/>Cargando tu comunidad…</div> : !visibleItems.length ? <div className="app-empty"><span className="empty-icon"><AdminIcon name={resource}/></span><h3>{createOnly ? 'Registra un discípulo' : items.length ? 'No encontramos coincidencias' : resource === 'members' ? 'Aquí comienza tu comunidad' : resource === 'groups' ? 'Un lugar para compartir la fe' : 'Preparemos el próximo encuentro'}</h3><p>{createOnly ? 'Crea su ficha y selecciona el Grupo de Comunión Familiar al que pertenece.' : items.length ? 'Prueba otra búsqueda o cambia el filtro.' : 'Los registros que crees aparecerán aquí.'}</p></div> : <div className="manage-records app-record-list">{visibleItems.map(row => {
+      const name = String(row.nombres ? `${row.nombres} ${row.apellidos || ''}` : row.nombre || row.titulo)
+      return <article key={row[ids[resource]]}>
+      <button className="record-open" aria-label={`Ver ficha de ${name}`} onClick={() => { setDetail(row); setEdit(null) }}>
+        {resource === 'members' ? <span className="member-avatar" aria-hidden="true">{`${String(row.nombres || '').slice(0, 1)}${String(row.apellidos || '').slice(0, 1)}`}</span> : resource === 'groups' ? <span className="group-avatar"><AdminIcon name="members"/></span> : <span className="event-cover">{row.imagen ? <img src={String(row.imagen)} alt="" loading="lazy"/> : <AdminIcon name="activities"/>}<span className="event-date"><small>{new Date(`${row.fecha}T12:00:00-05:00`).toLocaleDateString('es-CO', { month: 'short', timeZone: 'America/Bogota' }).replace('.', '')}</small><b>{String(row.fecha).slice(8, 10)}</b></span></span>}
+        <span className="record-copy"><strong>{name}</strong>{resource === 'members' ? <><span>{row.tipo_identificacion} {row.numero_identificacion}</span><span className="record-state" data-state={row.estado_miembro}>{row.estado_miembro}</span></> : resource === 'groups' ? <><span>{row.miembros} discípulos</span><span>{row.dia_reunion || 'Día por definir'}{row.hora_reunion ? ` · ${String(row.hora_reunion).slice(0, 5)}` : ''}</span></> : <><span>{row.fecha} · {String(row.hora).slice(0, 5)}</span><span>{row.lugar}</span><span className="event-type" data-state={row.estado_actividad}>{row.estado_actividad === 'cancelada' ? 'Cancelada' : typeNames[String(row.tipo_actividad)]}</span></>}</span>
+        <AdminIcon name="chevron"/>
+      </button>
+      {(canEdit(row) || has(user, remove[resource])) && <details className="record-menu"><summary aria-label={`Acciones de ${name}`}>•••</summary><div>{canEdit(row) && <button className="secondary" onClick={() => openEdit(row)}>Editar</button>}{has(user, remove[resource]) && <button className="secondary" onClick={() => void archive(row)}>Archivar</button>}</div></details>}
+    </article>})}</div>)}
+    {detail && resource === 'activities' && <aside className="manage-editor activity-detail">{detail.imagen && <img className="activity-detail-image" src={String(detail.imagen)} alt=""/>}<span className="event-type">{typeNames[String(detail.tipo_actividad)]}</span><h3>{detail.titulo}</h3><p>{detail.fecha} · {String(detail.hora).slice(0, 5)} · {detail.lugar}</p><p>{detail.descripcion || 'Sin descripción adicional.'}</p><p>Estado: {detail.estado_actividad}</p><div className="manage-actions">{canEdit(detail) && <button onClick={() => openEdit(detail)}>Editar actividad</button>}{(has(user, 'asistencia.registrar') || has(user, 'asistencia.ver')) && <a className="app-action secondary" href={`#gestion/falls/registro/actividad/${detail.id_actividad}`}>Ver asistencia</a>}</div></aside>}
+    {detail && resource === 'members' && <MemberDetail key={detail.id_miembro} row={detail} user={user} catalogs={catalogs} notify={notify} onSaved={load} onClose={() => setDetail(null)} />}
+    {detail && resource === 'groups' && <GroupDetail key={detail.id_grupo} row={detail} user={user} onClose={() => setDetail(null)} onEdit={canEdit(detail) ? () => openEdit(detail) : undefined} />}
+  </section>
+}
+
+function MemberDetail({ row, user, catalogs, notify, onSaved, onClose }: { row: Row; user: AuthUser; catalogs: Catalogs; notify: Message; onSaved: () => Promise<void>; onClose: () => void }) {
+  const [ministries, setMinistries] = useState<number[]>([])
+  const [history, setHistory] = useState<Row[]>([])
+  const [consents, setConsents] = useState<Row[]>([])
+  const [coverageOptions, setCoverageOptions] = useState<Option[]>([])
+  const [state, setState] = useState(String(row.estado_miembro))
+  async function loadDetails() {
+    try {
+      const [membership, changes] = await Promise.all([api<{ items: Row[] }>(`members/${row.id_miembro}/ministries`), api<{ items: Row[] }>(`members/${row.id_miembro}/history`)])
+      setMinistries(membership.items.map(item => Number(item.id_ministerio))); setHistory(changes.items)
+      if (has(user, 'consentimientos.gestionar')) setConsents((await api<{ items: Row[] }>(`members/${row.id_miembro}/consents`)).items)
+      if (has(user, 'grupos.editar') && user.permissions['grupos.editar'] === 'todos') {
+        const people = (await api<{ items: Row[] }>('members')).items
+        setCoverageOptions(people.filter(person => person.id_miembro !== row.id_miembro).map(person => ({ value: Number(person.id_miembro), label: `${person.nombres} ${person.apellidos || ''}`.trim() })))
+      }
+    } catch (error) { notify(errorMessage(error)) }
+  }
+  useEffect(() => { void loadDetails() }, [row.id_miembro])
+  const labels: Record<string, string> = { nombres: 'Nombres', apellidos: 'Apellidos', tipo_identificacion: 'Tipo de identificación', numero_identificacion: 'Identificación', celular: 'Celular', correo: 'Correo', fecha_nacimiento: 'Nacimiento / cumpleaños', funcion_iglesia: 'Función', grupo_sanguineo_rh: 'Grupo sanguíneo / RH', eps: 'EPS', contacto_emergencia_nombre: 'Contacto de emergencia', contacto_emergencia_celular: 'Celular de emergencia', id_grupo: 'ID de grupo', id_rol_eclesiastico: 'ID de rol eclesiástico', id_cobertura_pastoral: 'ID de cobertura pastoral', codigo_qr: 'Identificador QR', fecha_creacion: 'Creación', fecha_actualizacion: 'Actualización' }
+  return <aside className="manage-editor"><div className="manage-section-heading"><h3>Ficha de {row.nombres}</h3><button className="secondary" onClick={onClose}>Cerrar ficha</button></div>
+    <dl className="manage-details">{Object.entries(labels).filter(([key]) => Object.hasOwn(row, key)).map(([key, label]) => <div key={key}><dt>{label}</dt><dd>{String(row[key] || 'Sin registrar')}</dd></div>)}</dl>
+    {has(user, 'miembros.estado') && <form className="manage-actions" onSubmit={event => { event.preventDefault(); void api(`members/${row.id_miembro}/state`, { estado_miembro: state }).then(() => { notify('Estado actualizado.'); void onSaved() }).catch(error => notify(errorMessage(error))) }}><label>Estado del discípulo <AppSelect value={state} onChange={event => setState(event.target.value)}>{['activo', 'inactivo', 'retirado'].map(value => <option key={value}>{value}</option>)}</AppSelect></label><button>Actualizar estado</button></form>}
+    {has(user, 'grupos.editar') && !has(user, 'miembros.editar') && <><h4>Grupo y cobertura</h4><DataForm fields={[
+      { key: 'id_grupo', label: 'Grupo', options: catalogOptions(catalogs.grupos, 'id_grupo') },
+      ...(user.permissions['grupos.editar'] === 'todos' ? [{ key: 'id_cobertura_pastoral', label: 'Cobertura pastoral', options: coverageOptions }] : []),
+    ]} initial={row} onSave={async values => { await api(`members/${row.id_miembro}/relations`, values); notify('Relaciones actualizadas.'); await onSaved(); await loadDetails() }} /></>}
+    <h4>Ministerios</h4><div className="manage-actions">{catalogs.ministerios.map(ministry => <label key={ministry.id_ministerio}><input type="checkbox" checked={ministries.includes(Number(ministry.id_ministerio))} disabled={!has(user, 'ministerios.gestionar') || !user.registration?.canAssignServices} onChange={event => setMinistries(event.target.checked ? [...ministries, Number(ministry.id_ministerio)] : ministries.filter(id => id !== ministry.id_ministerio))} /> {ministry.nombre}</label>)}</div>
+    {has(user, 'ministerios.gestionar') && user.registration?.canAssignServices && <button onClick={() => void api(`members/${row.id_miembro}/ministries`, { ids: ministries }, 'PUT').then(() => notify('Ministerios guardados.')).catch(error => notify(errorMessage(error)))}>Guardar ministerios</button>}
+    <h4>Historial de grupo y cobertura</h4>{history.length ? history.map(item => <p key={item.id_historial}>{item.concepto}: {item.id_anterior || 'Sin asignar'} → {item.id_nuevo || 'Sin asignar'} · {item.fecha_cambio}</p>) : <p>Sin cambios registrados.</p>}
+    {canManageCoverage(user) && catalogs.roles.some(role => role.id_rol_eclesiastico === row.id_rol_eclesiastico && Number(role.nivel_jerarquico) === 6) && <CoverageAssignments id={Number(row.id_miembro)} name={`${row.nombres} ${row.apellidos || ''}`} user={user}/>}
+    {has(user, 'consentimientos.gestionar') && <><h4>Consentimiento de datos</h4><p>Registra la evidencia de la autorización en papel o digital.</p>
+      {consents.map(item => <p key={item.id_consentimiento}>Versión {item.version_politica} · {item.medio} · {item.estado_consentimiento}</p>)}
+      <DataForm fields={[
+        { key: 'version_politica', label: 'Versión de la política', required: true, max: 50 },
+        { key: 'medio', label: 'Medio', required: true, options: options(['papel', 'digital']) },
+        { key: 'estado_consentimiento', label: 'Estado del consentimiento', required: true, options: options(['aceptado', 'revocado', 'pendiente']) },
+        { key: 'acepta_politica_privacidad', label: 'Acepta política de privacidad', type: 'checkbox' }, { key: 'acepta_datos_religiosos', label: 'Autoriza datos religiosos', type: 'checkbox' },
+        { key: 'fecha_aceptacion', label: 'Fecha de aceptación (Colombia)', type: 'datetime-local' }, { key: 'fecha_revocacion', label: 'Fecha de revocación (Colombia)', type: 'datetime-local' },
+      ]} onSave={async values => { const timestamp = (value: string | number | null) => value ? new Date(`${value}:00-05:00`).toISOString() : null; await api(`members/${row.id_miembro}/consents`, { ...values, fecha_aceptacion: timestamp(values.fecha_aceptacion), fecha_revocacion: timestamp(values.fecha_revocacion) }); notify('Consentimiento registrado.'); await loadDetails() }} label="Registrar consentimiento" />
+    </>}
+  </aside>
+}
+
+function GroupDetail({ row, user, onClose, onEdit }: { row: Row; user: AuthUser; onClose: () => void; onEdit?: () => void }) {
+  const mapQuery = row.latitud != null && row.longitud != null ? `${row.latitud},${row.longitud}` : row.direccion ? `${row.direccion}, ${row.barrio || ''}, Villavicencio, Meta` : null
+  return <aside className="manage-editor group-detail"><div className="group-detail-banner" aria-hidden="true"><AdminIcon name="groups"/><span>LA FE NOS REÚNE</span></div><div className="manage-section-heading"><h3>{row.nombre}</h3><button className="secondary" onClick={onClose}>Cerrar ficha</button></div>
+    <p style={{ whiteSpace: 'pre-line' }}><strong>Barrio o barrios:</strong> {row.barrio || 'Sin asignar'}</p>
+    {(row.direccion || row.dia_reunion || row.hora_reunion) && <p>{[row.direccion, row.dia_reunion, String(row.hora_reunion || '').slice(0, 5)].filter(Boolean).join(' · ')}</p>}
+    <p>Discípulos registrados: {row.miembros}. Discipulador: ID {row.id_discipulador || 'sin asignar'}.</p>
+    <GroupTerritory key={String(row.id_discipulador || 'sin-discipulador')} id={Number(row.id_grupo)} leaderId={row.id_discipulador ? Number(row.id_discipulador) : null} user={user}/>
+    {!row.id_discipulador && onEdit && <button type="button" className="secondary" onClick={onEdit}>Asignar discipulador</button>}
+    <div className="group-detail-actions">{has(user, 'miembros.ver') && <a className="app-action secondary" href={`#gestion/members/grupo/${row.id_grupo}`}><span className="dashboard-card-icon"><AdminIcon name="members"/></span>Ver discípulos<AdminIcon name="chevron"/></a>}{onEdit && <button type="button" className="secondary" onClick={onEdit}><span className="dashboard-card-icon"><AdminIcon name="groups"/></span>Editar grupo<AdminIcon name="chevron"/></button>}{has(user, 'grupos.ver') && <a className="app-action secondary" href="#gestion/mapa"><span className="dashboard-card-icon"><AdminIcon name="mapa"/></span>Ver barrios en el mapa<AdminIcon name="chevron"/></a>}{mapQuery && <a className="app-action secondary" href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(mapQuery)}`} target="_blank" rel="noopener noreferrer"><span className="dashboard-card-icon"><AdminIcon name="home"/></span>Ubicación en mapa<AdminIcon name="chevron"/></a>}</div>
+  </aside>
+}
+
+function Attendance({ user, notify }: { user: AuthUser; notify: Message }) {
+  const [activities, setActivities] = useState<Row[]>([])
+  const [activityId, setActivityId] = useState(() => window.location.hash.split('/')[3] === 'actividad' ? window.location.hash.split('/')[4] || '' : '')
+  const [roster, setRoster] = useState<Row[]>([])
+  const [records, setRecords] = useState<Row[]>([])
+  const [method, setMethod] = useState('manual')
+  const [corrections, setCorrections] = useState<Record<string, string>>({})
+  const [pending, setPending] = useState<Record<string, string>>({})
+  const [search, setSearch] = useState('')
+  const [saving, setSaving] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const requestId = useRef(0)
+  useEffect(() => { api<{ items: Row[] }>('activities').then(result => setActivities(result.items)).catch(error => notify(errorMessage(error))) }, [])
+  async function load() {
+    const request = ++requestId.current
+    if (!activityId) { setRoster([]); setRecords([]); return }
+    setLoading(true)
+    try {
+      const [people, attendance] = await Promise.all([has(user, 'asistencia.registrar') ? api<{ items: Row[] }>(`attendance/roster?activityId=${activityId}`) : Promise.resolve({ items: [] }), has(user, 'asistencia.ver') ? api<{ items: Row[] }>(`attendance?activityId=${activityId}`) : Promise.resolve({ items: [] })])
+      if (request !== requestId.current) return
+      setRoster(people.items); setRecords(attendance.items); setCorrections({})
+    } catch (error) { if (request === requestId.current) { notify(errorMessage(error)); setRoster([]); setRecords([]) } }
+    finally { if (request === requestId.current) setLoading(false) }
+  }
+  useEffect(() => { setPending({}); setSearch(''); void load(); return () => { requestId.current++ } }, [activityId])
+  const selected = activities.find(item => String(item.id_actividad) === activityId)
+  const states: Record<string, string> = { presente: 'Presente', ausente: 'Ausente', justificado: 'Justificado', visitante: 'Visitante' }
+  async function saveRoster() {
+    if (saving || !Object.keys(pending).length) return
+    setSaving(true)
+    let saved = 0
+    const failed: Record<string, string> = {}
+    let failure = ''
+    for (const [id, state] of Object.entries(pending)) {
+      try { await api('attendance', { id_actividad: Number(activityId), id_miembro: Number(id), estado_asistencia: state, metodo_registro: 'manual' }); saved++ }
+      catch (error) { failed[id] = state; failure = errorMessage(error) }
+    }
+    setPending(failed)
+    await load()
+    setSaving(false)
+    notify(failure ? `${saved} registros guardados. ${failure} Revisa las selecciones pendientes.` : saved === 1 ? '1 registro de asistencia guardado.' : `${saved} registros de asistencia guardados.`)
+  }
+  return <section className="attendance-page"><h2>Asistencia</h2><p className="section-caption">Un encuentro, muchas historias para acompañar.</p><label>Actividad <AppSelect aria-label="Actividad" value={activityId} disabled={saving} onChange={event => setActivityId(event.target.value)}><option value="">Selecciona una actividad</option>{activities.map(item => <option key={item.id_actividad} value={String(item.id_actividad)}>{item.fecha} · {typeNames[String(item.tipo_actividad)]} · {item.titulo}{item.estado_actividad === 'cancelada' && ' · Cancelada'}</option>)}</AppSelect></label>
+    {!activityId && <div className="app-empty"><span className="empty-icon"><AdminIcon name="attendance"/></span><h3>¿En qué encuentro estamos?</h3><p>Selecciona una actividad para consultar o registrar su asistencia.</p></div>}
+    {activityId && <>
+      {selected && <div className="attendance-event"><span className="dashboard-card-icon"><AdminIcon name="activities"/></span><div><strong>{selected.titulo}</strong><span>{selected.fecha} · {String(selected.hora).slice(0, 5)}</span></div><span className="app-count">{selected.estado_actividad === 'cancelada' ? 'Cancelada' : 'Encuentro'}</span></div>}
+      {has(user, 'asistencia.registrar') && <>
+        <form className="record-search" onSubmit={event => event.preventDefault()}><AdminIcon name="search"/><label className="sr-only" htmlFor="attendance-search">Buscar discípulo para asistencia</label><input id="attendance-search" value={search} placeholder="Buscar discípulo" type="search" onChange={event => setSearch(event.target.value)}/></form>
+        {loading ? <p role="status">Cargando asistencia…</p> : <div className="attendance-roster">{roster.filter(person => String(person.nombre).toLowerCase().includes(search.toLowerCase())).map(person => {
+          const id = String(person.id_miembro)
+          const existing = records.find(record => String(record.id_miembro) === id)
+          return <div key={id} className="attendance-person"><span className="member-avatar" aria-hidden="true">{String(person.nombre).split(' ').slice(0, 2).map(word => word[0]).join('')}</span><strong>{person.nombre}</strong>{existing ? <span className="attendance-saved" data-state={existing.estado_asistencia}>{states[String(existing.estado_asistencia)] || existing.estado_asistencia}<small>Guardado</small></span> : <AppSelect aria-label={`Asistencia de ${person.nombre}`} data-state={pending[id] || ''} disabled={saving || selected?.estado_actividad === 'cancelada'} value={pending[id] || ''} onChange={event => setPending(previous => { const next = { ...previous }; if (event.target.value) next[id] = event.target.value; else delete next[id]; return next })}><option value="">Sin marcar</option>{['presente', 'ausente', 'justificado'].map(state => <option key={state} value={state}>{states[state]}</option>)}</AppSelect>}</div>
+        })}{!roster.length && <p>No hay discípulos disponibles para esta actividad. Puedes registrar un visitante a continuación.</p>}</div>}
+        <button className="attendance-save" disabled={saving || !Object.keys(pending).length || selected?.estado_actividad === 'cancelada'} onClick={() => void saveRoster()}>{saving ? 'Guardando asistencia…' : `Guardar asistencia${Object.keys(pending).length ? ` (${Object.keys(pending).length})` : ''}`}</button>
+      </>}
+      {has(user, 'asistencia.registrar') && <details className="attendance-other"><summary>Registrar visitante, identificador QR u otro estado</summary><div className="manage-editor"><label>Método <AppSelect value={method} disabled={saving} onChange={event => setMethod(event.target.value)}><option value="manual">Manual</option><option value="qr">QR: ingresar identificador</option></AppSelect></label>
+      <DataForm key={`${activityId}-${method}`} fields={[
+        ...(method === 'manual' ? [{ key: 'id_miembro', label: 'Discípulo (sin asignar para visitante)', options: roster.map(item => ({ value: Number(item.id_miembro), label: String(item.nombre) })) }] : [{ key: 'codigo_qr', label: 'Identificador QR del discípulo', required: true, max: 36 }]),
+        { key: 'estado_asistencia', label: 'Estado de asistencia', required: true, options: options(attendanceStates) },
+        { key: 'nombre_visitante', label: 'Nombre del visitante, si aplica', max: 150 },
+      ]} initial={{ estado_asistencia: 'presente' }} onSave={async values => { await api('attendance', { ...values, id_actividad: Number(activityId), metodo_registro: method }); notify('Asistencia registrada.'); await load() }} label="Registrar asistencia" />
+    </div></details>}
+    {records.length > 0 && <h3 className="attendance-record-heading">Asistencias guardadas <span>{records.length}</span></h3>}
+    <div className="manage-records">{records.map(row => <article key={row.id_asistencia}><div><strong>{row.nombre || row.nombre_visitante || 'Visitante'}</strong><p>{states[String(row.estado_asistencia)] || row.estado_asistencia} · {row.metodo_registro}</p></div><div className="manage-actions">
+      {has(user, 'asistencia.corregir') && <><label>Corregir <AppSelect aria-label="Corregir" value={corrections[String(row.id_asistencia)] || String(row.estado_asistencia)} onChange={event => setCorrections({ ...corrections, [String(row.id_asistencia)]: event.target.value })}>{attendanceStates.map(value => <option key={value}>{value}</option>)}</AppSelect></label><button onClick={() => void api(`attendance/${row.id_asistencia}`, { estado_asistencia: corrections[String(row.id_asistencia)] || row.estado_asistencia }, 'PATCH').then(() => { notify('Asistencia corregida; alertas recalculadas.'); void load() }).catch(error => notify(errorMessage(error)))}>Guardar corrección</button></>}
+      {has(user, 'asistencia.eliminar') && <button className="secondary" onClick={() => void api(`attendance/${row.id_asistencia}`, {}, 'DELETE').then(() => { notify('Asistencia archivada.'); void load() }).catch(error => notify(errorMessage(error)))}>Archivar</button>}
+    </div></article>)}</div></>}
+  </section>
+}
+
+function Reports({ user, notify }: { user: AuthUser; notify: Message }) {
+  const [from, setFrom] = useState(''), [to, setTo] = useState(''), [busy, setBusy] = useState(false)
+  async function download(type: string, format: string) {
+    setBusy(true)
+    try {
+      const query = new URLSearchParams({ format, ...(from ? { from } : {}), ...(to ? { to } : {}) })
+      const response = await fetch(`/api/management/reports/${type}?${query}`, { credentials: 'same-origin', signal: AbortSignal.timeout(30000) })
+      if (!response.ok) throw new Error((await response.json()).error || 'No pudimos generar el reporte.')
+      const objectUrl = URL.createObjectURL(await response.blob())
+      const link = document.createElement('a'); link.href = objectUrl; link.download = `${type}.${format}`; link.click(); setTimeout(() => URL.revokeObjectURL(objectUrl), 10000)
+      notify('Reporte descargado.')
+    } catch (error) { notify(errorMessage(error)) } finally { setBusy(false) }
+  }
+  return <section className="reports-page"><h2>Reportes</h2><p className="section-caption">La información que necesitas, lista para compartir.</p>
+    <div className="manage-records report-cards">{[
+      { type: 'asistencia', label: 'Reporte de asistencia', icon: 'activities', description: 'Consulta la asistencia registrada en un rango de fechas.' },
+      { type: 'cumpleanos', label: 'Listado de cumpleaños', icon: 'birthday', description: 'Las fechas para celebrar a nuestra comunidad.' },
+      { type: 'grupos', label: 'Grupos de Comunión', icon: 'members', description: 'Grupos registrados y las personas que los integran.' },
+    ].filter(report => has(user, `reportes.${report.type}`)).map(report => <article key={report.type} data-report={report.type}><span className="report-icon"><AdminIcon name={report.icon}/></span><div className="report-copy"><strong>{report.label}</strong><p>{report.description}</p>{report.type === 'asistencia' && <div className="report-dates"><label>Desde<input type="date" value={from} onChange={event => setFrom(event.target.value)}/></label><label>Hasta<input type="date" min={from} value={to} onChange={event => setTo(event.target.value)}/></label></div>}<div className="manage-actions">{['pdf', 'xlsx'].map(format => <button key={format} className={`report-export export-${format}`} aria-label={`${report.label}: descargar ${format === 'pdf' ? 'PDF' : 'Excel'}`} disabled={busy || Boolean(from && to && from > to) && report.type === 'asistencia'} onClick={() => void download(report.type, format)}><AdminIcon name="reports"/>{format === 'pdf' ? 'PDF' : 'Excel'}</button>)}</div></div></article>)}</div>
+  </section>
+}
+
+function Dashboard({ user }: { user: AuthUser }) {
+  const [widgets, setWidgets] = useState<{ key: string; label: string; value: number }[]>([])
+  const [loading, setLoading] = useState(true)
+  const [failure, setFailure] = useState('')
+  const available = new Set(allowedModules(user).map(module => module.key))
+  useEffect(() => {
+    let active = true
+    api<{ widgets: { key: string; label: string; value: number }[] }>('dashboard').then(result => { if (active) setWidgets(result.widgets) }).catch(error => { if (active) setFailure(errorMessage(error)) }).finally(() => { if (active) setLoading(false) })
+    return () => { active = false }
+  }, [JSON.stringify(user.permissions)])
+  const shortcuts = [
+    { key: 'members', label: 'Discípulos', icon: 'members', description: 'Registrar / Buscar', href: '#gestion/members', allowed: available.has('members') },
+    { key: 'groups', label: 'Grupos de Comunión', icon: 'groups', description: 'Ver grupos', href: '#gestion/groups', allowed: available.has('groups') },
+    { key: 'attendance', label: 'Asistencia', icon: 'attendance', description: 'Tomar asistencia', href: '#gestion/falls/registro', allowed: has(user, 'asistencia.registrar') || has(user, 'asistencia.ver') },
+    { key: 'activities', label: 'Eventos y Cultos', icon: 'activities', description: 'Crear / Consultar', href: '#gestion/activities', allowed: available.has('activities') },
+    { key: 'alerts', label: 'Alertas', icon: 'alerts', description: 'Acompañamiento pastoral', href: '#gestion/falls/alertas', allowed: has(user, 'alertas.ver') },
+    { key: 'reports', label: 'Reportes', icon: 'reports', description: 'Asistencia, cumpleaños y grupos', href: '#gestion/reports', allowed: available.has('reports') },
+  ]
+  const widgetIcons: Record<string, string> = { miembros: 'members', grupos: 'groups', alertas: 'alerts', cumpleanos: 'birthday', eventos: 'activities' }
+  const widgetLinks: Record<string, string> = { miembros: '#gestion/members', grupos: '#gestion/groups', alertas: '#gestion/falls/alertas', cumpleanos: '#gestion/reports', eventos: '#gestion/activities' }
+  const date = new Intl.DateTimeFormat('es-CO', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'America/Bogota' }).format(new Date())
+  return <section className="dashboard-home" aria-labelledby="dashboard-title">
+    <div className="dashboard-intro"><div><span className="dashboard-eyebrow">QUÉ BUENO TENERTE AQUÍ</span><h2 id="dashboard-title">Hola, {user.name?.trim().split(/\s+/)[0] || 'bienvenido'}<span className="greeting-dot">.</span></h2><p className="dashboard-date">{date}</p></div><span className="dashboard-welcome-mark" aria-hidden="true"><img src="/logo1.png" alt=""/></span></div>
+    <section className="today-card" aria-labelledby="today-title"><div className="today-heading"><h3 id="today-title">Hoy en tu comunidad</h3><span>EL CALVARIO</span></div>
+      {loading ? <p role="status">Consultando el resumen…</p> : failure ? <p role="alert">{failure}</p> : <div className="today-stats">{widgets.filter(widget => widgetIcons[widget.key]).map(widget => <a key={widget.key} href={widgetLinks[widget.key]} className="today-stat"><AdminIcon name={widgetIcons[widget.key]}/><span><strong>{widget.value}</strong><span>{widget.label}</span></span></a>)}{!widgets.some(widget => widgetIcons[widget.key]) && <p>Tus accesos disponibles están a continuación.</p>}</div>}
+    </section>
+    <div className="dashboard-section-label"><h3>Tu iglesia, a un toque</h3><span>ACCESOS RÁPIDOS</span></div>
+    <nav className="dashboard-shortcuts" aria-label="Accesos principales">
+      {shortcuts.map(shortcut => {
+        const content = <>
+          <span className="dashboard-card-icon"><AdminIcon name={shortcut.icon}/></span>
+          <span className="dashboard-card-copy"><strong>{shortcut.label}</strong><span>{shortcut.allowed ? shortcut.description : 'Sin acceso con tu rol'}</span></span>
+          <span className="dashboard-card-arrow" aria-hidden="true">↗</span>
+        </>
+        return shortcut.allowed
+          ? <a key={shortcut.key} className="dashboard-shortcut" data-shortcut={shortcut.key} href={shortcut.href} aria-label={shortcut.label}>{content}</a>
+          : <button key={shortcut.key} type="button" className="dashboard-shortcut" data-shortcut={shortcut.key} disabled aria-label={`${shortcut.label}: sin acceso con tu rol`}>{content}</button>
+      })}
+    </nav>
+  </section>
+}
+function Alerts({ notify }: { notify: Message }) {
+  const [items, setItems] = useState<Row[]>([])
+  const [loading, setLoading] = useState(true)
+  useEffect(() => { api<{ items: Row[] }>('alerts').then(result => setItems(result.items)).catch(error => notify(errorMessage(error))).finally(() => setLoading(false)) }, [])
+  return <section className="alerts-page"><div className="manage-section-heading"><h2>Alertas pastorales</h2><span className="app-count">{items.length} vigentes</span></div><p className="section-caption">Una oportunidad para acercarnos y acompañar.</p>{loading ? <p role="status">Consultando alertas…</p> : items.length ? <div className="manage-records alert-records">{items.map(item => <article key={item.id_alerta}><span className="alert-symbol"><AdminIcon name="warning"/></span><div><strong>{item.nombre}</strong><p className="alert-reason">2 ausencias consecutivas</p><p>{item.titulo}</p></div></article>)}</div> : <div className="app-empty"><span className="empty-icon"><AdminIcon name="check"/></span><h3>Sin alertas vigentes</h3><p>Aquí verás a quienes tengan dos ausencias consecutivas registradas.</p></div>}</section>
+}
+
+function Falls({ user, notify }: { user: AuthUser; notify: Message }) {
+  const canRegister = has(user, 'asistencia.registrar') || has(user, 'asistencia.ver')
+  const canSeeAlerts = has(user, 'alertas.ver')
+  const readSection = () => {
+    const route = window.location.hash.split('/')
+    const requested = route[1] === 'alerts' || route[2] === 'alertas' ? 'alertas' : 'registro'
+    return (requested === 'alertas' && canSeeAlerts) || !canRegister ? 'alertas' : 'registro'
+  }
+  const [section, setSection] = useState(readSection)
+  useEffect(() => {
+    const update = () => setSection(readSection())
+    window.addEventListener('hashchange', update)
+    return () => window.removeEventListener('hashchange', update)
+  }, [canRegister, canSeeAlerts])
+  return <section className="manage-falls" aria-labelledby="falls-title">
+    <h2 id="falls-title" className="sr-only">Asistencia y alertas</h2>
+    <nav className="falls-tabs" aria-label="Secciones de Fallas">
+      {canRegister && <a href="#gestion/falls/registro" aria-current={section === 'registro' ? 'page' : undefined}><AdminIcon name="attendance"/>Registro de asistencia</a>}
+      {canSeeAlerts && <a href="#gestion/falls/alertas" aria-current={section === 'alertas' ? 'page' : undefined}><AdminIcon name="alerts"/>Alertas</a>}
+    </nav>
+    <div className="falls-content" key={section}>
+      {section === 'registro' && canRegister && <Attendance user={user} notify={notify}/>}
+      {section === 'alertas' && canSeeAlerts && <Alerts notify={notify}/>}
+    </div>
+  </section>
+}
+
+type PermissionCatalog = { roles: { id_rol: number; nombre: string }[]; permissions: { codigo: string; descripcion: string; admite_grupo: boolean }[]; grants: { id_rol: number; codigo_permiso: string; alcance: string }[] }
+function Permissions({ notify }: { notify: Message }) {
+  const [data, setData] = useState<PermissionCatalog | null>(null)
+  const [roleId, setRoleId] = useState('')
+  const [grants, setGrants] = useState<Record<string, string>>({})
+  const [busy, setBusy] = useState(false)
+  async function load() { try { setData(await api<PermissionCatalog>('permissions')) } catch (error) { notify(errorMessage(error)) } }
+  useEffect(() => { void load() }, [])
+  useEffect(() => { setGrants(Object.fromEntries((data?.grants || []).filter(grant => grant.id_rol === Number(roleId)).map(grant => [grant.codigo_permiso, grant.alcance]))) }, [roleId, data])
+  const protectedRole = ['Superadmin', 'Administrador', 'Pastor', 'Usuario', 'Apóstol General', 'Asistencia Apostólica', 'Pastor de Distrito', 'Pastor Local'].includes(data?.roles.find(role => role.id_rol === Number(roleId))?.nombre || '')
+  const discipleRole = data?.roles.find(role => role.id_rol === Number(roleId))?.nombre === 'Discipulador'
+  return <section><h2>Permisos por rol del sistema</h2><p>Los cambios se aplican también a las sesiones abiertas. Los roles eclesiásticos se gestionan en la ficha del discípulo.</p><label>Rol del sistema <AppSelect value={roleId} onChange={event => setRoleId(event.target.value)}><option value="">Selecciona…</option>{data?.roles.map(role => <option key={role.id_rol} value={role.id_rol}>{role.nombre}</option>)}</AppSelect></label>
+    {roleId && <form onSubmit={event => { event.preventDefault(); setBusy(true); void api(`permissions/${roleId}`, { grants: Object.entries(grants).filter(([, value]) => value).map(([codigo, alcance]) => ({ codigo, alcance })) }, 'PUT').then(() => { notify('Permisos actualizados.'); void load() }).catch(error => notify(errorMessage(error))).finally(() => setBusy(false)) }}>
+      <div className="manage-records">{data?.permissions.map(permission => <label className="manage-permission" key={permission.codigo}>
+        <span>{permission.descripcion}<small>{permission.codigo.startsWith('miembros.') ? 'Discípulos' : permission.codigo}</small></span>
+        <AppSelect disabled={protectedRole || busy || discipleRole && !permission.admite_grupo} value={grants[permission.codigo] || ''} onChange={event => setGrants({ ...grants, [permission.codigo]: event.target.value })}>
+          <option value="">Sin permiso</option>{!discipleRole && <option value="todos">Todos</option>}{permission.admite_grupo && <option value="grupo">Grupos a cargo</option>}
+        </AppSelect>
+      </label>)}</div>
+      {protectedRole ? <p>Este rol conserva su configuración protegida.</p> : <button disabled={busy}>Guardar permisos</button>}
+    </form>}
+  </section>
+}
+
+export default function Management() {
+  const { user, checking, error, refresh, setUser } = useAuthSession()
+  const accessKey = JSON.stringify([user?.id, user?.memberId, user?.state, user?.permissions, user?.pastoralRole, user?.registration])
+  const [catalogs, setCatalogs] = useState<Catalogs>(emptyCatalogs)
+  const [requestedTab, setRequestedTab] = useState(currentModule)
+  const [message, setMessage] = useState('')
+  const [accountBusy, setAccountBusy] = useState(false)
+  async function checkActivation() {
+    setAccountBusy(true); setMessage('')
+    try {
+      const updated = await refresh()
+      setMessage(updated?.state === 'pendiente' ? 'Tu cuenta sigue pendiente por activación.' : updated ? 'Tu cuenta ya está habilitada.' : 'Tu sesión ha finalizado. Inicia sesión nuevamente.')
+    } catch (cause) { setMessage(errorMessage(cause)) }
+    finally { setAccountBusy(false) }
+  }
+  async function logout() {
+    setAccountBusy(true); setMessage('')
+    try { await authRequest('logout', {}); setUser(null); window.location.hash = '#login' }
+    catch (cause) { setMessage(errorMessage(cause)) }
+    finally { setAccountBusy(false) }
+  }
+  async function reloadCatalogs() { setCatalogs(await api<Catalogs>('catalogs')) }
+  useEffect(() => {
+    let active = true
+    setCatalogs(emptyCatalogs)
+    if (has(user, 'gestion.acceder')) void api<Catalogs>('catalogs').then(result => { if (active) setCatalogs(result) }).catch(cause => { if (active) setMessage(errorMessage(cause)) })
+    return () => { active = false }
+  }, [accessKey])
+  useEffect(() => {
+    const update = () => { setRequestedTab(currentModule()); setMessage('') }
+    window.addEventListener('hashchange', update)
+    return () => window.removeEventListener('hashchange', update)
+  }, [])
+  const tabs = allowedModules(user).filter(module => module.key !== 'users')
+  const tab = tabs.some(module => module.key === requestedTab) ? requestedTab : tabs[0]?.key || ''
+  const navigation = <AdminNavigation user={user} active={tab} onSelect={key => { setRequestedTab(key); setMessage(''); window.location.hash = `#gestion/${key}` }}/>
+  return <AdminFrame title={tab === 'dashboard' ? 'Mi comunidad' : tabs.find(module => module.key === tab)?.label || 'Gestión de la comunidad'} sectionName={user?.state === 'pendiente' ? 'Activación de la cuenta' : tabs.find(module => module.key === tab)?.label || 'Comunidad'} navigation={navigation} viewKey={user?.state === 'pendiente' ? 'pending' : tab} user={user} onUserChange={setUser} compactNavigation={checking || tab === 'dashboard'}>
+    <div className="management-shell">
+    <div className="manage-message" role="status" aria-live="polite">{message || error}</div>
+    {checking ? <p>Verificando acceso…</p> : user?.state === 'pendiente' ? <section className="manage-editor manage-activation" aria-labelledby="activation-title">
+      <span className="manage-activation-icon"><AdminIcon name="permissions"/></span>
+      <div role="status" aria-live="polite"><h2 id="activation-title">Tu cuenta está pendiente por activación.</h2>
+        <p className="manage-activation-email">{user.email}</p>
+        <p>Tu sesión está iniciada. Un administrador, pastor o Superadmin debe activar tu cuenta y asignarte un rol para que puedas utilizar las herramientas del panel.</p>
+      </div>
+      <div className="manage-actions"><button type="button" disabled={accountBusy} onClick={() => void checkActivation()}>{accountBusy ? 'Consultando…' : 'Consultar activación'}</button><button type="button" className="secondary" disabled={accountBusy} onClick={() => void logout()}>Cerrar sesión</button></div>
+    </section> : !user || !has(user, 'gestion.acceder') ? <p>Necesitas una cuenta con un rol autorizado. <a href="#login">Ir a mi cuenta</a></p> : <>
+      <div className="manage-session"><span className="manage-session-dot"/><span>{user.roles.join(', ')}</span><span>Al servicio de nuestra comunidad</span></div>
+      {tab === 'dashboard' && <Dashboard key={accessKey} user={user} />}
+      {tab === 'mapa' && <Suspense fallback={<p>Cargando mapa de zonas…</p>}><CoverageMap key={accessKey} user={user}/></Suspense>}
+      {(['members', 'groups', 'activities'] as const).map(resource => tab === resource && <Records key={`${resource}-${accessKey}`} resource={resource} user={user} catalogs={catalogs} reloadCatalogs={reloadCatalogs} notify={setMessage} />)}
+      {tab === 'falls' && <Falls key={accessKey} user={user} notify={setMessage} />}{tab === 'reports' && <Reports user={user} notify={setMessage} />}
+      {tab === 'permissions' && <Permissions notify={setMessage} />}
+    </>}
+    </div>
+  </AdminFrame>
+}

@@ -1,0 +1,8 @@
+CREATE TABLE IF NOT EXISTS solicitud_participacion (
+  id_solicitud INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  nombre VARCHAR(120) NOT NULL,
+  telefono VARCHAR(30) NOT NULL,
+  ministerio VARCHAR(80) NOT NULL,
+  mensaje TEXT NOT NULL,
+  fecha_creacion DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB;

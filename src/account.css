@@ -1,0 +1,40 @@
+.panel-account-menu { position: relative; min-width: 0; }
+button.panel-account { border: 0; background: transparent; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.panel-account-label { overflow: hidden; text-overflow: ellipsis; max-width: 200px; white-space: nowrap; }
+.account-dropdown { position: absolute; top: calc(100% + 12px); right: 0; z-index: 90; width: min(286px,calc(100vw - 28px)); padding: 10px; border: 1px solid #edddd0; border-radius: 18px; background: #fffefd; box-shadow: 0 20px 50px -18px #6b321d30; }
+.account-menu-summary { display: grid; gap: 5px; padding: 12px; border-bottom: 1px solid #eee2d7; margin-bottom: 6px; min-width: 0; }
+.account-menu-summary strong { font-size: 13px; color: #49342a; overflow-wrap: anywhere; }
+.account-menu-summary span { font-size: 11px; color: #84756c; overflow-wrap: anywhere; }
+.account-dropdown button { display: block; width: 100%; min-height: 44px; padding: 12px; border: 0; border-radius: 10px; color: #524036; background: transparent; text-align: left; font: inherit; font-size: 12px; cursor: pointer; touch-action: manipulation; }
+.account-dropdown button:hover { background: #fff0e2; }
+.account-dropdown .account-menu-logout { color: #a14328; border-top: 1px solid #eee6db; border-radius: 0 0 10px 10px; margin-top: 6px; }
+.account-overlay { position: fixed; inset: 0; z-index: 300; display: grid; place-items: center; padding: 20px; overflow-y: auto; background: #16251d66; backdrop-filter: blur(5px); }
+.account-dialog { width: min(520px,100%); max-height: calc(100dvh - 40px); overflow-y: auto; padding: 28px; border: 1px solid #e7e6dc; border-radius: 22px; background: #fffefd; color: #26372d; box-shadow: 0 25px 80px #17251c40; }
+.account-dialog-heading { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
+.account-eyebrow { font-size: 9px; color: #8b936f; letter-spacing: .12em; }
+.account-dialog h2 { font-size: 25px; line-height: 1.3; margin: 7px 0 20px; letter-spacing: -.035em; }
+.account-dialog button { font: inherit; cursor: pointer; touch-action: manipulation; }
+.account-close { display: grid; place-items: center; width: 44px; height: 44px; flex-shrink: 0; border: 1px solid #e7e7dd; border-radius: 12px; background: #f6f6ef; color: #455347; font-size: 24px !important; }
+.account-tabs { display: flex; gap: 8px; padding: 6px; margin: 0 0 24px; border-radius: 12px; background: #f0f2e8; }
+.account-tabs button { flex: 1; min-height: 44px; border: 0; border-radius: 8px; background: transparent; color: #6d7966; font-size: 12px; }
+.account-tabs [aria-pressed=true] { background: #fffefd; color: #2c3f30; box-shadow: 0 3px 12px -8px #273b30; }
+.account-form { display: grid; gap: 16px; }
+.account-form label { display: grid; gap: 8px; font-size: 12px; font-weight: 550; }
+.account-form input { display: block; width: 100%; min-width: 0; min-height: 44px; padding: 12px; border: 1px solid #dedfd2; border-radius: 10px; background: white; color: #293a31; font: inherit; font-size: 14px; }
+.account-form input:focus { border-color: #96a481; box-shadow: 0 0 0 3px #dce5c84d; }
+.account-primary { min-height: 44px; padding: 13px 16px; border: 0; border-radius: 11px; background: #ed7545; color: #332419; font-weight: 650 !important; font-size: 13px !important; }
+.account-primary:hover { background: #f08b60; }
+.account-show-password { justify-self: start; border: 0; padding: 4px 0; background: transparent; color: #76634e; font-size: 11px !important; }
+.account-help { margin: 0; color: #7d8577; font-size: 12px; line-height: 1.7; }
+.account-feedback { padding: 12px; border-radius: 10px; background: #eef4e5; color: #45603e; font-size: 12px; line-height: 1.6; overflow-wrap: anywhere; }
+.account-feedback:empty { display: none; }
+.account-feedback.is-error { background: #fff0e7; color: #9c492c; }
+.account-dialog :is(button,input):focus-visible { outline: 2px solid #c56335; outline-offset: 3px; }
+.account-dialog :disabled { opacity: .55; cursor: wait; }
+@media(max-width:540px) {
+  .panel-account-menu { margin-left: auto; }
+  button.panel-account { min-height: 44px; min-width: 44px; justify-content: center; }
+  .account-overlay { padding: 12px; }
+  .account-dialog { max-height: calc(100dvh - 24px); padding: 22px 18px; border-radius: 18px; }
+  .account-dialog h2 { font-size: 22px; }
+}

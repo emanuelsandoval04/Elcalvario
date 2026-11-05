@@ -1,0 +1,18 @@
+# Only these files can enter the API build context.
+*
+!Dockerfile
+!package.json
+!package-lock.json
+!server/
+!server/**
+!scripts/
+!scripts/start-deploy.mjs
+!scripts/import-geodata.mjs
+!scripts/import-neighborhood-catalog.mjs
+!database/
+!database/**
+# Never include SQL dumps, environment files or private keys.
+**/.env*
+**/*.pem
+**/*.key
+database/**/*.sql

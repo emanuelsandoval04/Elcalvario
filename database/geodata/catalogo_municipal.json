@@ -1,0 +1,5345 @@
+[
+  {
+    "id": "1",
+    "denominacion": "EL CARAJO",
+    "condicion": "IL",
+    "area_m2": "1659855.84463000000",
+    "comuna": "COMUNA 0",
+    "porcentaje_comuna": "0"
+  },
+  {
+    "id": "2",
+    "denominacion": "EL LAUREL",
+    "condicion": "IL",
+    "area_m2": "205228.88893500000",
+    "comuna": "COMUNA 0",
+    "porcentaje_comuna": "0"
+  },
+  {
+    "id": "3",
+    "denominacion": "LA GRANJA",
+    "condicion": "IL",
+    "area_m2": "90068.37873940000",
+    "comuna": "COMUNA 0",
+    "porcentaje_comuna": "0"
+  },
+  {
+    "id": "4",
+    "denominacion": "NUEVO AMANECER POMPEYA",
+    "condicion": "LG",
+    "area_m2": "48520.92803570000",
+    "comuna": "COMUNA 0",
+    "porcentaje_comuna": "0"
+  },
+  {
+    "id": "5",
+    "denominacion": "CAÑO NEGRO RESERVADO",
+    "condicion": "IL",
+    "area_m2": "23847.38892500000",
+    "comuna": "COMUNA 0",
+    "porcentaje_comuna": "0"
+  },
+  {
+    "id": "6",
+    "denominacion": "PARCELAS FRANCISCO DIAZ",
+    "condicion": "IL",
+    "area_m2": "1138338.10328000000",
+    "comuna": "COMUNA 0",
+    "porcentaje_comuna": "0"
+  },
+  {
+    "id": "7",
+    "denominacion": "CONDOMINIO MONTEBELLO",
+    "condicion": "IL",
+    "area_m2": "55555.16537350000",
+    "comuna": "COMUNA 0",
+    "porcentaje_comuna": "0"
+  },
+  {
+    "id": "8",
+    "denominacion": "SAN RAFAEL",
+    "condicion": "IL",
+    "area_m2": "2160259.86953000000",
+    "comuna": "COMUNA 0",
+    "porcentaje_comuna": "0"
+  },
+  {
+    "id": "9",
+    "denominacion": "QUINTAS DEL OCOA",
+    "condicion": "IL",
+    "area_m2": "193549.35047600000",
+    "comuna": "COMUNA 0",
+    "porcentaje_comuna": "0"
+  },
+  {
+    "id": "10",
+    "denominacion": "AGUA DULCE - LUNA ROJA",
+    "condicion": "IL",
+    "area_m2": "204491.15925500000",
+    "comuna": "COMUNA 0",
+    "porcentaje_comuna": "0"
+  },
+  {
+    "id": "11",
+    "denominacion": "RESERVAS DEL MEDITERRANEO",
+    "condicion": "IL",
+    "area_m2": "23264.26772590000",
+    "comuna": "COMUNA 0",
+    "porcentaje_comuna": "0"
+  },
+  {
+    "id": "12",
+    "denominacion": "VILLAS DE SAN LUIS",
+    "condicion": "LG",
+    "area_m2": "31816.12844830000",
+    "comuna": "COMUNA 0",
+    "porcentaje_comuna": "0"
+  },
+  {
+    "id": "13",
+    "denominacion": "SECTOR MORICHALITO",
+    "condicion": "IL",
+    "area_m2": "301925.10390100000",
+    "comuna": "COMUNA 0",
+    "porcentaje_comuna": "0"
+  },
+  {
+    "id": "14",
+    "denominacion": "SECTOR LA MARIA 4",
+    "condicion": "IL",
+    "area_m2": "374906.80375400000",
+    "comuna": "COMUNA 0",
+    "porcentaje_comuna": "0"
+  },
+  {
+    "id": "15",
+    "denominacion": "VILLA MARTHA SECTOR NARANJAL",
+    "condicion": "IL",
+    "area_m2": "150815.17382000000",
+    "comuna": "COMUNA 0",
+    "porcentaje_comuna": "0"
+  },
+  {
+    "id": "16",
+    "denominacion": "RESERVAS DEL COCUY",
+    "condicion": "IL",
+    "area_m2": "118024.56860500000",
+    "comuna": "COMUNA 0",
+    "porcentaje_comuna": "0"
+  },
+  {
+    "id": "17",
+    "denominacion": "QUINTAS DEL OCOA",
+    "condicion": "IL",
+    "area_m2": "193549.33004000000",
+    "comuna": "COMUNA 0",
+    "porcentaje_comuna": "0"
+  },
+  {
+    "id": "18",
+    "denominacion": "VILLA FRANCIA",
+    "condicion": "IL",
+    "area_m2": "33754.28533330000",
+    "comuna": "COMUNA 0",
+    "porcentaje_comuna": "0"
+  },
+  {
+    "id": "19",
+    "denominacion": "SECTOR GUAYURIBA",
+    "condicion": "IL",
+    "area_m2": "9892.14572936000",
+    "comuna": "COMUNA 0",
+    "porcentaje_comuna": "0"
+  },
+  {
+    "id": "20",
+    "denominacion": "JARDIN DE LAS LOMAS",
+    "condicion": "IL",
+    "area_m2": "5563.80101714000",
+    "comuna": "COMUNA 0",
+    "porcentaje_comuna": "0"
+  },
+  {
+    "id": "21",
+    "denominacion": "GARCITAS DEL SOL",
+    "condicion": "IL",
+    "area_m2": "106505.51822400000",
+    "comuna": "COMUNA 0",
+    "porcentaje_comuna": "0"
+  },
+  {
+    "id": "22",
+    "denominacion": "AMANECER LLANERO",
+    "condicion": "IL",
+    "area_m2": "25935.00941110000",
+    "comuna": "COMUNA 0",
+    "porcentaje_comuna": "0"
+  },
+  {
+    "id": "23",
+    "denominacion": "SAN FERNANDO",
+    "condicion": "IL",
+    "area_m2": "176582.56188100000",
+    "comuna": "COMUNA 0",
+    "porcentaje_comuna": "0"
+  },
+  {
+    "id": "24",
+    "denominacion": "PAULINA CASAS VIEJAS",
+    "condicion": "LG",
+    "area_m2": "39361.21367650000",
+    "comuna": "COMUNA 0",
+    "porcentaje_comuna": "0"
+  },
+  {
+    "id": "25",
+    "denominacion": "SULTANA",
+    "condicion": "IL",
+    "area_m2": "14113.88813910000",
+    "comuna": "COMUNA 0",
+    "porcentaje_comuna": "0"
+  },
+  {
+    "id": "26",
+    "denominacion": "SAN FRANCISCO",
+    "condicion": "IL",
+    "area_m2": "44174.63230490000",
+    "comuna": "COMUNA 0",
+    "porcentaje_comuna": "0"
+  },
+  {
+    "id": "27",
+    "denominacion": "VALLES DE MESETAS",
+    "condicion": "IL",
+    "area_m2": "174937.65279900000",
+    "comuna": "COMUNA 0",
+    "porcentaje_comuna": "0"
+  },
+  {
+    "id": "28",
+    "denominacion": "VILLA SOFIA",
+    "condicion": "IL",
+    "area_m2": "59333.45271100000",
+    "comuna": "COMUNA 0",
+    "porcentaje_comuna": "0"
+  },
+  {
+    "id": "29",
+    "denominacion": "CLUB CONDOMINIO ODONTOLOGOS BOSQUES DE LA CALLEJA",
+    "condicion": "IL",
+    "area_m2": "129054.81135900000",
+    "comuna": "COMUNA 0",
+    "porcentaje_comuna": "0"
+  },
+  {
+    "id": "30",
+    "denominacion": "SECTOR LA ALAMEDA",
+    "condicion": "IL",
+    "area_m2": "84268.23789010000",
+    "comuna": "COMUNA 0",
+    "porcentaje_comuna": "0"
+  },
+  {
+    "id": "31",
+    "denominacion": "SECTOR_SANTA BARBARA",
+    "condicion": "IL",
+    "area_m2": "106000.99224000000",
+    "comuna": "COMUNA 0",
+    "porcentaje_comuna": "0"
+  },
+  {
+    "id": "32",
+    "denominacion": "SECTOR MONTEMADERO",
+    "condicion": "IL",
+    "area_m2": "59829.12340230000",
+    "comuna": "COMUNA 0",
+    "porcentaje_comuna": "0"
+  },
+  {
+    "id": "33",
+    "denominacion": "CONDOMINIO CAMP ENTREPINOS - SECTOR MEDIO",
+    "condicion": "IL",
+    "area_m2": "188591.98216800000",
+    "comuna": "COMUNA 0",
+    "porcentaje_comuna": "0"
+  },
+  {
+    "id": "34",
+    "denominacion": "BOSQUES DE NORMANDIA",
+    "condicion": "IL",
+    "area_m2": "325310.29459000000",
+    "comuna": "COMUNA 0",
+    "porcentaje_comuna": "0"
+  },
+  {
+    "id": "35",
+    "denominacion": "CATALANA",
+    "condicion": "LG",
+    "area_m2": "17025.80174770000",
+    "comuna": "COMUNA 1",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "36",
+    "denominacion": "ALCAZARES",
+    "condicion": "LG",
+    "area_m2": "28626.83734660000",
+    "comuna": "COMUNA 1",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "37",
+    "denominacion": "VIRREY",
+    "condicion": "LG",
+    "area_m2": "39538.51361650000",
+    "comuna": "COMUNA 1",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "38",
+    "denominacion": "EL TRIANGULO DEL CAUDAL ORIENTAL",
+    "condicion": "LG",
+    "area_m2": "57269.15963730000",
+    "comuna": "COMUNA 1",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "39",
+    "denominacion": "GALAN",
+    "condicion": "RC",
+    "area_m2": "43061.12027320000",
+    "comuna": "COMUNA 1",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "40",
+    "denominacion": "CAMPIÑA",
+    "condicion": "LG",
+    "area_m2": "51542.60898390000",
+    "comuna": "COMUNA 1",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "41",
+    "denominacion": "CAÑO FISTOLES",
+    "condicion": "LG",
+    "area_m2": "15372.35574830000",
+    "comuna": "COMUNA 1",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "42",
+    "denominacion": "SAN ANGEL",
+    "condicion": "LG",
+    "area_m2": "13905.97788120000",
+    "comuna": "COMUNA 1",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "43",
+    "denominacion": "TRIUNFO SUBNORMAL",
+    "condicion": "IL",
+    "area_m2": "54001.26980810000",
+    "comuna": "COMUNA 1",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "44",
+    "denominacion": "CAMBULOS",
+    "condicion": "LG",
+    "area_m2": "15961.91036430000",
+    "comuna": "COMUNA 1",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "45",
+    "denominacion": "CONJUNTO RESIDENCIAL LA JULIANA",
+    "condicion": "LG",
+    "area_m2": "4404.09563001000",
+    "comuna": "COMUNA 1",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "46",
+    "denominacion": "RONDINELLA",
+    "condicion": "LG",
+    "area_m2": "16103.35336700000",
+    "comuna": "COMUNA 1",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "47",
+    "denominacion": "MANAURE",
+    "condicion": "LG",
+    "area_m2": "16144.49158310000",
+    "comuna": "COMUNA 1",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "48",
+    "denominacion": "SANTA JOSEFA",
+    "condicion": "LG",
+    "area_m2": "67297.61502150000",
+    "comuna": "COMUNA 1",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "49",
+    "denominacion": "POBLADO",
+    "condicion": "LG",
+    "area_m2": "16594.95785790000",
+    "comuna": "COMUNA 1",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "50",
+    "denominacion": "PANORAMA",
+    "condicion": "LG",
+    "area_m2": "54413.21897030000",
+    "comuna": "COMUNA 1",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "51",
+    "denominacion": "PANORAMA DEL CAMPO",
+    "condicion": "LG",
+    "area_m2": "14206.07469740000",
+    "comuna": "COMUNA 1",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "52",
+    "denominacion": "PUERTA DEL SOL",
+    "condicion": "LG",
+    "area_m2": "14275.66876660000",
+    "comuna": "COMUNA 1",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "53",
+    "denominacion": "EL CAUDAL",
+    "condicion": "LG",
+    "area_m2": "93514.51722700000",
+    "comuna": "COMUNA 1",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "54",
+    "denominacion": "ALTOS DE PANORAMA",
+    "condicion": "LG",
+    "area_m2": "14457.41427870000",
+    "comuna": "COMUNA 1",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "55",
+    "denominacion": "PRADERA",
+    "condicion": "IL",
+    "area_m2": "52834.41162910000",
+    "comuna": "COMUNA 1",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "56",
+    "denominacion": "CHORRERA",
+    "condicion": "IL",
+    "area_m2": "2219.16300590000",
+    "comuna": "COMUNA 1",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "57",
+    "denominacion": "TEJARES DEL NORTE",
+    "condicion": "LG",
+    "area_m2": "8988.97227092000",
+    "comuna": "COMUNA 1",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "58",
+    "denominacion": "ANDES",
+    "condicion": "LG",
+    "area_m2": "15714.93941510000",
+    "comuna": "COMUNA 1",
+    "porcentaje_comuna": "97"
+  },
+  {
+    "id": "59",
+    "denominacion": "CHAPINERITO",
+    "condicion": "IL",
+    "area_m2": "64665.87715300000",
+    "comuna": "COMUNA 1",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "60",
+    "denominacion": "CEREZOS",
+    "condicion": "IL",
+    "area_m2": "8975.38083342000",
+    "comuna": "COMUNA 1",
+    "porcentaje_comuna": "97"
+  },
+  {
+    "id": "61",
+    "denominacion": "GIRASOLES",
+    "condicion": "IL",
+    "area_m2": "6404.52790054000",
+    "comuna": "COMUNA 1",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "62",
+    "denominacion": "DOCE DE OCTUBRE",
+    "condicion": "RC",
+    "area_m2": "93844.52180530000",
+    "comuna": "COMUNA 1",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "63",
+    "denominacion": "BALCONES DE SAIN NICOLAS",
+    "condicion": "LG",
+    "area_m2": "5244.60155372000",
+    "comuna": "COMUNA 1",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "64",
+    "denominacion": "TRIUNFO",
+    "condicion": "LG",
+    "area_m2": "198380.48037800000",
+    "comuna": "COMUNA 1",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "65",
+    "denominacion": "NUEVA GRANADA",
+    "condicion": "RC",
+    "area_m2": "7453.49458859000",
+    "comuna": "COMUNA 1",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "66",
+    "denominacion": "BOSQUES DE SAN FRANCISCO",
+    "condicion": "LG",
+    "area_m2": "3136.95083865000",
+    "comuna": "COMUNA 1",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "67",
+    "denominacion": "PRADOS DE SAN FRANCISCO",
+    "condicion": "LG",
+    "area_m2": "4630.25549681000",
+    "comuna": "COMUNA 1",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "68",
+    "denominacion": "POBLADO DE SAN PABLO",
+    "condicion": "LG",
+    "area_m2": "1849.88347073000",
+    "comuna": "COMUNA 1",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "69",
+    "denominacion": "TORRES DE MARSELLA",
+    "condicion": "LG",
+    "area_m2": "2613.51091315000",
+    "comuna": "COMUNA 1",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "70",
+    "denominacion": "CEDRITOS",
+    "condicion": "IL",
+    "area_m2": "11835.99954290000",
+    "comuna": "COMUNA 1",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "71",
+    "denominacion": "RECUERDO",
+    "condicion": "RC",
+    "area_m2": "4910.99339453000",
+    "comuna": "COMUNA 1",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "72",
+    "denominacion": "ESMERALDA NORTE SUBNORMAL",
+    "condicion": "IL",
+    "area_m2": "2517.42265605000",
+    "comuna": "COMUNA 1",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "73",
+    "denominacion": "PLAYA DE CAÑO PARRADO",
+    "condicion": "IL",
+    "area_m2": "40874.35920570000",
+    "comuna": "COMUNA 1",
+    "porcentaje_comuna": "97"
+  },
+  {
+    "id": "74",
+    "denominacion": "NUEVA GRANADA SUBNORMAL SECTOR UNO",
+    "condicion": "IL",
+    "area_m2": "10887.48049030000",
+    "comuna": "COMUNA 1",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "75",
+    "denominacion": "CAMPIÑA SUBNORMAL",
+    "condicion": "IL",
+    "area_m2": "7202.54553906000",
+    "comuna": "COMUNA 1",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "76",
+    "denominacion": "ESMERALDA",
+    "condicion": "LG",
+    "area_m2": "120893.21185500000",
+    "comuna": "COMUNA 1",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "77",
+    "denominacion": "GRAMA",
+    "condicion": "LG",
+    "area_m2": "126857.47541200000",
+    "comuna": "COMUNA 1",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "78",
+    "denominacion": "VILLA DEL ROSARIO",
+    "condicion": "LG",
+    "area_m2": "4390.23206820000",
+    "comuna": "COMUNA 1",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "79",
+    "denominacion": "NUEVA GRANADA SUBNORMAL SECTOR DOS",
+    "condicion": "IL",
+    "area_m2": "5970.60311902000",
+    "comuna": "COMUNA 1",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "80",
+    "denominacion": "DISTRITO",
+    "condicion": "IL",
+    "area_m2": "8402.57293722000",
+    "comuna": "COMUNA 1",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "81",
+    "denominacion": "EMPORIO SUBNORMAL",
+    "condicion": "IL",
+    "area_m2": "16203.14770550000",
+    "comuna": "COMUNA 1",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "82",
+    "denominacion": "ESMERALDA SUBNORMAL",
+    "condicion": "IL",
+    "area_m2": "17212.25297300000",
+    "comuna": "COMUNA 1",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "83",
+    "denominacion": "SAN FELIPE",
+    "condicion": "LG",
+    "area_m2": "9569.54539270000",
+    "comuna": "COMUNA 1",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "84",
+    "denominacion": "VILLA PATRICIA",
+    "condicion": "IL",
+    "area_m2": "11925.40693870000",
+    "comuna": "COMUNA 1",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "85",
+    "denominacion": "CERRO CAMPESTRE",
+    "condicion": "IL",
+    "area_m2": "9432.86011389000",
+    "comuna": "COMUNA 1",
+    "porcentaje_comuna": "96"
+  },
+  {
+    "id": "86",
+    "denominacion": "CEDROS",
+    "condicion": "IL",
+    "area_m2": "23162.12585840000",
+    "comuna": "COMUNA 1",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "87",
+    "denominacion": "CEREZOS SUBNORMAL",
+    "condicion": "IL",
+    "area_m2": "6418.81874231000",
+    "comuna": "COMUNA 1",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "88",
+    "denominacion": "ALCAZARES SUBNORMAL",
+    "condicion": "IL",
+    "area_m2": "9997.00677495000",
+    "comuna": "COMUNA 1",
+    "porcentaje_comuna": "91"
+  },
+  {
+    "id": "89",
+    "denominacion": "EL TRIANGULO",
+    "condicion": "IL",
+    "area_m2": "4344.86606814000",
+    "comuna": "COMUNA 1",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "90",
+    "denominacion": "CAUDAL ORIENTAL",
+    "condicion": "LG",
+    "area_m2": "105462.27261600000",
+    "comuna": "COMUNA 1",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "91",
+    "denominacion": "CAUDAL SECTOR OCCIDENTAL",
+    "condicion": "LG",
+    "area_m2": "19875.13380910000",
+    "comuna": "COMUNA 1",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "92",
+    "denominacion": "CAUDAL NORTE PRIMER SECTOR",
+    "condicion": "LG",
+    "area_m2": "10610.87318540000",
+    "comuna": "COMUNA 1",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "93",
+    "denominacion": "PATARROYO",
+    "condicion": "IL",
+    "area_m2": "108232.45675700000",
+    "comuna": "COMUNA 1",
+    "porcentaje_comuna": "1"
+  },
+  {
+    "id": "94",
+    "denominacion": "RINCON DEL PARAISO",
+    "condicion": "IL",
+    "area_m2": "17233.39754170000",
+    "comuna": "COMUNA 1",
+    "porcentaje_comuna": "16"
+  },
+  {
+    "id": "95",
+    "denominacion": "ROSAL",
+    "condicion": "IL",
+    "area_m2": "104707.81906300000",
+    "comuna": "COMUNA 1--COMUNA 2",
+    "porcentaje_comuna": "34--12"
+  },
+  {
+    "id": "96",
+    "denominacion": "EMPORIO BAJO",
+    "condicion": "IL",
+    "area_m2": "26185.66212000000",
+    "comuna": "COMUNA 1--COMUNA 2",
+    "porcentaje_comuna": "98--2"
+  },
+  {
+    "id": "97",
+    "denominacion": "EMPORIO",
+    "condicion": "LG",
+    "area_m2": "234283.93150400000",
+    "comuna": "COMUNA 1--COMUNA 3",
+    "porcentaje_comuna": "99--1"
+  },
+  {
+    "id": "98",
+    "denominacion": "VILLA JULIA SUBNORMAL",
+    "condicion": "IL",
+    "area_m2": "9760.90704841000",
+    "comuna": "COMUNA 1--COMUNA 3",
+    "porcentaje_comuna": "10--90"
+  },
+  {
+    "id": "99",
+    "denominacion": "BALCONES DE TOLEDO",
+    "condicion": "LG",
+    "area_m2": "15052.40320870000",
+    "comuna": "COMUNA 2",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "100",
+    "denominacion": "BALCONES DE SAN SOUCCI",
+    "condicion": "LG",
+    "area_m2": "42982.38477550000",
+    "comuna": "COMUNA 2",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "101",
+    "denominacion": "VILLA CODEM",
+    "condicion": "LG",
+    "area_m2": "40120.21792560000",
+    "comuna": "COMUNA 2",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "102",
+    "denominacion": "VILLA MARIA",
+    "condicion": "LG",
+    "area_m2": "44652.83962850000",
+    "comuna": "COMUNA 2",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "103",
+    "denominacion": "SIETE DE AGOSTO",
+    "condicion": "LG",
+    "area_m2": "180168.15538000000",
+    "comuna": "COMUNA 2",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "104",
+    "denominacion": "QUINTAS DE SAN SOUCCI",
+    "condicion": "LG",
+    "area_m2": "26438.77000370000",
+    "comuna": "COMUNA 2",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "105",
+    "denominacion": "TRAPICHE",
+    "condicion": "LG",
+    "area_m2": "39451.10397300000",
+    "comuna": "COMUNA 2",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "106",
+    "denominacion": "NUEVA ANDALUCIA",
+    "condicion": "LG",
+    "area_m2": "14501.41179310000",
+    "comuna": "COMUNA 2",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "107",
+    "denominacion": "PORTAL DE LOS OCOBOS",
+    "condicion": "LG",
+    "area_m2": "11834.98556900000",
+    "comuna": "COMUNA 2",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "108",
+    "denominacion": "PORTALES DEL TRAPICHE",
+    "condicion": "LG",
+    "area_m2": "22280.18666030000",
+    "comuna": "COMUNA 2",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "109",
+    "denominacion": "SAINT NICOLAS",
+    "condicion": "LG",
+    "area_m2": "9462.69956563000",
+    "comuna": "COMUNA 2",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "110",
+    "denominacion": "BALATA",
+    "condicion": "LG",
+    "area_m2": "19260.42860600000",
+    "comuna": "COMUNA 2",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "111",
+    "denominacion": "FAVORITA",
+    "condicion": "LG",
+    "area_m2": "9490.21472549000",
+    "comuna": "COMUNA 2",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "112",
+    "denominacion": "ESPEJO",
+    "condicion": "IL",
+    "area_m2": "7771.06391394000",
+    "comuna": "COMUNA 2",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "113",
+    "denominacion": "SAN FERNANDO",
+    "condicion": "LG",
+    "area_m2": "26547.31104380000",
+    "comuna": "COMUNA 2",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "114",
+    "denominacion": "SALLE",
+    "condicion": "RC",
+    "area_m2": "71705.34589340000",
+    "comuna": "COMUNA 2",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "115",
+    "denominacion": "MESETAS",
+    "condicion": "IL",
+    "area_m2": "69804.31758950000",
+    "comuna": "COMUNA 2",
+    "porcentaje_comuna": "31"
+  },
+  {
+    "id": "116",
+    "denominacion": "HACIENDA EL TRAPICHE",
+    "condicion": "LG",
+    "area_m2": "31317.37274770000",
+    "comuna": "COMUNA 2",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "117",
+    "denominacion": "CENTRO",
+    "condicion": "LG",
+    "area_m2": "252078.19992000000",
+    "comuna": "COMUNA 2",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "118",
+    "denominacion": "AZOTEA",
+    "condicion": "LG",
+    "area_m2": "30255.91313570000",
+    "comuna": "COMUNA 2",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "119",
+    "denominacion": "RINCON DE LAS MARGARITAS",
+    "condicion": "LG",
+    "area_m2": "17999.59781230000",
+    "comuna": "COMUNA 2",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "120",
+    "denominacion": "BARZAL",
+    "condicion": "LG",
+    "area_m2": "342421.83861400000",
+    "comuna": "COMUNA 2",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "121",
+    "denominacion": "BOSQUE ALTO",
+    "condicion": "LG",
+    "area_m2": "14571.54052290000",
+    "comuna": "COMUNA 2",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "122",
+    "denominacion": "BUGANBILES",
+    "condicion": "LG",
+    "area_m2": "19983.65547850000",
+    "comuna": "COMUNA 2",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "123",
+    "denominacion": "BALCONES DE LA CALLEJA",
+    "condicion": "LG",
+    "area_m2": "4533.76298174000",
+    "comuna": "COMUNA 2",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "124",
+    "denominacion": "MAIZARO",
+    "condicion": "LG",
+    "area_m2": "124502.36868100000",
+    "comuna": "COMUNA 2",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "125",
+    "denominacion": "PINOS",
+    "condicion": "LG",
+    "area_m2": "49348.63373940000",
+    "comuna": "COMUNA 2",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "126",
+    "denominacion": "SAN JOSE",
+    "condicion": "RC",
+    "area_m2": "27014.56827900000",
+    "comuna": "COMUNA 2",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "127",
+    "denominacion": "MAIZARO ALTO",
+    "condicion": "LG",
+    "area_m2": "32426.37605330000",
+    "comuna": "COMUNA 2",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "128",
+    "denominacion": "BUQUE",
+    "condicion": "LG",
+    "area_m2": "214337.11165000000",
+    "comuna": "COMUNA 2",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "129",
+    "denominacion": "BARZAL BAJO",
+    "condicion": "IL",
+    "area_m2": "6402.55703183000",
+    "comuna": "COMUNA 2",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "130",
+    "denominacion": "MARGARITAS",
+    "condicion": "LG",
+    "area_m2": "16630.63715890000",
+    "comuna": "COMUNA 2",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "131",
+    "denominacion": "VENECIA SUBNORMAL",
+    "condicion": "IL",
+    "area_m2": "23105.97202670000",
+    "comuna": "COMUNA 2",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "132",
+    "denominacion": "POZO VEINTE",
+    "condicion": "IL",
+    "area_m2": "5674.97306396000",
+    "comuna": "COMUNA 2",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "133",
+    "denominacion": "AZOTEA SUBNORMAL",
+    "condicion": "IL",
+    "area_m2": "14121.55094520000",
+    "comuna": "COMUNA 2",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "134",
+    "denominacion": "BRISAS DEL BUQUE ALTO",
+    "condicion": "IL",
+    "area_m2": "5154.33477739000",
+    "comuna": "COMUNA 2",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "135",
+    "denominacion": "BARZAL SUBNORMAL",
+    "condicion": "IL",
+    "area_m2": "3073.64636249000",
+    "comuna": "COMUNA 2",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "136",
+    "denominacion": "MIRADOR DEL LLANO",
+    "condicion": "LG",
+    "area_m2": "9052.83804546000",
+    "comuna": "COMUNA 2",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "137",
+    "denominacion": "ESTACION PISCICOLA",
+    "condicion": "SD",
+    "area_m2": "54600.56660660000",
+    "comuna": "COMUNA 2",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "138",
+    "denominacion": "GUADUALES CONDOMINIO",
+    "condicion": "LG",
+    "area_m2": "11996.37291650000",
+    "comuna": "COMUNA 2",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "139",
+    "denominacion": "CAMOA",
+    "condicion": "LG",
+    "area_m2": "32063.12444240000",
+    "comuna": "COMUNA 2",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "140",
+    "denominacion": "COLINAS",
+    "condicion": "RC",
+    "area_m2": "75469.37827210000",
+    "comuna": "COMUNA 2",
+    "porcentaje_comuna": "97"
+  },
+  {
+    "id": "141",
+    "denominacion": "ISLA",
+    "condicion": "IL",
+    "area_m2": "12254.11648910000",
+    "comuna": "COMUNA 2",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "142",
+    "denominacion": "CAMILO TORRES",
+    "condicion": "RC",
+    "area_m2": "34588.53484240000",
+    "comuna": "COMUNA 2",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "143",
+    "denominacion": "LIBERTADORES",
+    "condicion": "RC",
+    "area_m2": "58157.64137310000",
+    "comuna": "COMUNA 2",
+    "porcentaje_comuna": "70"
+  },
+  {
+    "id": "144",
+    "denominacion": "SIETE DE AGOSTO SUBNORMAL",
+    "condicion": "IL",
+    "area_m2": "53387.53701770000",
+    "comuna": "COMUNA 2",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "145",
+    "denominacion": "TERRAZAS DE IBIZA",
+    "condicion": "LG",
+    "area_m2": "504.86628623000",
+    "comuna": "COMUNA 2",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "146",
+    "denominacion": "ALTAMIRA",
+    "condicion": "IL",
+    "area_m2": "7710.36011390000",
+    "comuna": "COMUNA 2",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "147",
+    "denominacion": "BARZAL O NO BARZAL definir",
+    "area_m2": "13315.11451820000",
+    "comuna": "COMUNA 2",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "148",
+    "denominacion": "SANTA INES",
+    "condicion": "LG",
+    "area_m2": "164375.72776800000",
+    "comuna": "COMUNA 2--COMUNA 3",
+    "porcentaje_comuna": "9--91"
+  },
+  {
+    "id": "149",
+    "denominacion": "VILLA JULIA",
+    "condicion": "LG",
+    "area_m2": "143019.40963600000",
+    "comuna": "COMUNA 2--COMUNA 3",
+    "porcentaje_comuna": "8--92"
+  },
+  {
+    "id": "150",
+    "denominacion": "SAN ISIDRO",
+    "condicion": "LG",
+    "area_m2": "167939.22124500000",
+    "comuna": "COMUNA 2--COMUNA 3",
+    "porcentaje_comuna": "24--76"
+  },
+  {
+    "id": "151",
+    "denominacion": "SAN ISIDRO BAJO",
+    "condicion": "IL",
+    "area_m2": "100524.55187600000",
+    "comuna": "COMUNA 2--COMUNA 3",
+    "porcentaje_comuna": "22--78"
+  },
+  {
+    "id": "152",
+    "denominacion": "NUEVO MAIZARO",
+    "condicion": "LG",
+    "area_m2": "132341.06294300000",
+    "comuna": "COMUNA 2--COMUNA 3--COMUNA 6",
+    "porcentaje_comuna": "24--5--71"
+  },
+  {
+    "id": "153",
+    "denominacion": "PRIMAVERA URBANA",
+    "condicion": "PY",
+    "area_m2": "44261.75726750000",
+    "comuna": "COMUNA 2--COMUNA 7",
+    "porcentaje_comuna": "91--9"
+  },
+  {
+    "id": "154",
+    "denominacion": "SANTA MARIA DEL BUQUE",
+    "condicion": "PY",
+    "area_m2": "32089.38820990000",
+    "comuna": "COMUNA 2--COMUNA 7",
+    "porcentaje_comuna": "2--98"
+  },
+  {
+    "id": "155",
+    "denominacion": "PORVENIR",
+    "condicion": "LG",
+    "area_m2": "271121.06970600000",
+    "comuna": "COMUNA 3",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "156",
+    "denominacion": "SAN LUIS",
+    "condicion": "RC",
+    "area_m2": "24032.15149700000",
+    "comuna": "COMUNA 3",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "157",
+    "denominacion": "FERIAS",
+    "condicion": "IL",
+    "area_m2": "4934.85308088000",
+    "comuna": "COMUNA 3",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "158",
+    "denominacion": "VEINTE DE JULIO",
+    "condicion": "LG",
+    "area_m2": "133434.75364500000",
+    "comuna": "COMUNA 3",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "159",
+    "denominacion": "VAINILLA",
+    "condicion": "LG",
+    "area_m2": "75358.30503820000",
+    "comuna": "COMUNA 3",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "160",
+    "denominacion": "SAN GREGORIO",
+    "condicion": "LG",
+    "area_m2": "65090.21258570000",
+    "comuna": "COMUNA 3",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "161",
+    "denominacion": "DELICIAS",
+    "condicion": "LG",
+    "area_m2": "29154.40234530000",
+    "comuna": "COMUNA 3",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "162",
+    "denominacion": "BRISAS DEL GUATIQUIA",
+    "condicion": "RC",
+    "area_m2": "145207.46589900000",
+    "comuna": "COMUNA 3",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "163",
+    "denominacion": "SANTA FE",
+    "condicion": "IL",
+    "area_m2": "26658.62094050000",
+    "comuna": "COMUNA 3",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "164",
+    "denominacion": "INDUSTRIAL",
+    "condicion": "RC",
+    "area_m2": "9122.91550190000",
+    "comuna": "COMUNA 3",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "165",
+    "denominacion": "GUAYABAL I",
+    "condicion": "RC",
+    "area_m2": "39297.82228030000",
+    "comuna": "COMUNA 3",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "166",
+    "denominacion": "VILLA JULIA SUBNORMAL",
+    "condicion": "IL",
+    "area_m2": "2786.29160939000",
+    "comuna": "COMUNA 3",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "167",
+    "denominacion": "SANTANDER",
+    "condicion": "RC",
+    "area_m2": "26043.50936930000",
+    "comuna": "COMUNA 3--COMUNA 4",
+    "porcentaje_comuna": "2--98"
+  },
+  {
+    "id": "168",
+    "denominacion": "GUAYABAL II",
+    "condicion": "RC",
+    "area_m2": "212085.51293400000",
+    "comuna": "COMUNA 3--COMUNA 4",
+    "porcentaje_comuna": "77--19"
+  },
+  {
+    "id": "169",
+    "denominacion": "SAN LUIS SUR",
+    "condicion": "IL",
+    "area_m2": "4690.78736521000",
+    "comuna": "COMUNA 3--COMUNA 4",
+    "porcentaje_comuna": "99--1"
+  },
+  {
+    "id": "170",
+    "denominacion": "SAN MARCOS",
+    "condicion": "IL",
+    "area_m2": "81430.42223730000",
+    "comuna": "COMUNA 3--COMUNA 6",
+    "porcentaje_comuna": "1--99"
+  },
+  {
+    "id": "171",
+    "denominacion": "BRISAS DEL PASTRANA",
+    "condicion": "IL",
+    "area_m2": "16210.00859820000",
+    "comuna": "COMUNA 3--COMUNA 6",
+    "porcentaje_comuna": "1--99"
+  },
+  {
+    "id": "172",
+    "denominacion": "SIMON BOLIVAR",
+    "condicion": "RC",
+    "area_m2": "49983.57897740000",
+    "comuna": "COMUNA 3--COMUNA 6",
+    "porcentaje_comuna": "1--99"
+  },
+  {
+    "id": "173",
+    "denominacion": "ANTONIO RICAURTE",
+    "condicion": "RC",
+    "area_m2": "37893.45309190000",
+    "comuna": "COMUNA 3--COMUNA 6",
+    "porcentaje_comuna": "98--2"
+  },
+  {
+    "id": "174",
+    "denominacion": "JORGE ELIECER GAITAN",
+    "condicion": "IL",
+    "area_m2": "72196.82593120000",
+    "comuna": "COMUNA 3--COMUNA 6",
+    "porcentaje_comuna": "99--1"
+  },
+  {
+    "id": "175",
+    "denominacion": "VAINILLA BAJO",
+    "condicion": "IL",
+    "area_m2": "16191.24059840000",
+    "comuna": "COMUNA 3--COMUNA 6",
+    "porcentaje_comuna": "98--2"
+  },
+  {
+    "id": "176",
+    "denominacion": "PORVENIR EL HUECO",
+    "condicion": "IL",
+    "area_m2": "10460.61919090000",
+    "comuna": "COMUNA 3--COMUNA 6",
+    "porcentaje_comuna": "95--5"
+  },
+  {
+    "id": "177",
+    "denominacion": "DOS MIL ALTO",
+    "condicion": "IL",
+    "area_m2": "6332.12758465000",
+    "comuna": "COMUNA 3--COMUNA 6",
+    "porcentaje_comuna": "5--95"
+  },
+  {
+    "id": "178",
+    "denominacion": "ALCALA",
+    "condicion": "LG",
+    "area_m2": "25106.34034900000",
+    "comuna": "COMUNA 4",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "179",
+    "denominacion": "BASTILLA",
+    "condicion": "LG",
+    "area_m2": "38494.49026810000",
+    "comuna": "COMUNA 4",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "180",
+    "denominacion": "BAMBU",
+    "condicion": "LG",
+    "area_m2": "22624.88123120000",
+    "comuna": "COMUNA 4",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "181",
+    "denominacion": "BALCONES DE PONTEVEDRA",
+    "condicion": "LG",
+    "area_m2": "10706.18039520000",
+    "comuna": "COMUNA 4",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "182",
+    "denominacion": "DESMOTADORA SECTOR CUATRO",
+    "condicion": "RC",
+    "area_m2": "12129.32208630000",
+    "comuna": "COMUNA 4",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "183",
+    "denominacion": "CASTILLA",
+    "condicion": "LG",
+    "area_m2": "37149.98376670000",
+    "comuna": "COMUNA 4",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "184",
+    "denominacion": "TULIPANES",
+    "condicion": "LG",
+    "area_m2": "16050.69020970000",
+    "comuna": "COMUNA 4",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "185",
+    "denominacion": "CANAAN",
+    "condicion": "LG",
+    "area_m2": "67377.95784390000",
+    "comuna": "COMUNA 4",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "186",
+    "denominacion": "BOSQUES DE ABAJAM",
+    "condicion": "LG",
+    "area_m2": "172509.85745000000",
+    "comuna": "COMUNA 4",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "187",
+    "denominacion": "MADRIGAL",
+    "condicion": "LG",
+    "area_m2": "89026.47805390000",
+    "comuna": "COMUNA 4",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "188",
+    "denominacion": "MANANTIAL",
+    "condicion": "LG",
+    "area_m2": "166408.17200100000",
+    "comuna": "COMUNA 4",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "189",
+    "denominacion": "SEIS DE ABRIL",
+    "condicion": "LG",
+    "area_m2": "44491.11806330000",
+    "comuna": "COMUNA 4",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "190",
+    "denominacion": "SAUCES",
+    "condicion": "LG",
+    "area_m2": "11778.30910710000",
+    "comuna": "COMUNA 4",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "191",
+    "denominacion": "CRISTALES",
+    "condicion": "IL",
+    "area_m2": "9955.15083557000",
+    "comuna": "COMUNA 4",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "192",
+    "denominacion": "ROSALES",
+    "condicion": "LG",
+    "area_m2": "57495.42632480000",
+    "comuna": "COMUNA 4",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "193",
+    "denominacion": "DELIRIO - COVISAN",
+    "condicion": "LG",
+    "area_m2": "247017.52857200000",
+    "comuna": "COMUNA 4",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "194",
+    "denominacion": "GAITANA",
+    "condicion": "LG",
+    "area_m2": "19211.87635880000",
+    "comuna": "COMUNA 4",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "195",
+    "denominacion": "MORICHAL",
+    "condicion": "LG",
+    "area_m2": "203015.01448800000",
+    "comuna": "COMUNA 4",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "196",
+    "denominacion": "PRADOS DE SIBERIA",
+    "condicion": "LG",
+    "area_m2": "64172.52644170000",
+    "comuna": "COMUNA 4",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "197",
+    "denominacion": "SANTA CATALINA",
+    "condicion": "LG",
+    "area_m2": "76488.95824750000",
+    "comuna": "COMUNA 4",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "198",
+    "denominacion": "CIUDAD SALITRE",
+    "condicion": "LG",
+    "area_m2": "151177.36598100000",
+    "comuna": "COMUNA 4",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "199",
+    "denominacion": "COPECAL",
+    "condicion": "LG",
+    "area_m2": "8293.87048046000",
+    "comuna": "COMUNA 4",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "200",
+    "denominacion": "VILLA DEL SOL",
+    "condicion": "LG",
+    "area_m2": "57422.51500470000",
+    "comuna": "COMUNA 4",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "201",
+    "denominacion": "BOSQUE",
+    "condicion": "LG",
+    "area_m2": "45394.06139430000",
+    "comuna": "COMUNA 4",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "202",
+    "denominacion": "LLANO GRANDE",
+    "condicion": "LG",
+    "area_m2": "8986.77474414000",
+    "comuna": "COMUNA 4",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "203",
+    "denominacion": "SANTA LUCIA",
+    "condicion": "LG",
+    "area_m2": "45056.85032170000",
+    "comuna": "COMUNA 4",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "204",
+    "denominacion": "MALVINAS",
+    "condicion": "IL",
+    "area_m2": "53045.22949840000",
+    "comuna": "COMUNA 4",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "205",
+    "denominacion": "ANTONIO VILLAVICENCIO",
+    "condicion": "IL",
+    "area_m2": "66274.06851160000",
+    "comuna": "COMUNA 4",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "206",
+    "denominacion": "ANTONIO VILLAVICENCIO SUBNORMAL",
+    "condicion": "IL",
+    "area_m2": "14088.67773520000",
+    "comuna": "COMUNA 4",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "207",
+    "denominacion": "PARCELAS DEL PROGRESO",
+    "condicion": "IL",
+    "area_m2": "450381.85791200000",
+    "comuna": "COMUNA 4",
+    "porcentaje_comuna": "94"
+  },
+  {
+    "id": "208",
+    "denominacion": "DESMOTADORA SECTOR DOS",
+    "condicion": "RC",
+    "area_m2": "9355.08143417000",
+    "comuna": "COMUNA 4",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "209",
+    "denominacion": "MALIBU",
+    "condicion": "LG",
+    "area_m2": "13563.31164590000",
+    "comuna": "COMUNA 4",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "210",
+    "denominacion": "CONSUELO",
+    "condicion": "LG",
+    "area_m2": "11640.66825640000",
+    "comuna": "COMUNA 4",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "211",
+    "denominacion": "SEIS DE ABRIL SUBNORMAL",
+    "condicion": "IL",
+    "area_m2": "10583.36075150000",
+    "comuna": "COMUNA 4",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "212",
+    "denominacion": "PARQUES DE SEVILLA",
+    "condicion": "LG",
+    "area_m2": "52449.21480530000",
+    "comuna": "COMUNA 4",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "213",
+    "denominacion": "BARLOVENTO",
+    "condicion": "LG",
+    "area_m2": "33952.73791400000",
+    "comuna": "COMUNA 4",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "214",
+    "denominacion": "VILLA CRISTINA",
+    "condicion": "LG",
+    "area_m2": "9871.10238662000",
+    "comuna": "COMUNA 4",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "215",
+    "denominacion": "VILLA KARINA",
+    "condicion": "LG",
+    "area_m2": "5554.57741266000",
+    "comuna": "COMUNA 4",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "216",
+    "denominacion": "HIERBABUENA",
+    "condicion": "LG",
+    "area_m2": "43057.55833880000",
+    "comuna": "COMUNA 4",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "217",
+    "denominacion": "PRADOS DE CASTILLA",
+    "condicion": "LG",
+    "area_m2": "4682.25491222000",
+    "comuna": "COMUNA 4",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "218",
+    "denominacion": "PARQUES DE CASTILLA",
+    "condicion": "LG",
+    "area_m2": "5316.22739883000",
+    "comuna": "COMUNA 4",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "219",
+    "denominacion": "ALMERIA PALMA REAL",
+    "condicion": "LG",
+    "area_m2": "18365.83891260000",
+    "comuna": "COMUNA 4",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "220",
+    "denominacion": "GIRASOLES",
+    "condicion": "LG",
+    "area_m2": "13310.44763950000",
+    "comuna": "COMUNA 4",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "221",
+    "denominacion": "CAMINO REAL",
+    "condicion": "LG",
+    "area_m2": "113880.66641800000",
+    "comuna": "COMUNA 4",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "222",
+    "denominacion": "GIRASOLES",
+    "condicion": "LG",
+    "area_m2": "12796.86548320000",
+    "comuna": "COMUNA 4",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "223",
+    "denominacion": "BARCELONA",
+    "condicion": "PY",
+    "area_m2": "31012.59722030000",
+    "comuna": "COMUNA 4",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "224",
+    "denominacion": "RINCON DE LOS ROSALES",
+    "condicion": "LG",
+    "area_m2": "11033.52883780000",
+    "comuna": "COMUNA 4",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "225",
+    "denominacion": "PRADOS DE ABAJAM",
+    "condicion": "IL",
+    "area_m2": "4720.84125431000",
+    "comuna": "COMUNA 4",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "226",
+    "denominacion": "DESMOTADORA SECTOR TRES",
+    "condicion": "RC",
+    "area_m2": "6384.59774634000",
+    "comuna": "COMUNA 4",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "227",
+    "denominacion": "DESMOTADORA SECTOR UNO",
+    "condicion": "RC",
+    "area_m2": "4715.63945479000",
+    "comuna": "COMUNA 4",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "228",
+    "denominacion": "JORDAN",
+    "condicion": "LG",
+    "area_m2": "91097.24462340000",
+    "comuna": "COMUNA 4",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "229",
+    "denominacion": "CEIBA B",
+    "condicion": "PY",
+    "area_m2": "330238.26860900000",
+    "comuna": "COMUNA 4",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "230",
+    "denominacion": "CEIBA A",
+    "condicion": "PY",
+    "area_m2": "356283.01406300000",
+    "comuna": "COMUNA 4",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "231",
+    "denominacion": "GEMELOS",
+    "condicion": "IL",
+    "area_m2": "37149.04457060000",
+    "comuna": "COMUNA 4",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "232",
+    "denominacion": "RECREO",
+    "condicion": "PY",
+    "area_m2": "108248.19612600000",
+    "comuna": "COMUNA 4",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "233",
+    "denominacion": "FORESTAL",
+    "condicion": "PY",
+    "area_m2": "279765.39591000000",
+    "comuna": "COMUNA 4",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "234",
+    "denominacion": "MI RANCHITO",
+    "condicion": "PY",
+    "area_m2": "61213.37079720000",
+    "comuna": "COMUNA 4",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "235",
+    "denominacion": "RECREO SUBNORMAL",
+    "condicion": "IL",
+    "area_m2": "15547.48548480000",
+    "comuna": "COMUNA 4",
+    "porcentaje_comuna": "99"
+  },
+  {
+    "id": "236",
+    "denominacion": "CEDRITOS",
+    "condicion": "IL",
+    "area_m2": "52795.45226630000",
+    "comuna": "COMUNA 4",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "237",
+    "denominacion": "BOSQUE DE PALMA",
+    "condicion": "PY",
+    "area_m2": "40152.28090940000",
+    "comuna": "COMUNA 4",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "238",
+    "denominacion": "FORTALEZA",
+    "condicion": "SD",
+    "area_m2": "9733.18007734000",
+    "comuna": "COMUNA 4",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "239",
+    "denominacion": "PORTALES DE COVISAN",
+    "condicion": "LG",
+    "area_m2": "32849.76734260000",
+    "comuna": "COMUNA 4",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "240",
+    "denominacion": "GAITANA SUBNORMAL",
+    "condicion": "IL",
+    "area_m2": "7030.33855607000",
+    "comuna": "COMUNA 4",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "241",
+    "denominacion": "VILLA MONICA",
+    "condicion": "IL",
+    "area_m2": "44069.82386010000",
+    "comuna": "COMUNA 4",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "242",
+    "denominacion": "GIRASOLES DEL TURPIAL",
+    "condicion": "IL",
+    "area_m2": "185781.19903800000",
+    "comuna": "COMUNA 4",
+    "porcentaje_comuna": "96"
+  },
+  {
+    "id": "243",
+    "denominacion": "VILLA PAULINA",
+    "condicion": "LG",
+    "area_m2": "58450.43670840000",
+    "comuna": "COMUNA 4",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "244",
+    "denominacion": "JORDAN RESERVADO",
+    "condicion": "LG",
+    "area_m2": "44816.26069890000",
+    "comuna": "COMUNA 4",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "245",
+    "denominacion": "JORDAN ALTO",
+    "condicion": "LG",
+    "area_m2": "19260.84840980000",
+    "comuna": "COMUNA 4",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "246",
+    "denominacion": "BOSQUES DE ABAJAM SUBNORMAL",
+    "condicion": "IL",
+    "area_m2": "6316.19050517000",
+    "comuna": "COMUNA 4",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "247",
+    "denominacion": "EMMANUEL",
+    "condicion": "IL",
+    "area_m2": "7200.37801325000",
+    "comuna": "COMUNA 4",
+    "porcentaje_comuna": "80"
+  },
+  {
+    "id": "248",
+    "denominacion": "VENCEDORES",
+    "condicion": "LG",
+    "area_m2": "129610.44496600000",
+    "comuna": "COMUNA 4",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "249",
+    "denominacion": "NUEVA COLOMBIA I",
+    "condicion": "LG",
+    "area_m2": "71473.47144570000",
+    "comuna": "COMUNA 4",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "250",
+    "denominacion": "NUEVA COLOMBIA II",
+    "condicion": "LG",
+    "area_m2": "50231.70967920000",
+    "comuna": "COMUNA 4",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "251",
+    "denominacion": "TOPACIO",
+    "condicion": "LG",
+    "area_m2": "46955.03239080000",
+    "comuna": "COMUNA 4",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "252",
+    "denominacion": "CAUDALES",
+    "condicion": "LG",
+    "area_m2": "32059.25267800000",
+    "comuna": "COMUNA 4",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "253",
+    "denominacion": "ALTOS DE OKAVANGO (PH ESMERALDA)",
+    "condicion": "LG",
+    "area_m2": "14247.32764210000",
+    "comuna": "COMUNA 4",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "254",
+    "denominacion": "GIRASOL",
+    "condicion": "LG",
+    "area_m2": "35999.27377430000",
+    "comuna": "COMUNA 4",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "255",
+    "denominacion": "VILLA FABIOLA",
+    "condicion": "LG",
+    "area_m2": "21277.49631380000",
+    "comuna": "COMUNA 4",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "256",
+    "denominacion": "PARAISO",
+    "condicion": "LG",
+    "area_m2": "166785.15488400000",
+    "comuna": "COMUNA 4",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "257",
+    "denominacion": "DESMONTADORA",
+    "condicion": "IL",
+    "area_m2": "69640.87202560000",
+    "comuna": "COMUNA 4",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "258",
+    "denominacion": "VILLAS DE CATAMA",
+    "condicion": "LG",
+    "area_m2": "83430.55796140000",
+    "comuna": "COMUNA 4",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "259",
+    "denominacion": "QUINTAS DE LA ESPERANZA",
+    "condicion": "LG",
+    "area_m2": "23327.92612240000",
+    "comuna": "COMUNA 4",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "260",
+    "denominacion": "PORTALES DEL LLANO",
+    "condicion": "LG",
+    "area_m2": "75317.52674090000",
+    "comuna": "COMUNA 4",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "261",
+    "denominacion": "UNIPORTALES",
+    "condicion": "LG",
+    "area_m2": "28157.97630210000",
+    "comuna": "COMUNA 4",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "262",
+    "denominacion": "SAN LUIS",
+    "condicion": "IL",
+    "area_m2": "11154.06149770000",
+    "comuna": "COMUNA 4",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "263",
+    "denominacion": "FLORENCIA",
+    "condicion": "LG",
+    "area_m2": "84139.26907360000",
+    "comuna": "COMUNA 4",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "264",
+    "denominacion": "PARQUE HABITACIONAL LA ESMERALDA - ETAPA 1",
+    "condicion": "LG",
+    "area_m2": "115936.29839200000",
+    "comuna": "COMUNA 4",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "265",
+    "denominacion": "SANTA HELENA",
+    "condicion": "LG",
+    "area_m2": "116449.78334100000",
+    "comuna": "COMUNA 4",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "266",
+    "denominacion": "CALAMAR",
+    "condicion": "LG",
+    "area_m2": "17517.76209450000",
+    "comuna": "COMUNA 4",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "267",
+    "denominacion": "VILLAS DEL PROGRESO",
+    "condicion": "IL",
+    "area_m2": "31748.31140630000",
+    "comuna": "COMUNA 4",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "268",
+    "denominacion": "VILLA SUAREZ",
+    "condicion": "RC",
+    "area_m2": "100875.23298300000",
+    "comuna": "COMUNA 4",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "269",
+    "denominacion": "RINCON DE SANTA HELENA",
+    "condicion": "LG",
+    "area_m2": "9398.10863950000",
+    "comuna": "COMUNA 4",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "270",
+    "denominacion": "PRADOS DE HIERBABUENA",
+    "condicion": "LG",
+    "area_m2": "10317.65196280000",
+    "comuna": "COMUNA 4",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "271",
+    "denominacion": "BRISAS DEL VALLE",
+    "condicion": "IL",
+    "area_m2": "32144.21117620000",
+    "comuna": "COMUNA 4",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "272",
+    "denominacion": "VILLA CAMPESTRE",
+    "condicion": "IL",
+    "area_m2": "28760.11553030000",
+    "comuna": "COMUNA 4",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "273",
+    "denominacion": "QUINTAS DE LA ESPERANZA SUBNORMAL",
+    "condicion": "IL",
+    "area_m2": "11302.09782930000",
+    "comuna": "COMUNA 4",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "274",
+    "denominacion": "RECREO SECTOR TRES",
+    "condicion": "LG",
+    "area_m2": "32476.59722450000",
+    "comuna": "COMUNA 4",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "275",
+    "denominacion": "EL REFUGIO",
+    "condicion": "LG",
+    "area_m2": "20689.42007750000",
+    "comuna": "COMUNA 4",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "276",
+    "denominacion": "VILLA ALEJANDRA",
+    "condicion": "IL",
+    "area_m2": "11990.35294700000",
+    "comuna": "COMUNA 4",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "277",
+    "denominacion": "SECOR TOTUMO NUEVA ESPERANZA Y MAR├ìA SABOGAL",
+    "condicion": "IL",
+    "area_m2": "62222.33404210000",
+    "comuna": "COMUNA 4",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "278",
+    "denominacion": "CEIBA",
+    "condicion": "LG",
+    "area_m2": "98890.03101560000",
+    "comuna": "COMUNA 4--COMUNA 5",
+    "porcentaje_comuna": "99--1"
+  },
+  {
+    "id": "279",
+    "denominacion": "RECREO",
+    "condicion": "LG",
+    "area_m2": "74673.16269250000",
+    "comuna": "COMUNA 4--COMUNA 5",
+    "porcentaje_comuna": "98--2"
+  },
+  {
+    "id": "280",
+    "denominacion": "MILAGRO",
+    "condicion": "LG",
+    "area_m2": "59582.46640250000",
+    "comuna": "COMUNA 4--COMUNA 5",
+    "porcentaje_comuna": "98--2"
+  },
+  {
+    "id": "281",
+    "denominacion": "SAN FELIPE",
+    "condicion": "LG",
+    "area_m2": "9761.94704184000",
+    "comuna": "COMUNA 4--COMUNA 5",
+    "porcentaje_comuna": "99--1"
+  },
+  {
+    "id": "282",
+    "denominacion": "SAN CARLOS SUB NORMAL",
+    "condicion": "IL",
+    "area_m2": "25184.79758950000",
+    "comuna": "COMUNA 4--COMUNA 5",
+    "porcentaje_comuna": "2--98"
+  },
+  {
+    "id": "283",
+    "denominacion": "RODEO SUBNORMAL",
+    "condicion": "IL",
+    "area_m2": "10505.39847770000",
+    "comuna": "COMUNA 4--COMUNA 5",
+    "porcentaje_comuna": "16--84"
+  },
+  {
+    "id": "284",
+    "denominacion": "MARIA II",
+    "condicion": "PY",
+    "area_m2": "139173.21274200000",
+    "comuna": "COMUNA 4--COMUNA 5",
+    "porcentaje_comuna": "33--67"
+  },
+  {
+    "id": "285",
+    "denominacion": "GALICIA",
+    "condicion": "PY",
+    "area_m2": "495879.28561900000",
+    "comuna": "COMUNA 4--COMUNA 5",
+    "porcentaje_comuna": "13--87"
+  },
+  {
+    "id": "286",
+    "denominacion": "JUANAMBU",
+    "condicion": "PY",
+    "area_m2": "1051023.94461000000",
+    "comuna": "COMUNA 4--COMUNA 5",
+    "porcentaje_comuna": "6--94"
+  },
+  {
+    "id": "287",
+    "denominacion": "SAN GERARDO V",
+    "condicion": "PY",
+    "area_m2": "101791.17863200000",
+    "comuna": "COMUNA 4--COMUNA 5",
+    "porcentaje_comuna": "14--86"
+  },
+  {
+    "id": "288",
+    "denominacion": "SAN GERARDO III",
+    "condicion": "PY",
+    "area_m2": "175097.17607400000",
+    "comuna": "COMUNA 4--COMUNA 5",
+    "porcentaje_comuna": "99--1"
+  },
+  {
+    "id": "289",
+    "denominacion": "POPULAR OLIMPICO",
+    "condicion": "LG",
+    "area_m2": "397845.83812600000",
+    "comuna": "COMUNA 4--COMUNA 5",
+    "porcentaje_comuna": "1--99"
+  },
+  {
+    "id": "290",
+    "denominacion": "BOSQUES DE SANTIAGO",
+    "condicion": "PY",
+    "area_m2": "97709.71788780000",
+    "comuna": "COMUNA 4--COMUNA 5",
+    "porcentaje_comuna": "98--2"
+  },
+  {
+    "id": "291",
+    "denominacion": "CALASANZ",
+    "condicion": "PY",
+    "area_m2": "47520.18431340000",
+    "comuna": "COMUNA 4--COMUNA 5",
+    "porcentaje_comuna": "32--68"
+  },
+  {
+    "id": "292",
+    "denominacion": "DOS MIL",
+    "condicion": "LG",
+    "area_m2": "152572.07766800000",
+    "comuna": "COMUNA 4--COMUNA 5--COMUNA 6",
+    "porcentaje_comuna": "1--68--31"
+  },
+  {
+    "id": "293",
+    "denominacion": "VILLA HELENA",
+    "condicion": "LG",
+    "area_m2": "13304.25507540000",
+    "comuna": "COMUNA 5",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "294",
+    "denominacion": "VILLA NIEVES",
+    "condicion": "LG",
+    "area_m2": "13984.96306970000",
+    "comuna": "COMUNA 5",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "295",
+    "denominacion": "SINDAMANOY",
+    "condicion": "LG",
+    "area_m2": "28285.55976370000",
+    "comuna": "COMUNA 5",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "296",
+    "denominacion": "MACUNAYMA",
+    "condicion": "LG",
+    "area_m2": "101823.06865400000",
+    "comuna": "COMUNA 5",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "297",
+    "denominacion": "VIZCAYA",
+    "condicion": "LG",
+    "area_m2": "87528.23095610000",
+    "comuna": "COMUNA 5",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "298",
+    "denominacion": "VILLA ALEJANDRA",
+    "condicion": "LG",
+    "area_m2": "10545.52454860000",
+    "comuna": "COMUNA 5",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "299",
+    "denominacion": "REMANSO",
+    "condicion": "LG",
+    "area_m2": "76468.29098280000",
+    "comuna": "COMUNA 5",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "300",
+    "denominacion": "DANUBIO",
+    "condicion": "LG",
+    "area_m2": "56483.59184350000",
+    "comuna": "COMUNA 5",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "301",
+    "denominacion": "SAN IGNACIO",
+    "condicion": "LG",
+    "area_m2": "92283.40275040000",
+    "comuna": "COMUNA 5",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "302",
+    "denominacion": "NUEVA FLORESTA",
+    "condicion": "RC",
+    "area_m2": "50404.43627930000",
+    "comuna": "COMUNA 5",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "303",
+    "denominacion": "MARACOS",
+    "condicion": "LG",
+    "area_m2": "224418.72684600000",
+    "comuna": "COMUNA 5",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "304",
+    "denominacion": "MARCO ANTONIO PINILLA",
+    "condicion": "LG",
+    "area_m2": "158289.46767300000",
+    "comuna": "COMUNA 5",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "305",
+    "denominacion": "NUEVA ESPERANZA",
+    "condicion": "LG",
+    "area_m2": "25839.58376380000",
+    "comuna": "COMUNA 5",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "306",
+    "denominacion": "RODEO",
+    "condicion": "LG",
+    "area_m2": "104912.34047900000",
+    "comuna": "COMUNA 5",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "307",
+    "denominacion": "PACANDE",
+    "condicion": "LG",
+    "area_m2": "49731.04337660000",
+    "comuna": "COMUNA 5",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "308",
+    "denominacion": "SABANA",
+    "condicion": "LG",
+    "area_m2": "65982.09168430000",
+    "comuna": "COMUNA 5",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "309",
+    "denominacion": "VALLES DE ARAGON",
+    "condicion": "LG",
+    "area_m2": "82421.76423530000",
+    "comuna": "COMUNA 5",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "310",
+    "denominacion": "FIKUS",
+    "condicion": "LG",
+    "area_m2": "25964.16540920000",
+    "comuna": "COMUNA 5",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "311",
+    "denominacion": "VILLA MELIDA",
+    "condicion": "LG",
+    "area_m2": "100021.53848200000",
+    "comuna": "COMUNA 5",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "312",
+    "denominacion": "SOCIEGO",
+    "condicion": "LG",
+    "area_m2": "34713.30593840000",
+    "comuna": "COMUNA 5",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "313",
+    "denominacion": "CAROLINA",
+    "condicion": "LG",
+    "area_m2": "109003.31373500000",
+    "comuna": "COMUNA 5",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "314",
+    "denominacion": "ALMENDROS",
+    "condicion": "LG",
+    "area_m2": "9932.66008034000",
+    "comuna": "COMUNA 5",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "315",
+    "denominacion": "ESTERO",
+    "condicion": "LG",
+    "area_m2": "409843.60000900000",
+    "comuna": "COMUNA 5",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "316",
+    "denominacion": "BIFAMILIAR HACARITAMA",
+    "condicion": "LG",
+    "area_m2": "6202.32945876000",
+    "comuna": "COMUNA 5",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "317",
+    "denominacion": "LAGUNA",
+    "condicion": "IL",
+    "area_m2": "18114.48237470000",
+    "comuna": "COMUNA 5",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "318",
+    "denominacion": "SECTOR TERMINAL",
+    "condicion": "LG",
+    "area_m2": "63503.64534740000",
+    "comuna": "COMUNA 5",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "319",
+    "denominacion": "TORRES DEL MEDITERRANEO",
+    "condicion": "LG",
+    "area_m2": "25914.31758210000",
+    "comuna": "COMUNA 5",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "320",
+    "denominacion": "RESERVA DE VIZCAYA",
+    "condicion": "LG",
+    "area_m2": "23664.59369630000",
+    "comuna": "COMUNA 5",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "321",
+    "denominacion": "PRIMAVERA SUBNORMAL",
+    "condicion": "IL",
+    "area_m2": "23038.22391700000",
+    "comuna": "COMUNA 5",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "322",
+    "denominacion": "BOCHICA",
+    "condicion": "LG",
+    "area_m2": "57450.23737380000",
+    "comuna": "COMUNA 5",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "323",
+    "denominacion": "ACAPULCO SUBNORMAL",
+    "condicion": "IL",
+    "area_m2": "7619.15626387000",
+    "comuna": "COMUNA 5",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "324",
+    "denominacion": "ACAPULCO",
+    "condicion": "LG",
+    "area_m2": "48037.78111810000",
+    "comuna": "COMUNA 5",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "325",
+    "denominacion": "ARANJUEZ II",
+    "condicion": "LG",
+    "area_m2": "16338.76638000000",
+    "comuna": "COMUNA 5",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "326",
+    "denominacion": "ARIGUANI",
+    "condicion": "LG",
+    "area_m2": "36857.54188190000",
+    "comuna": "COMUNA 5",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "327",
+    "denominacion": "BELLO HORIZONTE SUBNORMAL",
+    "condicion": "IL",
+    "area_m2": "11553.76241020000",
+    "comuna": "COMUNA 5",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "328",
+    "denominacion": "VIÑA DEL MAR",
+    "condicion": "IL",
+    "area_m2": "16616.28757610000",
+    "comuna": "COMUNA 5",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "329",
+    "denominacion": "POPULAR OLIMPICO SUBNORMAL",
+    "condicion": "IL",
+    "area_m2": "1823.25965170000",
+    "comuna": "COMUNA 5",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "330",
+    "denominacion": "TRIUNFADORES DEL OCOA",
+    "condicion": "IL",
+    "area_m2": "15238.00983770000",
+    "comuna": "COMUNA 5",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "331",
+    "denominacion": "BUENOS AIRES",
+    "condicion": "LG",
+    "area_m2": "12695.30232970000",
+    "comuna": "COMUNA 5",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "332",
+    "denominacion": "CATALUÑA",
+    "condicion": "LG",
+    "area_m2": "43841.00473910000",
+    "comuna": "COMUNA 5",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "333",
+    "denominacion": "AY MI LLANURA",
+    "condicion": "LG",
+    "area_m2": "129256.15319200000",
+    "comuna": "COMUNA 5",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "334",
+    "denominacion": "ARANJUEZ I",
+    "condicion": "LG",
+    "area_m2": "6544.76946564000",
+    "comuna": "COMUNA 5",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "335",
+    "denominacion": "BELLO HORIZONTE",
+    "condicion": "LG",
+    "area_m2": "24820.60881410000",
+    "comuna": "COMUNA 5",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "336",
+    "denominacion": "CERRO CAMPESTRE ALTO",
+    "condicion": "LG",
+    "area_m2": "74266.31776520000",
+    "comuna": "COMUNA 5",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "337",
+    "denominacion": "HACARITAMA",
+    "condicion": "LG",
+    "area_m2": "110910.73184000000",
+    "comuna": "COMUNA 5",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "338",
+    "denominacion": "BOSQUES DE VIZCAYA",
+    "condicion": "LG",
+    "area_m2": "43168.13060200000",
+    "comuna": "COMUNA 5",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "339",
+    "denominacion": "BOSQUES DE MORELIA",
+    "condicion": "LG",
+    "area_m2": "35167.52901520000",
+    "comuna": "COMUNA 5",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "340",
+    "denominacion": "CAVIVIR",
+    "condicion": "LG",
+    "area_m2": "46767.68584410000",
+    "comuna": "COMUNA 5",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "341",
+    "denominacion": "VILLA JOHANNA",
+    "condicion": "LG",
+    "area_m2": "58504.92593790000",
+    "comuna": "COMUNA 5",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "342",
+    "denominacion": "VILLA ORTIZ",
+    "condicion": "LG",
+    "area_m2": "81070.97198060000",
+    "comuna": "COMUNA 5",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "343",
+    "denominacion": "DOÑA LUZ",
+    "condicion": "LG",
+    "area_m2": "96531.74495230000",
+    "comuna": "COMUNA 5",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "344",
+    "denominacion": "VILLA ORIENTE",
+    "condicion": "LG",
+    "area_m2": "12873.94545180000",
+    "comuna": "COMUNA 5",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "345",
+    "denominacion": "MENEGUA",
+    "condicion": "RC",
+    "area_m2": "9942.73697944000",
+    "comuna": "COMUNA 5",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "346",
+    "denominacion": "CIUDADELA DIVINO NIÑO",
+    "condicion": "LG",
+    "area_m2": "12610.73234880000",
+    "comuna": "COMUNA 5",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "347",
+    "denominacion": "CIUDADELA DIVINO NIÑO SUBNORMAL",
+    "condicion": "IL",
+    "area_m2": "14229.31596200000",
+    "comuna": "COMUNA 5",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "348",
+    "denominacion": "BRISAS DEL OCOA TERCER MILENIO",
+    "condicion": "IL",
+    "area_m2": "615318.35784000000",
+    "comuna": "COMUNA 5",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "349",
+    "denominacion": "GUADALAJARA",
+    "condicion": "LG",
+    "area_m2": "54057.51257740000",
+    "comuna": "COMUNA 5",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "350",
+    "denominacion": "PORTAL DEL MOLINO",
+    "condicion": "LG",
+    "area_m2": "27647.90182930000",
+    "comuna": "COMUNA 5",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "351",
+    "denominacion": "BIFAMILIARES LA PRIMAVERA",
+    "condicion": "LG",
+    "area_m2": "14027.09683080000",
+    "comuna": "COMUNA 5",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "352",
+    "denominacion": "PRIMAVERA",
+    "condicion": "LG",
+    "area_m2": "30405.32687850000",
+    "comuna": "COMUNA 5",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "353",
+    "denominacion": "PRIMAVERA SUBNORMAL",
+    "condicion": "SD",
+    "area_m2": "11066.48951470000",
+    "comuna": "COMUNA 5",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "354",
+    "denominacion": "VILLA ENCANTO",
+    "condicion": "IL",
+    "area_m2": "17480.88926290000",
+    "comuna": "COMUNA 5",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "355",
+    "denominacion": "CAMINOS DE SEVILLA",
+    "condicion": "LG",
+    "area_m2": "26014.95825460000",
+    "comuna": "COMUNA 5",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "356",
+    "denominacion": "SAN CARLOS",
+    "condicion": "LG",
+    "area_m2": "239122.80109100000",
+    "comuna": "COMUNA 5",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "357",
+    "denominacion": "CIUDADELA LA MARIA",
+    "condicion": "PY",
+    "area_m2": "449755.93205700000",
+    "comuna": "COMUNA 5",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "358",
+    "denominacion": "LETICIA",
+    "condicion": "PY",
+    "area_m2": "388573.58511900000",
+    "comuna": "COMUNA 5",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "359",
+    "denominacion": "CAMINO DEL SOL",
+    "condicion": "SD",
+    "area_m2": "155300.97174200000",
+    "comuna": "COMUNA 5",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "360",
+    "denominacion": "CIUDADELA DEL PRADO",
+    "condicion": "PY",
+    "area_m2": "64534.65487640000",
+    "comuna": "COMUNA 5",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "361",
+    "denominacion": "QUINTAS DE AGUAS CLARAS",
+    "condicion": "IL",
+    "area_m2": "65951.01740710000",
+    "comuna": "COMUNA 5",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "362",
+    "denominacion": "DELICIAS",
+    "condicion": "PY",
+    "area_m2": "157126.27233600000",
+    "comuna": "COMUNA 5",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "363",
+    "denominacion": "VILLA SAMPER",
+    "condicion": "LG",
+    "area_m2": "42386.45920480000",
+    "comuna": "COMUNA 5",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "364",
+    "denominacion": "KIRPAS",
+    "condicion": "LG",
+    "area_m2": "115432.79851800000",
+    "comuna": "COMUNA 5",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "365",
+    "denominacion": "VILLA VALERIA",
+    "condicion": "LG",
+    "area_m2": "21988.17453100000",
+    "comuna": "COMUNA 5",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "366",
+    "denominacion": "SANTA ISABEL",
+    "condicion": "PY",
+    "area_m2": "79699.56320990000",
+    "comuna": "COMUNA 5",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "367",
+    "denominacion": "VILLAVENTO",
+    "condicion": "LG",
+    "area_m2": "20900.01370110000",
+    "comuna": "COMUNA 5",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "368",
+    "denominacion": "PALMAS DE VALLARTA",
+    "condicion": "LG",
+    "area_m2": "25661.69054110000",
+    "comuna": "COMUNA 5",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "369",
+    "denominacion": "CONQUISTA",
+    "condicion": "IL",
+    "area_m2": "7843.05531958000",
+    "comuna": "COMUNA 5",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "370",
+    "denominacion": "CIUDAD REAL",
+    "condicion": "LG",
+    "area_m2": "42111.37992090000",
+    "comuna": "COMUNA 5",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "371",
+    "denominacion": "OASIS",
+    "condicion": "IL",
+    "area_m2": "26494.48119190000",
+    "comuna": "COMUNA 5",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "372",
+    "denominacion": "RINCON DE LA MARIA",
+    "condicion": "LG",
+    "area_m2": "23854.67312770000",
+    "comuna": "COMUNA 5",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "373",
+    "denominacion": "ALAMEDA DEL BOSQUE",
+    "condicion": "LG",
+    "area_m2": "32437.12300620000",
+    "comuna": "COMUNA 5",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "374",
+    "denominacion": "CAMELIAS",
+    "condicion": "LG",
+    "area_m2": "92662.06325120000",
+    "comuna": "COMUNA 5",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "375",
+    "denominacion": "PORTALES DE LA PRIMAVERA",
+    "condicion": "LG",
+    "area_m2": "14244.23521750000",
+    "comuna": "COMUNA 5",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "376",
+    "denominacion": "NUEVA ESPERANZA II",
+    "condicion": "LG",
+    "area_m2": "25468.38369200000",
+    "comuna": "COMUNA 5",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "377",
+    "denominacion": "PARQUE DE CANAGUAY",
+    "condicion": "LG",
+    "area_m2": "16648.85167260000",
+    "comuna": "COMUNA 5",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "378",
+    "denominacion": "PARQUE LINEAL VIZCAYA",
+    "condicion": "LG",
+    "area_m2": "12794.41379470000",
+    "comuna": "COMUNA 5",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "379",
+    "denominacion": "PARCELAS DE KIRPAS",
+    "condicion": "IL",
+    "area_m2": "86662.22765530000",
+    "comuna": "COMUNA 5",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "380",
+    "denominacion": "TOSCANA",
+    "condicion": "LG",
+    "area_m2": "34869.65225210000",
+    "comuna": "COMUNA 5",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "381",
+    "denominacion": "VILLA NIEVES SUBNORMAL",
+    "condicion": "IL",
+    "area_m2": "21549.66389840000",
+    "comuna": "COMUNA 5",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "382",
+    "denominacion": "BALCONES DEL DANUBIO",
+    "condicion": "PY",
+    "area_m2": "5326.08270273000",
+    "comuna": "COMUNA 5",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "383",
+    "denominacion": "QUINTAS DE SANTA CLARA",
+    "condicion": "SD",
+    "area_m2": "23718.91637730000",
+    "comuna": "COMUNA 5",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "384",
+    "denominacion": "QUINTAS DE MORELIA",
+    "condicion": "LG",
+    "area_m2": "116438.98441000000",
+    "comuna": "COMUNA 5",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "385",
+    "denominacion": "GAVIOTAS",
+    "condicion": "LG",
+    "area_m2": "108429.67014500000",
+    "comuna": "COMUNA 5",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "386",
+    "denominacion": "GAVIOTAS SUBNORMAL",
+    "condicion": "IL",
+    "area_m2": "28465.38246440000",
+    "comuna": "COMUNA 5",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "387",
+    "denominacion": "MIRADOR DEL LLANO II",
+    "condicion": "PY",
+    "area_m2": "21438.25618460000",
+    "comuna": "COMUNA 5",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "388",
+    "denominacion": "GRACIELITA",
+    "condicion": "SD",
+    "area_m2": "290568.68852700000",
+    "comuna": "COMUNA 5",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "389",
+    "denominacion": "REMANSOS DEL LLANO",
+    "condicion": "PY",
+    "area_m2": "51898.95947530000",
+    "comuna": "COMUNA 5",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "390",
+    "denominacion": "DUARY II",
+    "condicion": "PY",
+    "area_m2": "19623.38923280000",
+    "comuna": "COMUNA 5",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "391",
+    "denominacion": "QUINTAS DE TOSCANA",
+    "condicion": "LG",
+    "area_m2": "18571.89401490000",
+    "comuna": "COMUNA 5",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "392",
+    "denominacion": "CATALUÑA SUBNORMAL",
+    "condicion": "IL",
+    "area_m2": "3128.79284056000",
+    "comuna": "COMUNA 5",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "393",
+    "denominacion": "VILLAS DEL ALCARAVAN",
+    "condicion": "LG",
+    "area_m2": "19912.88820610000",
+    "comuna": "COMUNA 5",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "394",
+    "denominacion": "SANTA CECILIA",
+    "condicion": "LG",
+    "area_m2": "6317.19722987000",
+    "comuna": "COMUNA 5",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "395",
+    "denominacion": "SANTA CECILIA SUBNORMAL",
+    "condicion": "IL",
+    "area_m2": "5041.68362425000",
+    "comuna": "COMUNA 5",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "396",
+    "denominacion": "SAN DIEGO",
+    "condicion": "IL",
+    "area_m2": "30529.57927170000",
+    "comuna": "COMUNA 5",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "397",
+    "denominacion": "LAS MARGARITAS",
+    "condicion": "IL",
+    "area_m2": "107903.58310600000",
+    "comuna": "COMUNA 5",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "398",
+    "denominacion": "RINCON DE LAS COLINAS",
+    "condicion": "IL",
+    "area_m2": "75658.78947190000",
+    "comuna": "COMUNA 5",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "399",
+    "denominacion": "JERIC├ô",
+    "condicion": "LG",
+    "area_m2": "20697.59869700000",
+    "comuna": "COMUNA 5",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "400",
+    "denominacion": "BALCONES DE AGUAS CLARAS",
+    "condicion": "IL",
+    "area_m2": "49804.29270100000",
+    "comuna": "COMUNA 5",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "401",
+    "denominacion": "CANTARRANA",
+    "condicion": "LG",
+    "area_m2": "106862.38333300000",
+    "comuna": "COMUNA 5--COMUNA 6",
+    "porcentaje_comuna": "36--64"
+  },
+  {
+    "id": "402",
+    "denominacion": "CATATUMBO SUBNORMAL",
+    "condicion": "IL",
+    "area_m2": "15901.56887550000",
+    "comuna": "COMUNA 5--COMUNA 6",
+    "porcentaje_comuna": "62--38"
+  },
+  {
+    "id": "403",
+    "denominacion": "BULEVAR CODEM",
+    "condicion": "LG",
+    "area_m2": "56324.67578850000",
+    "comuna": "COMUNA 5--COMUNA 7",
+    "porcentaje_comuna": "2--98"
+  },
+  {
+    "id": "404",
+    "denominacion": "ROSITA SUBNORMAL COOPERATIVA",
+    "condicion": "IL",
+    "area_m2": "22552.87801710000",
+    "comuna": "COMUNA 5--COMUNA 7",
+    "porcentaje_comuna": "3--97"
+  },
+  {
+    "id": "405",
+    "denominacion": "ROSITA",
+    "condicion": "LG",
+    "area_m2": "39167.07088340000",
+    "comuna": "COMUNA 5--COMUNA 7",
+    "porcentaje_comuna": "1--99"
+  },
+  {
+    "id": "406",
+    "denominacion": "AGUAS CLARAS",
+    "condicion": "IL",
+    "area_m2": "19152.56795020000",
+    "comuna": "COMUNA 5--COMUNA 7",
+    "porcentaje_comuna": "26--74"
+  },
+  {
+    "id": "407",
+    "denominacion": "SECTOR CHORILLANO",
+    "condicion": "IL",
+    "area_m2": "183530.79045500000",
+    "comuna": "COMUNA 5--COMUNA 7",
+    "porcentaje_comuna": "1--99"
+  },
+  {
+    "id": "408",
+    "denominacion": "CANAIMA",
+    "condicion": "LG",
+    "area_m2": "56503.25639740000",
+    "comuna": "COMUNA 6",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "409",
+    "denominacion": "BRISAS DEL CANEY",
+    "condicion": "LG",
+    "area_m2": "13994.55980960000",
+    "comuna": "COMUNA 6",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "410",
+    "denominacion": "AMARAL",
+    "condicion": "LG",
+    "area_m2": "10161.63206330000",
+    "comuna": "COMUNA 6",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "411",
+    "denominacion": "MACARENA",
+    "condicion": "LG",
+    "area_m2": "72935.28472400000",
+    "comuna": "COMUNA 6",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "412",
+    "denominacion": "TEUSACA",
+    "condicion": "LG",
+    "area_m2": "17440.79666720000",
+    "comuna": "COMUNA 6",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "413",
+    "denominacion": "GUATIQUIA",
+    "condicion": "LG",
+    "area_m2": "32960.24460760000",
+    "comuna": "COMUNA 6",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "414",
+    "denominacion": "SAN BENITO",
+    "condicion": "LG",
+    "area_m2": "304322.25254600000",
+    "comuna": "COMUNA 6",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "415",
+    "denominacion": "NOGAL",
+    "condicion": "LG",
+    "area_m2": "15432.63612900000",
+    "comuna": "COMUNA 6",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "416",
+    "denominacion": "SAUSALITO",
+    "condicion": "LG",
+    "area_m2": "18132.23125010000",
+    "comuna": "COMUNA 6",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "417",
+    "denominacion": "RETIRO",
+    "condicion": "LG",
+    "area_m2": "132080.72791500000",
+    "comuna": "COMUNA 6",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "418",
+    "denominacion": "SAN FRANCISCO",
+    "condicion": "IL",
+    "area_m2": "40990.78775300000",
+    "comuna": "COMUNA 6",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "419",
+    "denominacion": "MARSELLA",
+    "condicion": "LG",
+    "area_m2": "7880.75643485000",
+    "comuna": "COMUNA 6",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "420",
+    "denominacion": "SAN CRISTOBAL",
+    "condicion": "LG",
+    "area_m2": "12779.99864950000",
+    "comuna": "COMUNA 6",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "421",
+    "denominacion": "FLORIDA SUBNORMAL",
+    "condicion": "IL",
+    "area_m2": "34853.59529390000",
+    "comuna": "COMUNA 6",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "422",
+    "denominacion": "FLORIDA",
+    "condicion": "LG",
+    "area_m2": "86153.64094490000",
+    "comuna": "COMUNA 6",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "423",
+    "denominacion": "CANEY",
+    "condicion": "LG",
+    "area_m2": "11175.70266820000",
+    "comuna": "COMUNA 6",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "424",
+    "denominacion": "GARCIA BOHORQUEZ",
+    "condicion": "LG",
+    "area_m2": "17463.18271690000",
+    "comuna": "COMUNA 6",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "425",
+    "denominacion": "LOMONACO",
+    "condicion": "IL",
+    "area_m2": "2550.12891939000",
+    "comuna": "COMUNA 6",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "426",
+    "denominacion": "FLORIDA BAJA",
+    "condicion": "IL",
+    "area_m2": "15911.05312650000",
+    "comuna": "COMUNA 6",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "427",
+    "denominacion": "VILLA ADRIANA",
+    "condicion": "LG",
+    "area_m2": "4768.26966249000",
+    "comuna": "COMUNA 6",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "428",
+    "denominacion": "NUEVO RICAURTE SUBNORMAL",
+    "condicion": "SD",
+    "area_m2": "1520.14817501000",
+    "comuna": "COMUNA 6",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "429",
+    "denominacion": "OASIS",
+    "condicion": "LG",
+    "area_m2": "5003.18407110000",
+    "comuna": "COMUNA 6",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "430",
+    "denominacion": "FLORIDA SUBNORMAL",
+    "condicion": "IL",
+    "area_m2": "50977.42083800000",
+    "comuna": "COMUNA 6",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "431",
+    "denominacion": "ESPERANZA",
+    "condicion": "LG",
+    "area_m2": "330725.65965300000",
+    "comuna": "COMUNA 6--COMUNA 7",
+    "porcentaje_comuna": "31--69"
+  },
+  {
+    "id": "432",
+    "denominacion": "EMBUDO",
+    "condicion": "IL",
+    "area_m2": "62033.60136660000",
+    "comuna": "COMUNA 6--COMUNA 7",
+    "porcentaje_comuna": "70--29"
+  },
+  {
+    "id": "433",
+    "denominacion": "NUEVO RICAURTE",
+    "condicion": "LG",
+    "area_m2": "105189.38387700000",
+    "comuna": "COMUNA 6--COMUNA 7",
+    "porcentaje_comuna": "59--41"
+  },
+  {
+    "id": "434",
+    "denominacion": "ALBORADA",
+    "condicion": "LG",
+    "area_m2": "288248.26853800000",
+    "comuna": "COMUNA 7",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "435",
+    "denominacion": "CARULU",
+    "condicion": "LG",
+    "area_m2": "27163.89816390000",
+    "comuna": "COMUNA 7",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "436",
+    "denominacion": "PIAMONTE",
+    "condicion": "LG",
+    "area_m2": "39518.03504540000",
+    "comuna": "COMUNA 7",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "437",
+    "denominacion": "ACACIAS",
+    "condicion": "LG",
+    "area_m2": "43379.97089410000",
+    "comuna": "COMUNA 7",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "438",
+    "denominacion": "CENTAUROS",
+    "condicion": "LG",
+    "area_m2": "22637.48745790000",
+    "comuna": "COMUNA 7",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "439",
+    "denominacion": "VILLA DEL PALMAR",
+    "condicion": "LG",
+    "area_m2": "23735.49819090000",
+    "comuna": "COMUNA 7",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "440",
+    "denominacion": "SESQUICENTENARIO",
+    "condicion": "LG",
+    "area_m2": "30457.55660580000",
+    "comuna": "COMUNA 7",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "441",
+    "denominacion": "ESPERANZA 2001",
+    "condicion": "LG",
+    "area_m2": "11005.09016990000",
+    "comuna": "COMUNA 7",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "442",
+    "denominacion": "BRISAS DEL BUQUE",
+    "condicion": "IL",
+    "area_m2": "26633.90927670000",
+    "comuna": "COMUNA 7",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "443",
+    "denominacion": "ESPERANZA",
+    "condicion": "LG",
+    "area_m2": "544771.05904800000",
+    "comuna": "COMUNA 7",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "444",
+    "denominacion": "BOSQUES DE LOS CENTAUROS",
+    "condicion": "SD",
+    "area_m2": "23076.84214810000",
+    "comuna": "COMUNA 7",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "445",
+    "denominacion": "ALTAGRACIA",
+    "condicion": "LG",
+    "area_m2": "130542.53426300000",
+    "comuna": "COMUNA 7",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "446",
+    "denominacion": "VILLA CLAUDIA",
+    "condicion": "LG",
+    "area_m2": "18285.64611570000",
+    "comuna": "COMUNA 7",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "447",
+    "denominacion": "SERRANIA",
+    "condicion": "LG",
+    "area_m2": "27450.87122660000",
+    "comuna": "COMUNA 7",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "448",
+    "denominacion": "TORRES DE SAN JUAN",
+    "condicion": "LG",
+    "area_m2": "18610.67996410000",
+    "comuna": "COMUNA 7",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "449",
+    "denominacion": "JARDIN",
+    "condicion": "LG",
+    "area_m2": "13764.45759620000",
+    "comuna": "COMUNA 7",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "450",
+    "denominacion": "CORALINA",
+    "condicion": "LG",
+    "area_m2": "119440.27400000000",
+    "comuna": "COMUNA 7",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "451",
+    "denominacion": "SANTA MARTA",
+    "condicion": "LG",
+    "area_m2": "19094.91107950000",
+    "comuna": "COMUNA 7",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "452",
+    "denominacion": "PALMAR",
+    "condicion": "LG",
+    "area_m2": "20626.49026190000",
+    "comuna": "COMUNA 7",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "453",
+    "denominacion": "DIAMANTE",
+    "condicion": "LG",
+    "area_m2": "7686.44392763000",
+    "comuna": "COMUNA 7",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "454",
+    "denominacion": "ROSA BLANCA ORIENTAL",
+    "condicion": "LG",
+    "area_m2": "44147.53869440000",
+    "comuna": "COMUNA 7",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "455",
+    "denominacion": "ROSALINDA",
+    "condicion": "LG",
+    "area_m2": "24379.23435600000",
+    "comuna": "COMUNA 7",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "456",
+    "denominacion": "ROSA BLANCA",
+    "condicion": "LG",
+    "area_m2": "54158.30579380000",
+    "comuna": "COMUNA 7",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "457",
+    "denominacion": "ROSITA SUBNORMAL",
+    "condicion": "IL",
+    "area_m2": "160361.45862400000",
+    "comuna": "COMUNA 7",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "458",
+    "denominacion": "PLENAVIDA",
+    "condicion": "LG",
+    "area_m2": "25743.03331960000",
+    "comuna": "COMUNA 7",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "459",
+    "denominacion": "JUAN PABLO II",
+    "condicion": "LG",
+    "area_m2": "22188.56483010000",
+    "comuna": "COMUNA 7",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "460",
+    "denominacion": "OCOA I",
+    "condicion": "IL",
+    "area_m2": "23692.18332290000",
+    "comuna": "COMUNA 7",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "461",
+    "denominacion": "VILLA BOLIVAR",
+    "condicion": "LG",
+    "area_m2": "103211.24078000000",
+    "comuna": "COMUNA 7",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "462",
+    "denominacion": "PRIMERO DE MAYO",
+    "condicion": "IL",
+    "area_m2": "91846.49174280000",
+    "comuna": "COMUNA 7",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "463",
+    "denominacion": "VILLA HERMOSA",
+    "condicion": "LG",
+    "area_m2": "40242.65408140000",
+    "comuna": "COMUNA 7",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "464",
+    "denominacion": "JOSE OTTER",
+    "condicion": "LG",
+    "area_m2": "48710.53725280000",
+    "comuna": "COMUNA 7",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "465",
+    "denominacion": "REFUGIO",
+    "condicion": "IL",
+    "area_m2": "3493.82412638000",
+    "comuna": "COMUNA 7",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "466",
+    "denominacion": "REMANSOS DE ROSA BLANCA",
+    "condicion": "LG",
+    "area_m2": "72871.17075770000",
+    "comuna": "COMUNA 7",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "467",
+    "denominacion": "QUINTAS DE LAS ACACIAS",
+    "condicion": "LG",
+    "area_m2": "7977.17399755000",
+    "comuna": "COMUNA 7",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "468",
+    "denominacion": "VILLA HUMBERTO",
+    "condicion": "RC",
+    "area_m2": "23921.70259250000",
+    "comuna": "COMUNA 7",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "469",
+    "denominacion": "CASIBARITO",
+    "condicion": "LG",
+    "area_m2": "31968.63332470000",
+    "comuna": "COMUNA 7",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "470",
+    "denominacion": "BRISAS DE LA ESPERANZA",
+    "condicion": "IL",
+    "area_m2": "30523.51869290000",
+    "comuna": "COMUNA 7",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "471",
+    "denominacion": "ESPERANZA SUBNORMAL SECTOR UNO",
+    "condicion": "SD",
+    "area_m2": "4071.47020171000",
+    "comuna": "COMUNA 7",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "472",
+    "denominacion": "ESPERANZA SUBNORMAL SECTOR DOS",
+    "condicion": "IL",
+    "area_m2": "3253.41111598000",
+    "comuna": "COMUNA 7",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "473",
+    "denominacion": "ESPERANZA SUBNORMAL",
+    "condicion": "IL",
+    "area_m2": "1698.18448449000",
+    "comuna": "COMUNA 7",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "474",
+    "denominacion": "COMUNEROS",
+    "condicion": "LG",
+    "area_m2": "81304.75878620000",
+    "comuna": "COMUNA 7",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "475",
+    "denominacion": "ALBORADA SUBNORMAL",
+    "condicion": "IL",
+    "area_m2": "27530.50883670000",
+    "comuna": "COMUNA 7",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "476",
+    "denominacion": "PORTAL DE CASIBARE",
+    "condicion": "LG",
+    "area_m2": "43290.28081280000",
+    "comuna": "COMUNA 7",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "477",
+    "denominacion": "CEREZOS",
+    "condicion": "LG",
+    "area_m2": "27056.39391800000",
+    "comuna": "COMUNA 7",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "478",
+    "denominacion": "CABAÑA",
+    "condicion": "LG",
+    "area_m2": "24740.53293110000",
+    "comuna": "COMUNA 7",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "479",
+    "denominacion": "PARQUES DE LA CALLEJA",
+    "condicion": "LG",
+    "area_m2": "5723.54672937000",
+    "comuna": "COMUNA 7",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "480",
+    "denominacion": "CIUDADELA CENTAUROS",
+    "condicion": "LG",
+    "area_m2": "98591.45788130000",
+    "comuna": "COMUNA 7",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "481",
+    "denominacion": "COMUNEROS SUBNORMAL",
+    "condicion": "IL",
+    "area_m2": "26935.55625690000",
+    "comuna": "COMUNA 7",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "482",
+    "denominacion": "JARDIN SUBNORMAL",
+    "condicion": "IL",
+    "area_m2": "336.35062083200",
+    "comuna": "COMUNA 7",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "483",
+    "denominacion": "JUAN PABLO II SUBNORMAL",
+    "condicion": "IL",
+    "area_m2": "31002.72904350000",
+    "comuna": "COMUNA 7",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "484",
+    "denominacion": "RINCON DE LAS ACACIAS",
+    "condicion": "LG",
+    "area_m2": "5013.49596186000",
+    "comuna": "COMUNA 7",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "485",
+    "denominacion": "VEGA",
+    "condicion": "LG",
+    "area_m2": "96259.92559150000",
+    "comuna": "COMUNA 7",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "486",
+    "denominacion": "GUAYURIBA",
+    "condicion": "LG",
+    "area_m2": "584185.88200400000",
+    "comuna": "COMUNA 7",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "487",
+    "denominacion": "GRAN AIRICO",
+    "condicion": "LG",
+    "area_m2": "281025.68241600000",
+    "comuna": "COMUNA 7",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "488",
+    "denominacion": "BARCELONA VEREDAL II",
+    "condicion": "IL",
+    "area_m2": "6019.31353692000",
+    "comuna": "COMUNA 7",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "489",
+    "denominacion": "BOSQUES DE ROSABLANCA",
+    "condicion": "LG",
+    "area_m2": "367609.44433000000",
+    "comuna": "COMUNA 7",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "490",
+    "denominacion": "SAN SEBASTIAN",
+    "condicion": "LG",
+    "area_m2": "32327.18730410000",
+    "comuna": "COMUNA 7",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "491",
+    "denominacion": "ALBORADA BAJA",
+    "condicion": "IL",
+    "area_m2": "4278.41473949000",
+    "comuna": "COMUNA 7",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "492",
+    "denominacion": "MAPORAL",
+    "condicion": "IL",
+    "area_m2": "8422.84317399000",
+    "comuna": "COMUNA 7",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "493",
+    "denominacion": "MAPORAL",
+    "condicion": "PY",
+    "area_m2": "279929.39200300000",
+    "comuna": "COMUNA 7",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "494",
+    "denominacion": "SANTA MARIA",
+    "condicion": "PY",
+    "area_m2": "31604.90288990000",
+    "comuna": "COMUNA 7",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "495",
+    "denominacion": "MONTEARROYO",
+    "condicion": "LG",
+    "area_m2": "65747.05721080000",
+    "comuna": "COMUNA 7",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "496",
+    "denominacion": "RESERVA",
+    "condicion": "LG",
+    "area_m2": "52652.65485810000",
+    "comuna": "COMUNA 7",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "497",
+    "denominacion": "MADEIRA",
+    "condicion": "LG",
+    "area_m2": "16070.43950160000",
+    "comuna": "COMUNA 7",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "498",
+    "denominacion": "PORTALES DE LA ALAMEDA",
+    "condicion": "SD",
+    "area_m2": "2625.44366425000",
+    "comuna": "COMUNA 7",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "499",
+    "denominacion": "SANTA ANA",
+    "condicion": "SD",
+    "area_m2": "49273.92410580000",
+    "comuna": "COMUNA 7",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "500",
+    "denominacion": "PORTALES DE GRATAMIRA",
+    "condicion": "SD",
+    "area_m2": "30440.14328700000",
+    "comuna": "COMUNA 7",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "501",
+    "denominacion": "BALCONES DE GRATAMIRA",
+    "condicion": "LG",
+    "area_m2": "17975.86524470000",
+    "comuna": "COMUNA 7",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "502",
+    "denominacion": "QUINTAS DE SAN FERNANDO",
+    "condicion": "LG",
+    "area_m2": "57155.48280210000",
+    "comuna": "COMUNA 7",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "503",
+    "denominacion": "VILLAS DEL PARAISO",
+    "condicion": "IL",
+    "area_m2": "11344.22998420000",
+    "comuna": "COMUNA 7",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "504",
+    "denominacion": "PARCELACION BALMORAL",
+    "condicion": "IL",
+    "area_m2": "809001.88592900000",
+    "comuna": "COMUNA 7",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "505",
+    "denominacion": "CASIBARITO SEC VILLA LUCERO",
+    "condicion": "IL",
+    "area_m2": "9936.32064764000",
+    "comuna": "COMUNA 7",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "506",
+    "denominacion": "SOCIEGO",
+    "condicion": "LG",
+    "area_m2": "114408.96571000000",
+    "comuna": "COMUNA 7",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "507",
+    "denominacion": "PRADOS DE MAVICURE",
+    "condicion": "LG",
+    "area_m2": "142489.11103400000",
+    "comuna": "COMUNA 7",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "508",
+    "denominacion": "RINCON DE CASIBARITO",
+    "condicion": "IL",
+    "area_m2": "17900.67396310000",
+    "comuna": "COMUNA 7",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "509",
+    "denominacion": "CECILIA SUBNORMAL",
+    "condicion": "IL",
+    "area_m2": "86157.36175600000",
+    "comuna": "COMUNA 7",
+    "porcentaje_comuna": "16"
+  },
+  {
+    "id": "510",
+    "denominacion": "PARCELACION SAN CARLOS",
+    "condicion": "IL",
+    "area_m2": "352518.37456000000",
+    "comuna": "COMUNA 7",
+    "porcentaje_comuna": "17"
+  },
+  {
+    "id": "511",
+    "denominacion": "LEON XIII SECTOR SUR",
+    "condicion": "IL",
+    "area_m2": "11969.29376520000",
+    "comuna": "COMUNA 7--COMUNA 8",
+    "porcentaje_comuna": "35--65"
+  },
+  {
+    "id": "512",
+    "denominacion": "HACIENDA ROSA BLANCA",
+    "condicion": "LG",
+    "area_m2": "1902947.38149000000",
+    "comuna": "COMUNA 7--COMUNA 8",
+    "porcentaje_comuna": "13--87"
+  },
+  {
+    "id": "513",
+    "denominacion": "MP1-MP2-MP3",
+    "condicion": "PY",
+    "area_m2": "165208.10531700000",
+    "comuna": "COMUNA 7--COMUNA 8",
+    "porcentaje_comuna": "1--99"
+  },
+  {
+    "id": "514",
+    "denominacion": "O&L",
+    "condicion": "PY",
+    "area_m2": "5980.60220250000",
+    "comuna": "COMUNA 7--COMUNA 8",
+    "porcentaje_comuna": "98--2"
+  },
+  {
+    "id": "515",
+    "denominacion": "LEON XIII SECTOR NORTE",
+    "condicion": "IL",
+    "area_m2": "1981.40846762000",
+    "comuna": "COMUNA 7--COMUNA 8",
+    "porcentaje_comuna": "99--1"
+  },
+  {
+    "id": "516",
+    "denominacion": "SAN CAYETANO",
+    "condicion": "SD",
+    "area_m2": "12553.45141760000",
+    "comuna": "COMUNA 7--COMUNA 8",
+    "porcentaje_comuna": "93--7"
+  },
+  {
+    "id": "517",
+    "denominacion": "AMERICAS",
+    "condicion": "LG",
+    "area_m2": "125417.20775800000",
+    "comuna": "COMUNA 8",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "518",
+    "denominacion": "CASERA DE SANTILLANA",
+    "condicion": "LG",
+    "area_m2": "15859.19364090000",
+    "comuna": "COMUNA 8",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "519",
+    "denominacion": "GARDENIAS DE MONTECARLO",
+    "condicion": "LG",
+    "area_m2": "16901.84319920000",
+    "comuna": "COMUNA 8",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "520",
+    "denominacion": "ALAMOS SANTA ROSA",
+    "condicion": "LG",
+    "area_m2": "32186.36727710000",
+    "comuna": "COMUNA 8",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "521",
+    "denominacion": "LLANO LINDO",
+    "condicion": "LG",
+    "area_m2": "49303.88260940000",
+    "comuna": "COMUNA 8",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "522",
+    "denominacion": "HEROES",
+    "condicion": "LG",
+    "area_m2": "20516.65629800000",
+    "comuna": "COMUNA 8",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "523",
+    "denominacion": "SERRAMONTE",
+    "condicion": "LG",
+    "area_m2": "312798.48591200000",
+    "comuna": "COMUNA 8",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "524",
+    "denominacion": "VILLA LORENA",
+    "condicion": "LG",
+    "area_m2": "58853.23526690000",
+    "comuna": "COMUNA 8",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "525",
+    "denominacion": "TIGANA",
+    "condicion": "LG",
+    "area_m2": "10920.30910880000",
+    "comuna": "COMUNA 8",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "526",
+    "denominacion": "VILLA MILENA",
+    "condicion": "LG",
+    "area_m2": "27213.80172110000",
+    "comuna": "COMUNA 8",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "527",
+    "denominacion": "VILLA MARINA",
+    "condicion": "LG",
+    "area_m2": "21241.95147380000",
+    "comuna": "COMUNA 8",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "528",
+    "denominacion": "MONTECARLO SUBNORMAL",
+    "condicion": "IL",
+    "area_m2": "166430.47364500000",
+    "comuna": "COMUNA 8",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "529",
+    "denominacion": "SANTILLANA DEL LLANO",
+    "condicion": "LG",
+    "area_m2": "17962.25626790000",
+    "comuna": "COMUNA 8",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "530",
+    "denominacion": "NUEVO HORIZONTE",
+    "condicion": "LG",
+    "area_m2": "56170.64248730000",
+    "comuna": "COMUNA 8",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "531",
+    "denominacion": "RINCON DE LAS MARGARITAS",
+    "condicion": "LG",
+    "area_m2": "56117.81867170000",
+    "comuna": "COMUNA 8",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "532",
+    "denominacion": "ROCHELA",
+    "condicion": "LG",
+    "area_m2": "99471.71084930000",
+    "comuna": "COMUNA 8",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "533",
+    "denominacion": "NUEVA JERUSALEN",
+    "condicion": "LG",
+    "area_m2": "33498.87691380000",
+    "comuna": "COMUNA 8",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "534",
+    "denominacion": "PRADERA",
+    "condicion": "LG",
+    "area_m2": "10447.37926940000",
+    "comuna": "COMUNA 8",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "535",
+    "denominacion": "MARANATHA",
+    "condicion": "LG",
+    "area_m2": "17008.96449700000",
+    "comuna": "COMUNA 8",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "536",
+    "denominacion": "VILLA DEL RIO",
+    "condicion": "LG",
+    "area_m2": "22726.89692220000",
+    "comuna": "COMUNA 8",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "537",
+    "denominacion": "GUATAPE II",
+    "condicion": "LG",
+    "area_m2": "157188.79039300000",
+    "comuna": "COMUNA 8",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "538",
+    "denominacion": "MONTECARLO",
+    "condicion": "LG",
+    "area_m2": "30559.50594000000",
+    "comuna": "COMUNA 8",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "539",
+    "denominacion": "QUINTAS DE MONTECARLO",
+    "condicion": "LG",
+    "area_m2": "8691.81148674000",
+    "comuna": "COMUNA 8",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "540",
+    "denominacion": "MARIA PAZ",
+    "condicion": "LG",
+    "area_m2": "24284.42024950000",
+    "comuna": "COMUNA 8",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "541",
+    "denominacion": "FLORIDA",
+    "condicion": "LG",
+    "area_m2": "20150.57504590000",
+    "comuna": "COMUNA 8",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "542",
+    "denominacion": "URBANIZACION SAN JORGE",
+    "condicion": "LG",
+    "area_m2": "64322.69398630000",
+    "comuna": "COMUNA 8",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "543",
+    "denominacion": "ARAGUANEY",
+    "condicion": "LG",
+    "area_m2": "20180.19984150000",
+    "comuna": "COMUNA 8",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "544",
+    "denominacion": "NUEVO AMANECER",
+    "condicion": "LG",
+    "area_m2": "6338.76643689000",
+    "comuna": "COMUNA 8",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "545",
+    "denominacion": "VILLA SONIA",
+    "condicion": "IL",
+    "area_m2": "12328.71384590000",
+    "comuna": "COMUNA 8",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "546",
+    "denominacion": "TEUSAQUILLO",
+    "condicion": "IL",
+    "area_m2": "19446.16201980000",
+    "comuna": "COMUNA 8",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "547",
+    "denominacion": "ALAMOS SUR",
+    "condicion": "LG",
+    "area_m2": "31892.63331570000",
+    "comuna": "COMUNA 8",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "548",
+    "denominacion": "CAMINOS DE MONTECARLO",
+    "condicion": "LG",
+    "area_m2": "66293.10577380000",
+    "comuna": "COMUNA 8",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "549",
+    "denominacion": "VILLA ORIENTE",
+    "condicion": "LG",
+    "area_m2": "57726.97295310000",
+    "comuna": "COMUNA 8",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "550",
+    "denominacion": "CATUMARE",
+    "condicion": "LG",
+    "area_m2": "104376.14789700000",
+    "comuna": "COMUNA 8",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "551",
+    "denominacion": "RUBI",
+    "condicion": "IL",
+    "area_m2": "283772.48337900000",
+    "comuna": "COMUNA 8",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "552",
+    "denominacion": "CAMPO ALEGRE",
+    "condicion": "PY",
+    "area_m2": "216379.87570800000",
+    "comuna": "COMUNA 8",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "553",
+    "denominacion": "DIVINO NIÑO",
+    "condicion": "LG",
+    "area_m2": "10655.63874550000",
+    "comuna": "COMUNA 8",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "554",
+    "denominacion": "ROCHELA SUBNORMAL SECTOR UNO",
+    "condicion": "IL",
+    "area_m2": "22042.62157440000",
+    "comuna": "COMUNA 8",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "555",
+    "denominacion": "ROCHELA SUBNORMAL SECTOR DOS",
+    "condicion": "IL",
+    "area_m2": "5050.17658040000",
+    "comuna": "COMUNA 8",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "556",
+    "denominacion": "ROCHELA SUBNORMAL",
+    "condicion": "SD",
+    "area_m2": "1581.84241879000",
+    "comuna": "COMUNA 8",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "557",
+    "denominacion": "REMANENTE DE LA FINCA LA CABAÑA",
+    "condicion": "IL",
+    "area_m2": "1705.64360770000",
+    "comuna": "COMUNA 8",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "558",
+    "denominacion": "NUEVA ERA AMOR Y VIDA",
+    "condicion": "LG",
+    "area_m2": "3921.50104060000",
+    "comuna": "COMUNA 8",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "559",
+    "denominacion": "MONTE REAL",
+    "condicion": "LG",
+    "area_m2": "15739.18043070000",
+    "comuna": "COMUNA 8",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "560",
+    "denominacion": "MONTECARLO AVENIDA",
+    "condicion": "IL",
+    "area_m2": "6633.53906366000",
+    "comuna": "COMUNA 8",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "561",
+    "denominacion": "PORTALES DE SAN JORGE",
+    "condicion": "LG",
+    "area_m2": "3630.64052101000",
+    "comuna": "COMUNA 8",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "562",
+    "denominacion": "ALPES",
+    "condicion": "LG",
+    "area_m2": "3557.34356028000",
+    "comuna": "COMUNA 8",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "563",
+    "denominacion": "QUINTAS DE SAN JORGE",
+    "condicion": "LG",
+    "area_m2": "28394.97830890000",
+    "comuna": "COMUNA 8",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "564",
+    "denominacion": "CUADRO",
+    "condicion": "IL",
+    "area_m2": "865.77625188600",
+    "comuna": "COMUNA 8",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "565",
+    "denominacion": "LOMA LINDA",
+    "condicion": "LG",
+    "area_m2": "32848.88585510000",
+    "comuna": "COMUNA 8",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "566",
+    "denominacion": "LOMA AZUL",
+    "condicion": "SD",
+    "area_m2": "4781.25083606000",
+    "comuna": "COMUNA 8",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "567",
+    "denominacion": "PLAYA RICA",
+    "condicion": "LG",
+    "area_m2": "153761.25641900000",
+    "comuna": "COMUNA 8",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "568",
+    "denominacion": "ISLA",
+    "condicion": "SD",
+    "area_m2": "12459.57343560000",
+    "comuna": "COMUNA 8",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "569",
+    "denominacion": "VILLA UNION",
+    "condicion": "IL",
+    "area_m2": "6165.35255477000",
+    "comuna": "COMUNA 8",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "570",
+    "denominacion": "BRISAS DE CAÑO GRANDE",
+    "condicion": "IL",
+    "area_m2": "4371.71902508000",
+    "comuna": "COMUNA 8",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "571",
+    "denominacion": "VILLA DEL RIO SUBNORMAL",
+    "condicion": "IL",
+    "area_m2": "12731.77041230000",
+    "comuna": "COMUNA 8",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "572",
+    "denominacion": "CIUDAD DEL CAMPO",
+    "condicion": "LG",
+    "area_m2": "116720.30759800000",
+    "comuna": "COMUNA 8",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "573",
+    "denominacion": "GUADUALES",
+    "condicion": "IL",
+    "area_m2": "30165.17761770000",
+    "comuna": "COMUNA 8",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "574",
+    "denominacion": "RINCON DE ALAMOS",
+    "condicion": "SD",
+    "area_m2": "2556.79545173000",
+    "comuna": "COMUNA 8",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "575",
+    "denominacion": "MARGARITAS",
+    "condicion": "PY",
+    "area_m2": "255165.73705600000",
+    "comuna": "COMUNA 8",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "576",
+    "denominacion": "DIVINO NIÑO SUBNORMAL",
+    "condicion": "IL",
+    "area_m2": "4225.60881468000",
+    "comuna": "COMUNA 8",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "577",
+    "denominacion": "SECTOR PALMAR",
+    "condicion": "IL",
+    "area_m2": "59185.19249080000",
+    "comuna": "COMUNA 8",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "578",
+    "denominacion": "MONTE VERDE",
+    "condicion": "SD",
+    "area_m2": "10857.86948400000",
+    "comuna": "COMUNA 8",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "579",
+    "denominacion": "MONTECARLO ALTO",
+    "condicion": "IL",
+    "area_m2": "22264.55674350000",
+    "comuna": "COMUNA 8",
+    "porcentaje_comuna": "97"
+  },
+  {
+    "id": "580",
+    "denominacion": "PUENTE CAIDO",
+    "condicion": "IL",
+    "area_m2": "10573.01596720000",
+    "comuna": "COMUNA 8",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "581",
+    "denominacion": "ISLITA",
+    "condicion": "PY",
+    "area_m2": "9892.99799009000",
+    "comuna": "COMUNA 8",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "582",
+    "denominacion": "CAÑITO",
+    "condicion": "IL",
+    "area_m2": "616.71833520400",
+    "comuna": "COMUNA 8",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "583",
+    "denominacion": "VILLAS DEL PROGRESO",
+    "condicion": "IL",
+    "area_m2": "26032.80849810000",
+    "comuna": "COMUNA 8",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "584",
+    "denominacion": "SANTA LIBRADA",
+    "condicion": "IL",
+    "area_m2": "16546.20886980000",
+    "comuna": "COMUNA 8",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "585",
+    "denominacion": "BUENOS AIRES SECTOR AMERICAS",
+    "condicion": "IL",
+    "area_m2": "6503.76268491000",
+    "comuna": "COMUNA 8",
+    "porcentaje_comuna": "95"
+  },
+  {
+    "id": "586",
+    "denominacion": "VILLA VALERO",
+    "condicion": "IL",
+    "area_m2": "13105.12307120000",
+    "comuna": "COMUNA 8",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "587",
+    "denominacion": "PRADOS DE CAÑO GRANDE",
+    "condicion": "LG",
+    "area_m2": "8356.09677829000",
+    "comuna": "COMUNA 8",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "588",
+    "denominacion": "PRADOS DE CAÑO GRANDE SUBNORMAL",
+    "condicion": "IL",
+    "area_m2": "8816.89583219000",
+    "comuna": "COMUNA 8",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "589",
+    "denominacion": "LA UNION",
+    "condicion": "IL",
+    "area_m2": "13880.85782200000",
+    "comuna": "COMUNA 8",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "590",
+    "denominacion": "ALTAMIRA",
+    "condicion": "IL",
+    "area_m2": "14976.90241230000",
+    "comuna": "COMUNA 8",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "591",
+    "denominacion": "ARAGUANEY SUBNORMAL",
+    "condicion": "IL",
+    "area_m2": "13875.55942750000",
+    "comuna": "COMUNA 8",
+    "porcentaje_comuna": "13"
+  },
+  {
+    "id": "592",
+    "denominacion": "BOSQUES DE MANUEL ALEJANDRO",
+    "condicion": "IL",
+    "area_m2": "272700.75987700000",
+    "comuna": "COMUNA 8",
+    "porcentaje_comuna": "59"
+  },
+  {
+    "id": "593",
+    "denominacion": "GUAYABO",
+    "condicion": "IL",
+    "area_m2": "2786.09067151000",
+    "comuna": "COMUNA 8",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "594",
+    "denominacion": "MONTECARLO TERCER SECTOR",
+    "condicion": "LG",
+    "area_m2": "24881.49515190000",
+    "comuna": "COMUNA 8",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "595",
+    "denominacion": "ALTOS DE GUATAPE",
+    "condicion": "LG",
+    "area_m2": "46427.34680660000",
+    "comuna": "COMUNA 8",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "596",
+    "denominacion": "GUATAPE I",
+    "condicion": "LG",
+    "area_m2": "46136.69499410000",
+    "comuna": "COMUNA 8",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "597",
+    "denominacion": "VILLA DEL RIO II",
+    "condicion": "LG",
+    "area_m2": "23333.17382100000",
+    "comuna": "COMUNA 8",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "598",
+    "denominacion": "SAN JORGE V",
+    "condicion": "LG",
+    "area_m2": "14144.12273680000",
+    "comuna": "COMUNA 8",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "599",
+    "denominacion": "URBANIZACION SAN JORGE",
+    "condicion": "LG",
+    "area_m2": "3982.37342261000",
+    "comuna": "COMUNA 8",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "600",
+    "denominacion": "PORTALES DE NUEVO HORIZONTE",
+    "condicion": "LG",
+    "area_m2": "14195.20910790000",
+    "comuna": "COMUNA 8",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "601",
+    "denominacion": "SAN JORGE III",
+    "condicion": "LG",
+    "area_m2": "21214.60084540000",
+    "comuna": "COMUNA 8",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "602",
+    "denominacion": "MULTIFAMILIAR DE BAJA ALTURA 3 COND ALANA",
+    "condicion": "LG",
+    "area_m2": "17453.30064910000",
+    "comuna": "COMUNA 8",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "603",
+    "denominacion": "SAN JORGE ETAPA IV",
+    "condicion": "LG",
+    "area_m2": "49972.11055480000",
+    "comuna": "COMUNA 8",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "604",
+    "denominacion": "LOMA LINDA MONTECARLO",
+    "condicion": "IL",
+    "area_m2": "26809.04008780000",
+    "comuna": "COMUNA 8",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "605",
+    "denominacion": "NUEVO AMANECER SUBNORMAL",
+    "condicion": "IL",
+    "area_m2": "21767.22000770000",
+    "comuna": "COMUNA 8",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "606",
+    "denominacion": "PARCELACION CARACOLI",
+    "condicion": "IL",
+    "area_m2": "90019.35845150000",
+    "comuna": "COMUNA 8",
+    "porcentaje_comuna": "14"
+  },
+  {
+    "id": "607",
+    "denominacion": "BRASILIA",
+    "condicion": "LG",
+    "area_m2": "87318.16392830000",
+    "comuna": "COMUNA 9",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "608",
+    "denominacion": "CIUDAD PORFIA",
+    "condicion": "LG",
+    "area_m2": "756217.34377800000",
+    "comuna": "COMUNA 9",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "609",
+    "denominacion": "DARIEN",
+    "condicion": "LG",
+    "area_m2": "45170.01381120000",
+    "comuna": "COMUNA 9",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "610",
+    "denominacion": "VILLAS DEL OCOA",
+    "condicion": "LG",
+    "area_m2": "49162.82311030000",
+    "comuna": "COMUNA 9",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "611",
+    "denominacion": "PINARES DE ORIENTE",
+    "condicion": "LG",
+    "area_m2": "192061.44837200000",
+    "comuna": "COMUNA 9",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "612",
+    "denominacion": "ALCARAVAN",
+    "condicion": "LG",
+    "area_m2": "8863.60628011000",
+    "comuna": "COMUNA 9",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "613",
+    "denominacion": "MAPORITA",
+    "condicion": "IL",
+    "area_m2": "28622.94104630000",
+    "comuna": "COMUNA 9",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "614",
+    "denominacion": "RINCON DE LAS LOMAS",
+    "condicion": "LG",
+    "area_m2": "91103.43264850000",
+    "comuna": "COMUNA 9",
+    "porcentaje_comuna": "2"
+  },
+  {
+    "id": "615",
+    "denominacion": "SECTOR LA PLAYA DE CIUDAD PORFIA",
+    "condicion": "IL",
+    "area_m2": "9852.59916647000",
+    "comuna": "COMUNA 9",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "616",
+    "denominacion": "GRAMALOTE",
+    "condicion": "LG",
+    "area_m2": "32513.07220430000",
+    "comuna": "COMUNA 9",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "617",
+    "denominacion": "HABITAT",
+    "condicion": "LG",
+    "area_m2": "31874.30850570000",
+    "comuna": "COMUNA 9",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "618",
+    "denominacion": "SAN BERNARDINO",
+    "condicion": "PY",
+    "area_m2": "122301.68208700000",
+    "comuna": "COMUNA 9",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "619",
+    "denominacion": "CHARRASCAL",
+    "condicion": "LG",
+    "area_m2": "128414.54114000000",
+    "comuna": "COMUNA 9",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "620",
+    "denominacion": "RIVIERA",
+    "condicion": "PY",
+    "area_m2": "1024720.93498000000",
+    "comuna": "COMUNA 9",
+    "porcentaje_comuna": "53"
+  },
+  {
+    "id": "621",
+    "denominacion": "CUCHARON",
+    "condicion": "PY",
+    "area_m2": "1689226.34802000000",
+    "comuna": "COMUNA 9",
+    "porcentaje_comuna": "81"
+  },
+  {
+    "id": "622",
+    "denominacion": "BRISAS DEL OCOA",
+    "condicion": "PY",
+    "area_m2": "504901.06499900000",
+    "comuna": "COMUNA 9",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "623",
+    "denominacion": "CIUDAD PORFIA SUBNORMAL",
+    "condicion": "IL",
+    "area_m2": "43181.76016900000",
+    "comuna": "COMUNA 9",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "624",
+    "denominacion": "SAMAN DE LA RIVERA",
+    "condicion": "LG",
+    "area_m2": "167870.10880300000",
+    "comuna": "COMUNA 9",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "625",
+    "denominacion": "PIEDEMONTE",
+    "condicion": "LG",
+    "area_m2": "33147.22707110000",
+    "comuna": "COMUNA 9",
+    "porcentaje_comuna": "99"
+  },
+  {
+    "id": "626",
+    "denominacion": "ATLANTIDA",
+    "condicion": "PY",
+    "area_m2": "57219.38670950000",
+    "comuna": "COMUNA 9",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "627",
+    "denominacion": "MARIANA",
+    "condicion": "PY",
+    "area_m2": "611992.75922900000",
+    "comuna": "COMUNA 9",
+    "porcentaje_comuna": "57"
+  },
+  {
+    "id": "628",
+    "denominacion": "MADRID",
+    "condicion": "LG",
+    "area_m2": "1603144.32176000000",
+    "comuna": "COMUNA 9",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "629",
+    "denominacion": "VILLAS DEL LAGO",
+    "condicion": "LG",
+    "area_m2": "7745.78489389000",
+    "comuna": "COMUNA 9",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "630",
+    "denominacion": "SAN AGUSTIN",
+    "condicion": "LG",
+    "area_m2": "17553.11450630000",
+    "comuna": "COMUNA 9",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "631",
+    "denominacion": "SAN CIPRIANO",
+    "condicion": "IL",
+    "area_m2": "106237.11739300000",
+    "comuna": "COMUNA 9",
+    "porcentaje_comuna": "93"
+  },
+  {
+    "id": "632",
+    "denominacion": "VILLAS DE PAZ",
+    "condicion": "IL",
+    "area_m2": "20255.75712480000",
+    "comuna": "COMUNA 9",
+    "porcentaje_comuna": "70"
+  },
+  {
+    "id": "633",
+    "denominacion": "VILLAS DEL ALCARAVAN 1",
+    "condicion": "LG",
+    "area_m2": "20794.51013330000",
+    "comuna": "COMUNA 9",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "634",
+    "denominacion": "BOSQUES DE LA RIVERA 1 Y 2",
+    "condicion": "LG",
+    "area_m2": "153244.37396700000",
+    "comuna": "COMUNA 9",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "635",
+    "denominacion": "MIRAMAR",
+    "condicion": "IL",
+    "area_m2": "62914.39293860000",
+    "comuna": "COMUNA 9",
+    "porcentaje_comuna": "99"
+  },
+  {
+    "id": "636",
+    "denominacion": "CAMELIA IV",
+    "condicion": "PY",
+    "area_m2": "18022.58865140000",
+    "comuna": "COMUNA 9",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "637",
+    "denominacion": "VILLA LUCIANA",
+    "condicion": "IL",
+    "area_m2": "84128.58229470000",
+    "comuna": "COMUNA 9",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "638",
+    "denominacion": "BALCONES DE BRASILIA",
+    "condicion": "LG",
+    "area_m2": "26702.57672580000",
+    "comuna": "COMUNA 9",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "639",
+    "denominacion": "VILLA JULIANA",
+    "condicion": "LG",
+    "area_m2": "95480.75025150000",
+    "comuna": "COMUNA 9",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "640",
+    "denominacion": "CAMELIA I",
+    "condicion": "PY",
+    "area_m2": "938204.21700000000",
+    "comuna": "COMUNA 9",
+    "porcentaje_comuna": "99"
+  },
+  {
+    "id": "641",
+    "denominacion": "LA ALDEA",
+    "condicion": "IL",
+    "area_m2": "127592.89949500000",
+    "comuna": "COMUNA 9",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "642",
+    "denominacion": "CAMBULOS",
+    "condicion": "LG",
+    "area_m2": "241647.04630900000",
+    "comuna": "COMUNA 9",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "643",
+    "denominacion": "CIUDAD JARDIN",
+    "condicion": "LG",
+    "area_m2": "147327.63711500000",
+    "comuna": "COMUNA 9",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "644",
+    "denominacion": "VILLAS DEL LAGO SUBNORMAL",
+    "condicion": "IL",
+    "area_m2": "6075.65115674000",
+    "comuna": "COMUNA 9",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "645",
+    "denominacion": "EL PALMAR",
+    "condicion": "LG",
+    "area_m2": "17073.54989720000",
+    "comuna": "COMUNA 9",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "646",
+    "denominacion": "BOSQUES DE LA RIVERA 3",
+    "condicion": "LG",
+    "area_m2": "67093.00425900000",
+    "comuna": "COMUNA 9",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "647",
+    "denominacion": "LAS PALMAS",
+    "condicion": "IL",
+    "area_m2": "19629.27493280000",
+    "comuna": "COMUNA 9",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "648",
+    "denominacion": "LA NOHORA SUBNORMAL",
+    "condicion": "IL",
+    "area_m2": "178824.91525000000",
+    "comuna": "COMUNA 9",
+    "porcentaje_comuna": "99"
+  },
+  {
+    "id": "649",
+    "denominacion": "LA NOHORA",
+    "condicion": "LG",
+    "area_m2": "66776.24976100000",
+    "comuna": "COMUNA 9",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "650",
+    "denominacion": "CIUDADELA SAN ANTONIO",
+    "condicion": "LG",
+    "area_m2": "945881.68080400000",
+    "comuna": "COMUNA10",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "651",
+    "denominacion": "RELIQUIA",
+    "condicion": "LG",
+    "area_m2": "551575.28088900000",
+    "comuna": "COMUNA10",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "652",
+    "denominacion": "RELIQUIA SUBNORMAL SECTOR UNO",
+    "condicion": "IL",
+    "area_m2": "16464.50770410000",
+    "comuna": "COMUNA10",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "653",
+    "denominacion": "RELIQUIA SUBNORMAL SECTOR DOS",
+    "condicion": "IL",
+    "area_m2": "128.25179243600",
+    "comuna": "COMUNA10",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "654",
+    "denominacion": "RELIQUIA LA UNI├ôN (BETTY CAMACHO)",
+    "condicion": "LG",
+    "area_m2": "252675.02364400000",
+    "comuna": "COMUNA10",
+    "porcentaje_comuna": "97"
+  },
+  {
+    "id": "655",
+    "denominacion": "EL BRILLANTE",
+    "condicion": "LG",
+    "area_m2": "310870.87420600000",
+    "comuna": "COMUNA10",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "656",
+    "denominacion": "CIUDADELA CARLOS JAVIER SAVOGAL",
+    "condicion": "PY",
+    "area_m2": "1486465.76660000000",
+    "comuna": "COMUNA10",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "657",
+    "denominacion": "TRECE DE MAYO",
+    "condicion": "LG",
+    "area_m2": "158897.95682400000",
+    "comuna": "COMUNA10",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "658",
+    "denominacion": "VILLA MARINA",
+    "condicion": "LG",
+    "area_m2": "223830.97419900000",
+    "comuna": "COMUNA10",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "659",
+    "denominacion": "AGUAS ARRIBA",
+    "condicion": "IL",
+    "area_m2": "2028.63648414000",
+    "comuna": "COMUNA10",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "660",
+    "denominacion": "SAN DIEGO",
+    "condicion": "IL",
+    "area_m2": "6479.35774643000",
+    "comuna": "COMUNA10",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "661",
+    "denominacion": "AMISTAD",
+    "condicion": "IL",
+    "area_m2": "12708.66414740000",
+    "comuna": "COMUNA10",
+    "porcentaje_comuna": "99"
+  },
+  {
+    "id": "662",
+    "denominacion": "MAIZARO",
+    "condicion": "IL",
+    "area_m2": "11420.11544520000",
+    "comuna": "COMUNA10",
+    "porcentaje_comuna": "94"
+  },
+  {
+    "id": "663",
+    "denominacion": "BRISAS DE APIAY",
+    "condicion": "IL",
+    "area_m2": "233877.12719900000",
+    "comuna": "COMUNA10",
+    "porcentaje_comuna": "35"
+  },
+  {
+    "id": "664",
+    "denominacion": "LA ANTONIA",
+    "condicion": "LG",
+    "area_m2": "78755.06547380000",
+    "comuna": "COMUNA10",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "665",
+    "denominacion": "QUINTAS DE RUBIALES",
+    "condicion": "IL",
+    "area_m2": "135147.24099300000",
+    "comuna": "COMUNA10",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "666",
+    "denominacion": "BRILLANTE SUBNORMAL",
+    "condicion": "IL",
+    "area_m2": "137167.70656900000",
+    "comuna": "COMUNA10",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "667",
+    "denominacion": "VILLAS DEL TUNAL",
+    "condicion": "IL",
+    "area_m2": "5939.97505050000",
+    "comuna": "COMUNA10",
+    "porcentaje_comuna": "100"
+  },
+  {
+    "id": "668",
+    "denominacion": "LOS LAGOS",
+    "condicion": "IL",
+    "area_m2": "48771.34781560000",
+    "comuna": "COMUNA10",
+    "porcentaje_comuna": "100"
+  }
+]

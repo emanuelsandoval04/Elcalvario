@@ -1,0 +1,12 @@
+.institution-container { max-width: 1200px; margin: auto; padding: 0 32px; }
+.institution-section { padding: 64px 0; border-top: 1px solid #e9e4dd; scroll-margin-top: 110px; }
+.institution-section h2 { font-size: clamp(26px,3.5vw,40px); line-height: 1.2; max-width: 850px; margin: 16px 0 28px; }
+.institution-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 22px; }
+.institution-grid article { border: 1px solid #e9e4dd; border-radius: 18px; padding: 26px; background: #fffefd; }
+.institution-grid h3 { font-size: 18px; margin: 0 0 18px; }
+.institution-section p, .institution-section address { font-size: 14px; line-height: 1.8; font-style: normal; }
+.institution-reference { color: #ad401b; }
+.institution-community { display: flex; align-items: center; justify-content: space-between; gap: 40px; }
+.institution-community > strong { color: #ef5726; font-size: 110px; font-weight: 600; }
+.institution-footer { padding: 28px; text-align: center; font-size: 12px; line-height: 1.8; color: #746b62; border-top: 1px solid #e9e4dd; }
+@media(max-width:767px) { .institution-container { padding: 0 22px; } .institution-section { padding: 40px 0; } .institution-grid { grid-template-columns: 1fr; } .institution-community { gap: 16px; } .institution-community > strong { font-size: 72px; } }
