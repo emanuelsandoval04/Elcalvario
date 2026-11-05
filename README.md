@@ -6,6 +6,8 @@ Producción: [elcalvario.vercel.app](https://elcalvario.vercel.app). La rama `ma
 
 ## Despliegue
 
+La sección [Adiestramiento](docs/adiestramiento.md) integra el catálogo de libros, su asignación en fichas nuevas y existentes, el libro actual en el perfil y la exportación completa a Excel según permisos.
+
 Consulta [la guía de Aiven + Vercel](docs/despliegue.md). React y la API se alojan juntos en Vercel; MySQL se conecta a Aiven por TLS. La plantilla `.env.vercel.example` contiene las variables del proyecto y `.env.aiven.local` se usa para comprobar la conexión y ejecutar migraciones desde tu equipo. Las credenciales son privadas del servidor.
 
 ## Desarrollo

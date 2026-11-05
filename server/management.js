@@ -6,7 +6,8 @@ import { hasPastoralAuthority, pastoralRoles } from './pastoral-policy.js'
 import { invalid, identifier, text, choice, boolean, date, url, fields, memberFields, sensitiveMemberFields, groupFields, activityFields, bogotaToday } from './entities.js'
 import { recalculateAlerts } from './alerts.js'
 import { facebookTransmission } from './facebook.js'
-import { sendReport } from './reports.js'
+import { sendReport, discipleReportRows, discipleColumns } from './reports.js'
+import { canManageTraining, requireTraining, trainingBooks, validateTrainingBook } from './training.js'
 import { parseProfilePhoto, saveProfilePhoto } from './profile-photo.js'
 import { mapRouter } from './map.js'
 import { applyGroupCoverage } from './group-coverage.js'
@@ -20,7 +21,7 @@ const memberId = req => req.authUser.memberId || -1
 const groupScopedPermissions=new Set(['gestion.acceder','miembros.ver','miembros.registrar','miembros.editar','miembros.estado','miembros.eliminar',
   'grupos.ver','grupos.editar','grupos.eliminar','eventos.eliminar','asistencia.registrar','asistencia.ver',
   'asistencia.corregir','asistencia.eliminar','alertas.ver','reportes.asistencia','reportes.cumpleanos','reportes.grupos',
-  'ministerios.gestionar','consentimientos.gestionar'])
+  'ministerios.gestionar','consentimientos.gestionar','reportes.discipulos'])
 const groupFilter = (req,code,alias='g') => scoped(req,code) ? {sql:` AND ${alias}.id_discipulador=?`,params:[memberId(req)]} : {sql:'',params:[]}
 const memberFilter = (req,code,alias='m') => scoped(req,code) ? {sql:` AND (EXISTS(SELECT 1 FROM grupo_comunion sg WHERE sg.id_grupo=${alias}.id_grupo AND sg.id_discipulador=? AND sg.archivado=0) OR (${alias}.id_grupo IS NULL AND ${alias}.id_usuario_creacion=?))`,params:[memberId(req),req.authUser.id]} : {sql:'',params:[]}
 const activityFilter = (req,code,alias='ac') => scoped(req,code) ? {sql:` AND EXISTS(SELECT 1 FROM reunion_grupo sr JOIN grupo_comunion sg ON sg.id_grupo=sr.id_grupo WHERE sr.id_actividad=${alias}.id_actividad AND sg.id_discipulador=? AND sg.archivado=0)`,params:[memberId(req)]} : {sql:'',params:[]}
@@ -93,6 +94,27 @@ async function recordRelations(connection,old,values,actorId) {
   }
 }
 
+async function exportDisciples(req,res,id=null) {
+  if(!can(req,'miembros.ver')) throw invalid('No tienes permiso para consultar fichas de discípulos.',403)
+  const reportScope=memberFilter(req,'reportes.discipulos'), viewScope=memberFilter(req,'miembros.ver')
+  const clauses=[], params=[...reportScope.params,...viewScope.params]
+  if(id) { clauses.push('m.id_miembro=?'); params.push(id) }
+  if(req.query.q) { const search=text(req.query.q,100,true); clauses.push("(CONCAT_WS(' ',m.nombres,m.apellidos) LIKE ? OR m.numero_identificacion LIKE ?)"); params.push(`%${search}%`,`%${search}%`) }
+  if(req.query.estado) { clauses.push('m.estado_miembro=?'); params.push(choice(req.query.estado,['activo','inactivo','retirado'])) }
+  if(req.query.sin_libro==='1') clauses.push('m.id_libro IS NULL')
+  if(req.query.id_grupo) { clauses.push('m.id_grupo=?'); params.push(identifier(req.query.id_grupo)) }
+  const [rows]=await pool.execute(`SELECT m.*,CAST(m.fecha_nacimiento AS CHAR) AS fecha_nacimiento,
+    l.nombre AS libro_actual,g.nombre AS grupo_nombre,r.nombre AS rol_nombre,s.nombre AS sede_nombre,
+    CONCAT_WS(' ',c.nombres,c.apellidos) AS cobertura_nombre,
+    (SELECT GROUP_CONCAT(mt.nombre ORDER BY mt.nombre SEPARATOR ', ') FROM miembro_ministerio mm JOIN ministerio mt ON mt.id_ministerio=mm.id_ministerio WHERE mm.id_miembro=m.id_miembro AND mm.activo=1) AS ministerios
+    FROM miembro m LEFT JOIN libro_adiestramiento l ON l.id_libro=m.id_libro
+    LEFT JOIN grupo_comunion g ON g.id_grupo=m.id_grupo LEFT JOIN rol_eclesiastico r ON r.id_rol_eclesiastico=m.id_rol_eclesiastico
+    LEFT JOIN sede s ON s.id_sede=m.id_sede LEFT JOIN miembro c ON c.id_miembro=m.id_cobertura_pastoral
+    WHERE m.archivado=0 ${reportScope.sql} ${viewScope.sql} ${clauses.length?'AND '+clauses.join(' AND '):''} ORDER BY m.nombres,m.apellidos,m.id_miembro`,params)
+  if(id && !rows.length) throw invalid('Discípulo no disponible en tu alcance.',404)
+  await sendReport(res,'discipulos','xlsx',discipleReportRows(rows.map(row=>cleanMember(req,row))),{title:'Ficha de discípulos',columns:discipleColumns(can(req,'miembros.sensibles'))})
+}
+
 publicRouter.get('/institution',async (_req,res) => {
   const [rows]=await pool.execute('SELECT * FROM institucion WHERE id=1')
   res.json(rows[0])
@@ -112,6 +134,18 @@ publicRouter.get('/transmission',async (_req,res) => res.json(await facebookTran
 
 managementRouter.use(protectMutation,requireSession,requirePermission('gestion.acceder'))
 managementRouter.use('/mapa',mapRouter)
+managementRouter.get('/training/books', requireTraining, async (_req,res) => res.json({items:await trainingBooks()}))
+managementRouter.post('/training/books', requireTraining, async (req,res) => {
+  const name=text(req.body?.nombre,150,true), description=text(req.body?.descripcion,2000)
+  const id=await transaction(async connection=>{
+    const actor=await currentActor(req,connection)
+    if(!canManageTraining(actor)) throw invalid('Ya no tienes permiso para crear libros.',403)
+    const [existing]=await connection.execute('SELECT id_libro FROM libro_adiestramiento WHERE nombre=?',[name])
+    if(existing.length) throw invalid('Ya existe un libro con ese nombre.',409)
+    return insert(connection,'libro_adiestramiento',{nombre:name,descripcion:description,id_usuario_creacion:actor.id})
+  })
+  res.status(201).json({id,nombre:name,descripcion:description})
+})
 managementRouter.get('/catalogs',async (req,res) => {
   const [roles]=await pool.execute('SELECT * FROM rol_eclesiastico ORDER BY nivel_jerarquico')
   const [sedes]=await pool.execute('SELECT * FROM sede ORDER BY nombre')
@@ -122,12 +156,13 @@ managementRouter.get('/catalogs',async (req,res) => {
   const registrationFilter=groupFilter(req,registrationPermission(req))
   const [registrationGroups]=can(req,'miembros.editar') || can(req,'miembros.registrar') ? await pool.execute(`SELECT g.id_grupo,g.nombre FROM grupo_comunion g WHERE g.archivado=0 ${registrationFilter.sql}`,[...registrationFilter.params]) : [[]]
   const barrios=can(req,'grupos.ver') ? await readNeighborhoodCatalog() : []
-  res.json({roles,sedes,zonas,ministerios,grupos,registrationGroups,barrios})
+  const libros=(can(req,'miembros.ver') || can(req,'miembros.editar') || can(req,'miembros.registrar') || canManageTraining(req.authUser)) ? await trainingBooks() : []
+  res.json({roles,sedes,zonas,ministerios,grupos,registrationGroups,barrios,libros})
 })
 managementRouter.get('/members',requirePermission('miembros.ver'),async (req,res) => {
   const filter=memberFilter(req,'miembros.ver')
   const search=text(req.query.q,100) || ''
-  const [rows]=await pool.execute(`SELECT m.*,CAST(m.fecha_nacimiento AS CHAR) AS fecha_nacimiento FROM miembro m WHERE m.archivado=0 ${filter.sql}
+  const [rows]=await pool.execute(`SELECT m.*,l.nombre AS libro_actual,CAST(m.fecha_nacimiento AS CHAR) AS fecha_nacimiento FROM miembro m LEFT JOIN libro_adiestramiento l ON l.id_libro=m.id_libro WHERE m.archivado=0 ${filter.sql}
     AND (CONCAT_WS(' ',m.nombres,m.apellidos) LIKE ? OR m.numero_identificacion LIKE ?) ORDER BY m.nombres LIMIT 500`,[...filter.params,`%${search}%`,`%${search}%`])
   res.json({items:rows.map(row=>cleanMember(req,row))})
 })
@@ -156,6 +191,7 @@ managementRouter.post('/members',(req,res,next)=>can(req,'miembros.registrar') |
     const actor=await currentActor(req,connection)
     if(!hasPermission(actor,'miembros.editar') && !hasPermission(actor,'miembros.registrar')) throw invalid('Ya no tienes permiso para registrar discípulos.',403)
     checkMemberServices(actor,values)
+    values.id_libro=await validateTrainingBook(connection,values.id_libro,registrationType==='discipulo')
     if(registrationType==='administrativo' && !actor.registration.canCreateAdministrative) throw invalid('Tu cargo no permite crear administrativos.',403)
     if((ministryId || leadsGroup) && !hasPastoralAuthority(actor)) throw invalid('Ya no tienes autorización para asignar servicios.',403)
     if(ministryId && !can(req,'ministerios.gestionar') || leadsGroup && !can(req,'grupos.editar')) throw invalid('Tus permisos para asignar servicios han cambiado.',403)
@@ -198,6 +234,10 @@ managementRouter.patch('/members/:id',requirePermission('miembros.editar'),async
     const actor=await currentActor(req,connection)
     if(!hasPermission(actor,'miembros.editar')) throw invalid('Ya no tienes permiso para editar discípulos.',403)
     const old=await getMember(req,id,'miembros.editar',connection,true)
+    if(Object.hasOwn(values,'id_libro')) {
+      if(values.id_libro!==old.id_libro && !canManageTraining(actor)) throw invalid('Sin permiso para asignar libros.',403)
+      values.id_libro=await validateTrainingBook(connection,values.id_libro,values.id_libro!==old.id_libro)
+    }
     checkMemberServices(actor,values,old)
     if(Object.hasOwn(values,'id_rol_eclesiastico') && values.id_rol_eclesiastico!==old.id_rol_eclesiastico) {
       const [accounts]=await connection.execute('SELECT id_usuario FROM usuario WHERE id_miembro=?',[id])
@@ -210,6 +250,20 @@ managementRouter.patch('/members/:id',requirePermission('miembros.editar'),async
   })
   res.json({ok:true})
 })
+managementRouter.put('/members/:id/book',requirePermission('miembros.ver'),requireTraining,async(req,res)=>{
+  const id=identifier(req.params.id)
+  if(!Object.hasOwn(req.body || {},'id_libro')) throw invalid('Selecciona un libro.')
+  await transaction(async connection=>{
+    const actor=await currentActor(req,connection)
+    if(!hasPermission(actor,'miembros.ver') || !canManageTraining(actor)) throw invalid('Tus permisos para asignar libros han cambiado.',403)
+    const member=await getMember(req,id,'miembros.ver',connection,true)
+    if(Object.hasOwn(req.body,'expectedId') && identifier(req.body.expectedId,true)!==member.id_libro) throw invalid('Otro usuario cambió el libro. Actualiza la ficha antes de guardar.',409)
+    const book=await validateTrainingBook(connection,req.body.id_libro,true)
+    await update(connection,'miembro','id_miembro',id,{id_libro:book,id_usuario_actualizacion:actor.id})
+  })
+  res.json({ok:true})
+})
+managementRouter.get('/members/:id/excel',requirePermission('reportes.discipulos'),async(req,res)=>exportDisciples(req,res,identifier(req.params.id)))
 managementRouter.post('/members/:id/relations',requirePermission('grupos.editar'),requirePermission('miembros.ver'),async (req,res) => {
   const values=fields(req.body,{id_grupo:memberFields.id_grupo,id_cobertura_pastoral:memberFields.id_cobertura_pastoral})
   const id=identifier(req.params.id)
@@ -537,17 +591,21 @@ managementRouter.put('/permissions/:roleId',requirePermission('permisos.gestiona
       const code=text(grant.codigo,80,true),scope=choice(grant.alcance,['todos','grupo'])
       if(code==='sedes.gestionar') throw invalid('La plataforma utiliza una sola sede y una sola zona.')
       if(scope==='grupo' && !groupScopedPermissions.has(code)) throw invalid(`El permiso ${code} requiere alcance general.`)
-      if(roles[0].nombre==='Discipulador' && (scope!=='grupo' || !groupScopedPermissions.has(code))) throw invalid('El Discipulador debe conservar el alcance de sus grupos.')
+      if(roles[0].nombre==='Discipulador' && !(code==='adiestramiento.gestionar' && scope==='todos') && (scope!=='grupo' || !groupScopedPermissions.has(code))) throw invalid('El Discipulador debe conservar el alcance de sus grupos.')
       await insert(connection,'rol_permiso',{id_rol:roleId,codigo_permiso:code,alcance:scope})
     }
   })
   res.json({ok:true})
 })
 managementRouter.get('/reports/:type',async(req,res)=>{
-  const type=choice(req.params.type,['asistencia','cumpleanos','grupos'])
+  const type=choice(req.params.type,['asistencia','cumpleanos','grupos','discipulos'])
   const code=`reportes.${type}`
   if(!can(req,code)) throw invalid('No tienes permiso para este reporte.',403)
   const format=choice(req.query.format,['pdf','xlsx'])
+  if(type==='discipulos') {
+    if(format!=='xlsx') throw invalid('La ficha completa de discípulos se descarga en Excel.')
+    return exportDisciples(req,res)
+  }
   let rows
   if(type==='cumpleanos') {
     const filter=memberFilter(req,code)

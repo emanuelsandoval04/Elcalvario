@@ -1,7 +1,7 @@
 import AppSelect from './AppSelect'
 import ProfilePhoto from './ProfilePhoto'
 import { lazy, Suspense, useEffect, useId, useRef, useState } from 'react'
-import type { FormEvent } from 'react'
+import type { FormEvent, ReactNode } from 'react'
 import { authRequest, hasPermission, useAuthSession } from './auth'
 import type { AuthUser } from './auth'
 import { managementRequest as api } from './management-api'
@@ -12,12 +12,15 @@ import AdminNavigation, { allowedModules, currentModule } from './admin-navigati
 import { CoverageAssignments, GroupTerritory, canManageCoverage } from './CoverageAssignments'
 import GroupNeighborhoodField from './GroupNeighborhoodField'
 import type { Barrio } from './GroupNeighborhoodField'
+import Training, { TrainingBookPicker, canCreateTrainingBooks } from './Training'
+import type { TrainingBook } from './Training'
+import { downloadReport } from './report-download'
 const CoverageMap = lazy(() => import('./CoverageMap'))
 
 type Row = Record<string, string | number | null>
-type Catalogs = { roles: Row[]; ministerios: Row[]; grupos: Row[]; registrationGroups?: Row[]; barrios?: Barrio[] }
+type Catalogs = { roles: Row[]; ministerios: Row[]; grupos: Row[]; registrationGroups?: Row[]; barrios?: Barrio[]; libros?: TrainingBook[] }
 type Option = { value: string | number; label: string }
-type Field = { key: string; label: string; type?: string; required?: boolean; max?: number; options?: Option[]; step?: string }
+type Field = { key: string; label: string; type?: string; required?: boolean; max?: number; options?: Option[]; step?: string; render?: (props: { initial: Row; disabled: boolean; labelId: string; onBusy: (busy: boolean) => void }) => ReactNode }
 type Message = (message: string) => void
 const errorMessage = (error: unknown) => error instanceof Error ? error.message : 'No pudimos completar la operación.'
 const searchable = (value: string) => value.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase()
@@ -28,10 +31,11 @@ const catalogOptions = (rows: Row[], id: string) => rows.map(row => ({ value: Nu
 const attendanceStates = ['presente', 'ausente', 'justificado', 'visitante']
 const typeNames: Record<string, string> = { culto: 'Culto', evento: 'Evento especial', reunion_grupo: 'Reunión de grupo' }
 
-function DataForm({ fields, initial = {}, onSave, onCancel, label = 'Guardar', memberWizard = false, groupNeighborhoods = false, availableBarrios }: { fields: Field[]; initial?: Row; onSave: (values: Row) => Promise<void>; onCancel?: () => void; label?: string; memberWizard?: boolean; groupNeighborhoods?: boolean; availableBarrios?: Barrio[] }) {
+function DataForm({ fields, initial = {}, onSave, onCancel, label = 'Guardar', memberWizard = false, groupNeighborhoods = false, availableBarrios, submitDisabled = false }: { fields: Field[]; initial?: Row; onSave: (values: Row) => Promise<void>; onCancel?: () => void; label?: string; memberWizard?: boolean; groupNeighborhoods?: boolean; availableBarrios?: Barrio[]; submitDisabled?: boolean }) {
   const formId = useId()
   const [busy, setBusy] = useState(false)
   const [photoBusy, setPhotoBusy] = useState(false)
+  const [inlineBusy, setInlineBusy] = useState(false)
   const [neighborhoodBusy, setNeighborhoodBusy] = useState(groupNeighborhoods)
   const [message, setMessage] = useState('')
   const [page, setPage] = useState(0)
@@ -47,7 +51,7 @@ function DataForm({ fields, initial = {}, onSave, onCancel, label = 'Guardar', m
   useEffect(() => { if (memberWizard) heading.current?.focus({ preventScroll: true }) }, [page, memberWizard])
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    if (busy || photoBusy || neighborhoodBusy) return
+    if (busy || photoBusy || neighborhoodBusy || inlineBusy || submitDisabled) return
     const form = event.currentTarget
     if (memberWizard) {
       const activeFields = form.querySelectorAll<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>(`[data-form-step="${page}"] input, [data-form-step="${page}"] select, [data-form-step="${page}"] textarea`)
@@ -68,7 +72,7 @@ function DataForm({ fields, initial = {}, onSave, onCancel, label = 'Guardar', m
     {memberWizard && <div className="wizard-progress manage-wide"><span>Paso {page + 1} de {steps.length}</span><span>{['Lo esencial', 'Un poco más de ti', 'Último paso'][page]}</span><progress value={page + 1} max={steps.length} aria-label="Progreso del registro"/></div>}
     {steps.map((group, index) => <fieldset key={index} data-form-step={index} hidden={index !== page} className="manage-form-fields manage-wide">
     {memberWizard && <div className="wizard-step-heading manage-wide"><h3 ref={index === page ? heading : undefined} tabIndex={-1}>{group.title}</h3><p>{['Empecemos por conocer a la persona.', 'Completa los datos que tengas disponibles.', 'Ya casi está. Revisa y guarda su información.'][index]}</p></div>}
-    {group.fields.map(field => field.type === 'photo' ? <div key={field.key} className="manage-wide"><ProfilePhoto name={field.key} defaultValue={initial[field.key] ? String(initial[field.key]) : null} onBusyChange={setPhotoBusy} disabled={busy}/></div> : <label key={field.key} className={field.type === 'textarea' ? 'manage-wide' : ''}>
+    {group.fields.map(field => field.render ? <div key={field.key} className="manage-wide"><span id={`${formId}-${field.key}`}>{field.label}{field.required ? ' *' : ''}</span>{field.render({ initial, disabled: busy, labelId: `${formId}-${field.key}`, onBusy: setInlineBusy })}</div> : field.type === 'photo' ? <div key={field.key} className="manage-wide"><ProfilePhoto name={field.key} defaultValue={initial[field.key] ? String(initial[field.key]) : null} onBusyChange={setPhotoBusy} disabled={busy}/></div> : <label key={field.key} className={field.type === 'textarea' ? 'manage-wide' : ''}>
       <span id={`${formId}-${field.key}`}>{field.label}{field.required && <span className="field-required"> *</span>}</span>
       {field.options ? <AppSelect aria-labelledby={`${formId}-${field.key}`} name={field.key} required={field.required} defaultValue={String(initial[field.key] ?? '')} disabled={busy}>
         <option value="">{field.required ? 'Selecciona…' : 'Sin asignar'}</option>
@@ -83,7 +87,7 @@ function DataForm({ fields, initial = {}, onSave, onCancel, label = 'Guardar', m
     {groupNeighborhoods && <GroupNeighborhoodField groupId={initial.id_grupo ? Number(initial.id_grupo) : null} legacyText={String(initial.barrio || '')} disabled={busy} onBusy={setNeighborhoodBusy} availableBarrios={availableBarrios}/>}
     <div className="manage-wide manage-actions form-footer">
       {memberWizard && page > 0 ? <button type="button" className="secondary" disabled={busy} onClick={() => { setPage(page - 1); setMessage('') }}><AdminIcon name="back"/>Atrás</button> : onCancel && <button type="button" className="secondary" disabled={busy} onClick={onCancel}>Cancelar</button>}
-      <button disabled={busy || photoBusy || neighborhoodBusy}>{busy ? 'Guardando…' : memberWizard && page < 2 ? <>Continuar <span aria-hidden="true">→</span></> : label}</button>
+      <button disabled={busy || photoBusy || neighborhoodBusy || inlineBusy || submitDisabled}>{busy ? 'Guardando…' : memberWizard && page < 2 ? <>Continuar <span aria-hidden="true">→</span></> : label}</button>
     </div>
     {message && <p className="manage-wide manage-message" role="alert">{message}</p>}
   </form>
@@ -97,6 +101,7 @@ function Records({ resource, user, catalogs, reloadCatalogs, notify }: { resourc
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [filter, setFilter] = useState('todos')
+  const [exporting, setExporting] = useState(false)
   const titleRef = useRef<HTMLHeadingElement>(null)
   const listRequest = useRef(0)
   const [activityType, setActivityType] = useState('evento')
@@ -131,7 +136,7 @@ function Records({ resource, user, catalogs, reloadCatalogs, notify }: { resourc
       if (request !== listRequest.current) return
       setItems(result.items)
       const detailId = window.location.hash.split('/')[2] === 'ficha' ? Number(window.location.hash.split('/')[3]) : null
-      if (detailId) setDetail(result.items.find(row => Number(row[ids[resource]]) === detailId) || null)
+      setDetail(previous => detailId ? result.items.find(row => Number(row[ids[resource]]) === detailId) || null : previous ? result.items.find(row => row[ids[resource]] === previous[ids[resource]]) || null : null)
       if (resource === 'groups' && has(user, 'miembros.ver')) setMembers((await api<{ items: Row[] }>('members')).items)
     } catch (error) { if (request === listRequest.current) notify(errorMessage(error)) } finally { if (request === listRequest.current) setLoading(false) }
   }
@@ -151,6 +156,7 @@ function Records({ resource, user, catalogs, reloadCatalogs, notify }: { resourc
       { key: 'celular', label: 'Celular', type: 'tel', required: true, max: 20 }, { key: 'correo', label: 'Correo', type: 'email', max: 120 },
       { key: 'fecha_nacimiento', label: 'Fecha de nacimiento / cumpleaños', type: 'date', required: true },
       { key: 'id_grupo', label: 'Grupo de Comunión Familiar (opcional)', options: catalogOptions(catalogs.registrationGroups || catalogs.grupos, 'id_grupo') },
+      { key: 'id_libro', label: 'Libro de adiestramiento', required: registrationType === 'discipulo' && Boolean(catalogs.libros?.length), render: ({ initial, disabled, labelId, onBusy }) => <TrainingBookPicker books={catalogs.libros || []} initialId={initial.id_libro} disabled={disabled} required={registrationType === 'discipulo' && Boolean(catalogs.libros?.length)} canCreate={canCreateTrainingBooks(user)} onCreated={reloadCatalogs} onBusy={onBusy} labelledBy={labelId}/> },
     ]
     if (canServices && (edit?.id_miembro || registrationType === 'administrativo')) formFields.push({ key: 'funcion_iglesia', label: 'Función o servicio en la iglesia', max: 150 }, { key: 'id_cobertura_pastoral', label: 'Cobertura pastoral', options: memberOptions.filter(option => option.value !== edit?.id_miembro) })
     if (canAdministrative && registrationType === 'administrativo' && !edit?.id_miembro) formFields.push(
@@ -210,7 +216,7 @@ function Records({ resource, user, catalogs, reloadCatalogs, notify }: { resourc
   const visibleItems = scopedItems.filter(row => {
     const matches = searchable(`${row.nombres || ''} ${row.apellidos || ''} ${row.numero_identificacion || ''} ${row.nombre || ''} ${row.titulo || ''}`).includes(searchable(search))
     if (!matches) return false
-    if (resource === 'members') return filter === 'todos' || row.estado_miembro === filter
+    if (resource === 'members') return filter === 'todos' || (filter === 'sin_libro' ? !row.id_libro : row.estado_miembro === filter)
     if (resource === 'activities') return filter === 'pasados' ? String(row.fecha) < today : String(row.fecha) >= today
     return true
   })
@@ -225,7 +231,10 @@ function Records({ resource, user, catalogs, reloadCatalogs, notify }: { resourc
     {!edit && !detail && <>
       {groupId && <p className="group-filter">Mostrando discípulos del grupo seleccionado. <a href="#gestion/members">Ver todos</a></p>}
       {!createOnly && <form className="record-search" onSubmit={event => { event.preventDefault() }}><AdminIcon name="search"/><label className="sr-only" htmlFor={`search-${resource}`}>Buscar {resource === 'members' ? 'por nombre o identificación' : titles[resource].toLowerCase()}</label><input id={`search-${resource}`} value={search} type="search" placeholder={resource === 'members' ? 'Buscar por nombre o identificación' : resource === 'groups' ? 'Buscar grupo' : 'Buscar evento o culto'} maxLength={100} onChange={event => setSearch(event.target.value)} /></form>}
-      {resource === 'members' && !createOnly && <div className="record-filters" role="group" aria-label="Filtrar discípulos">{[['todos', 'Todos'], ['activo', 'Activos'], ['inactivo', 'Inactivos'], ['retirado', 'Retirados']].map(([value, label]) => <button key={value} type="button" aria-pressed={filter === value} onClick={() => setFilter(value)}>{label} <span>({value === 'todos' ? scopedItems.length : scopedItems.filter(item => item.estado_miembro === value).length})</span></button>)}</div>}
+      {resource === 'members' && !createOnly && <><div className="record-filters" role="group" aria-label="Filtrar discípulos">{[['todos', 'Todos'], ['activo', 'Activos'], ['inactivo', 'Inactivos'], ['retirado', 'Retirados'], ['sin_libro', 'Sin libro']].map(([value, label]) => <button key={value} type="button" aria-pressed={filter === value} onClick={() => setFilter(value)}>{label} <span>({value === 'todos' ? scopedItems.length : scopedItems.filter(item => value === 'sin_libro' ? !item.id_libro : item.estado_miembro === value).length})</span></button>)}</div>{has(user, 'reportes.discipulos') && <button type="button" className="secondary" disabled={exporting} onClick={() => {
+        const query = new URLSearchParams({ format: 'xlsx', ...(search ? { q: search } : {}), ...(['activo', 'inactivo', 'retirado'].includes(filter) ? { estado: filter } : {}), ...(filter === 'sin_libro' ? { sin_libro: '1' } : {}), ...(groupId ? { id_grupo: String(groupId) } : {}) })
+        setExporting(true); void downloadReport(`reports/discipulos?${query}`, 'discipulos.xlsx').then(() => notify('Excel de discípulos descargado.')).catch(cause => notify(errorMessage(cause))).finally(() => setExporting(false))
+      }}>{exporting ? 'Preparando Excel…' : 'Descargar discípulos en Excel'}</button>}</>}
       {resource === 'activities' && <div className="record-filters event-filters" role="group" aria-label="Filtrar eventos"><button type="button" aria-pressed={filter !== 'pasados'} onClick={() => setFilter('proximos')}>Próximos</button><button type="button" aria-pressed={filter === 'pasados'} onClick={() => setFilter('pasados')}>Pasados</button></div>}
     </>}
     {edit && <div className="manage-editor record-editor" ref={editorRef}>
@@ -248,23 +257,24 @@ function Records({ resource, user, catalogs, reloadCatalogs, notify }: { resourc
       return <article key={row[ids[resource]]}>
       <button className="record-open" aria-label={`Ver ficha de ${name}`} onClick={() => { setDetail(row); setEdit(null) }}>
         {resource === 'members' ? <span className="member-avatar" aria-hidden="true">{`${String(row.nombres || '').slice(0, 1)}${String(row.apellidos || '').slice(0, 1)}`}</span> : resource === 'groups' ? <span className="group-avatar"><AdminIcon name="members"/></span> : <span className="event-cover">{row.imagen ? <img src={String(row.imagen)} alt="" loading="lazy"/> : <AdminIcon name="activities"/>}<span className="event-date"><small>{new Date(`${row.fecha}T12:00:00-05:00`).toLocaleDateString('es-CO', { month: 'short', timeZone: 'America/Bogota' }).replace('.', '')}</small><b>{String(row.fecha).slice(8, 10)}</b></span></span>}
-        <span className="record-copy"><strong>{name}</strong>{resource === 'members' ? <><span>{row.tipo_identificacion} {row.numero_identificacion}</span><span className="record-state" data-state={row.estado_miembro}>{row.estado_miembro}</span></> : resource === 'groups' ? <><span>{row.miembros} discípulos</span><span>{row.dia_reunion || 'Día por definir'}{row.hora_reunion ? ` · ${String(row.hora_reunion).slice(0, 5)}` : ''}</span></> : <><span>{row.fecha} · {String(row.hora).slice(0, 5)}</span><span>{row.lugar}</span><span className="event-type" data-state={row.estado_actividad}>{row.estado_actividad === 'cancelada' ? 'Cancelada' : typeNames[String(row.tipo_actividad)]}</span></>}</span>
+        <span className="record-copy"><strong>{name}</strong>{resource === 'members' ? <><span>{row.tipo_identificacion} {row.numero_identificacion}</span><span>Libro: {row.libro_actual || 'Sin asignar'}</span><span className="record-state" data-state={row.estado_miembro}>{row.estado_miembro}</span></> : resource === 'groups' ? <><span>{row.miembros} discípulos</span><span>{row.dia_reunion || 'Día por definir'}{row.hora_reunion ? ` · ${String(row.hora_reunion).slice(0, 5)}` : ''}</span></> : <><span>{row.fecha} · {String(row.hora).slice(0, 5)}</span><span>{row.lugar}</span><span className="event-type" data-state={row.estado_actividad}>{row.estado_actividad === 'cancelada' ? 'Cancelada' : typeNames[String(row.tipo_actividad)]}</span></>}</span>
         <AdminIcon name="chevron"/>
       </button>
       {(canEdit(row) || has(user, remove[resource])) && <details className="record-menu"><summary aria-label={`Acciones de ${name}`}>•••</summary><div>{canEdit(row) && <button className="secondary" onClick={() => openEdit(row)}>Editar</button>}{has(user, remove[resource]) && <button className="secondary" onClick={() => void archive(row)}>Archivar</button>}</div></details>}
     </article>})}</div>)}
     {detail && resource === 'activities' && <aside className="manage-editor activity-detail">{detail.imagen && <img className="activity-detail-image" src={String(detail.imagen)} alt=""/>}<span className="event-type">{typeNames[String(detail.tipo_actividad)]}</span><h3>{detail.titulo}</h3><p>{detail.fecha} · {String(detail.hora).slice(0, 5)} · {detail.lugar}</p><p>{detail.descripcion || 'Sin descripción adicional.'}</p><p>Estado: {detail.estado_actividad}</p><div className="manage-actions">{canEdit(detail) && <button onClick={() => openEdit(detail)}>Editar actividad</button>}{(has(user, 'asistencia.registrar') || has(user, 'asistencia.ver')) && <a className="app-action secondary" href={`#gestion/falls/registro/actividad/${detail.id_actividad}`}>Ver asistencia</a>}</div></aside>}
-    {detail && resource === 'members' && <MemberDetail key={detail.id_miembro} row={detail} user={user} catalogs={catalogs} notify={notify} onSaved={load} onClose={() => setDetail(null)} />}
+    {detail && resource === 'members' && <MemberDetail key={detail.id_miembro} row={detail} user={user} catalogs={catalogs} reloadCatalogs={reloadCatalogs} notify={notify} onSaved={load} onClose={() => setDetail(null)} />}
     {detail && resource === 'groups' && <GroupDetail key={detail.id_grupo} row={detail} user={user} onClose={() => setDetail(null)} onEdit={canEdit(detail) ? () => openEdit(detail) : undefined} />}
   </section>
 }
 
-function MemberDetail({ row, user, catalogs, notify, onSaved, onClose }: { row: Row; user: AuthUser; catalogs: Catalogs; notify: Message; onSaved: () => Promise<void>; onClose: () => void }) {
+function MemberDetail({ row, user, catalogs, reloadCatalogs, notify, onSaved, onClose }: { row: Row; user: AuthUser; catalogs: Catalogs; reloadCatalogs: () => Promise<void>; notify: Message; onSaved: () => Promise<void>; onClose: () => void }) {
   const [ministries, setMinistries] = useState<number[]>([])
   const [history, setHistory] = useState<Row[]>([])
   const [consents, setConsents] = useState<Row[]>([])
   const [coverageOptions, setCoverageOptions] = useState<Option[]>([])
   const [state, setState] = useState(String(row.estado_miembro))
+  const [exporting, setExporting] = useState(false)
   async function loadDetails() {
     try {
       const [membership, changes] = await Promise.all([api<{ items: Row[] }>(`members/${row.id_miembro}/ministries`), api<{ items: Row[] }>(`members/${row.id_miembro}/history`)])
@@ -279,6 +289,10 @@ function MemberDetail({ row, user, catalogs, notify, onSaved, onClose }: { row: 
   useEffect(() => { void loadDetails() }, [row.id_miembro])
   const labels: Record<string, string> = { nombres: 'Nombres', apellidos: 'Apellidos', tipo_identificacion: 'Tipo de identificación', numero_identificacion: 'Identificación', celular: 'Celular', correo: 'Correo', fecha_nacimiento: 'Nacimiento / cumpleaños', funcion_iglesia: 'Función', grupo_sanguineo_rh: 'Grupo sanguíneo / RH', eps: 'EPS', contacto_emergencia_nombre: 'Contacto de emergencia', contacto_emergencia_celular: 'Celular de emergencia', id_grupo: 'ID de grupo', id_rol_eclesiastico: 'ID de rol eclesiástico', id_cobertura_pastoral: 'ID de cobertura pastoral', codigo_qr: 'Identificador QR', fecha_creacion: 'Creación', fecha_actualizacion: 'Actualización' }
   return <aside className="manage-editor"><div className="manage-section-heading"><h3>Ficha de {row.nombres}</h3><button className="secondary" onClick={onClose}>Cerrar ficha</button></div>
+    <section className="training-member-current" aria-label="Adiestramiento del discípulo"><h4>Libro actual</h4><p><strong>{row.libro_actual || 'Sin libro asignado'}</strong></p>
+      {canCreateTrainingBooks(user) && <DataForm fields={[{ key: 'id_libro', label: 'Seleccionar libro de adiestramiento', required: Boolean(catalogs.libros?.length), render: ({ disabled, labelId, onBusy }) => <TrainingBookPicker key={`${row.id_miembro}-${row.id_libro || 'none'}`} books={catalogs.libros || []} initialId={row.id_libro} required={Boolean(catalogs.libros?.length)} disabled={disabled} canCreate onCreated={reloadCatalogs} onBusy={onBusy} labelledBy={labelId}/> }]} initial={row} label={row.id_libro ? 'Actualizar libro actual' : 'Asignar libro'} submitDisabled={!catalogs.libros?.length} onSave={async values => { await api(`members/${row.id_miembro}/book`, { id_libro: values.id_libro, expectedId: row.id_libro || null }, 'PUT'); await onSaved(); notify('Libro de adiestramiento asignado.'); }}/>}
+    </section>
+    {has(user, 'reportes.discipulos') && <button type="button" className="secondary" disabled={exporting} onClick={() => { setExporting(true); void downloadReport(`members/${row.id_miembro}/excel`, `discipulo-${row.id_miembro}.xlsx`).then(() => notify('Ficha completa descargada en Excel.')).catch(cause => notify(errorMessage(cause))).finally(() => setExporting(false)) }}>{exporting ? 'Preparando Excel…' : 'Descargar ficha en Excel'}</button>}
     <dl className="manage-details">{Object.entries(labels).filter(([key]) => Object.hasOwn(row, key)).map(([key, label]) => <div key={key}><dt>{label}</dt><dd>{String(row[key] || 'Sin registrar')}</dd></div>)}</dl>
     {has(user, 'miembros.estado') && <form className="manage-actions" onSubmit={event => { event.preventDefault(); void api(`members/${row.id_miembro}/state`, { estado_miembro: state }).then(() => { notify('Estado actualizado.'); void onSaved() }).catch(error => notify(errorMessage(error))) }}><label>Estado del discípulo <AppSelect value={state} onChange={event => setState(event.target.value)}>{['activo', 'inactivo', 'retirado'].map(value => <option key={value}>{value}</option>)}</AppSelect></label><button>Actualizar estado</button></form>}
     {has(user, 'grupos.editar') && !has(user, 'miembros.editar') && <><h4>Grupo y cobertura</h4><DataForm fields={[
@@ -390,10 +404,7 @@ function Reports({ user, notify }: { user: AuthUser; notify: Message }) {
     setBusy(true)
     try {
       const query = new URLSearchParams({ format, ...(from ? { from } : {}), ...(to ? { to } : {}) })
-      const response = await fetch(`/api/management/reports/${type}?${query}`, { credentials: 'same-origin', signal: AbortSignal.timeout(30000) })
-      if (!response.ok) throw new Error((await response.json()).error || 'No pudimos generar el reporte.')
-      const objectUrl = URL.createObjectURL(await response.blob())
-      const link = document.createElement('a'); link.href = objectUrl; link.download = `${type}.${format}`; link.click(); setTimeout(() => URL.revokeObjectURL(objectUrl), 10000)
+      await downloadReport(`reports/${type}?${query}`, `${type}.${format}`)
       notify('Reporte descargado.')
     } catch (error) { notify(errorMessage(error)) } finally { setBusy(false) }
   }
@@ -402,7 +413,8 @@ function Reports({ user, notify }: { user: AuthUser; notify: Message }) {
       { type: 'asistencia', label: 'Reporte de asistencia', icon: 'activities', description: 'Consulta la asistencia registrada en un rango de fechas.' },
       { type: 'cumpleanos', label: 'Listado de cumpleaños', icon: 'birthday', description: 'Las fechas para celebrar a nuestra comunidad.' },
       { type: 'grupos', label: 'Grupos de Comunión', icon: 'members', description: 'Grupos registrados y las personas que los integran.' },
-    ].filter(report => has(user, `reportes.${report.type}`)).map(report => <article key={report.type} data-report={report.type}><span className="report-icon"><AdminIcon name={report.icon}/></span><div className="report-copy"><strong>{report.label}</strong><p>{report.description}</p>{report.type === 'asistencia' && <div className="report-dates"><label>Desde<input type="date" value={from} onChange={event => setFrom(event.target.value)}/></label><label>Hasta<input type="date" min={from} value={to} onChange={event => setTo(event.target.value)}/></label></div>}<div className="manage-actions">{['pdf', 'xlsx'].map(format => <button key={format} className={`report-export export-${format}`} aria-label={`${report.label}: descargar ${format === 'pdf' ? 'PDF' : 'Excel'}`} disabled={busy || Boolean(from && to && from > to) && report.type === 'asistencia'} onClick={() => void download(report.type, format)}><AdminIcon name="reports"/>{format === 'pdf' ? 'PDF' : 'Excel'}</button>)}</div></div></article>)}</div>
+      { type: 'discipulos', label: 'Ficha completa de discípulos', icon: 'training', description: 'Datos de la ficha, ministerios y libro de adiestramiento actual.' },
+    ].filter(report => has(user, `reportes.${report.type}`)).map(report => <article key={report.type} data-report={report.type}><span className="report-icon"><AdminIcon name={report.icon}/></span><div className="report-copy"><strong>{report.label}</strong><p>{report.description}</p>{report.type === 'asistencia' && <div className="report-dates"><label>Desde<input type="date" value={from} onChange={event => setFrom(event.target.value)}/></label><label>Hasta<input type="date" min={from} value={to} onChange={event => setTo(event.target.value)}/></label></div>}<div className="manage-actions">{(report.type === 'discipulos' ? ['xlsx'] : ['pdf', 'xlsx']).map(format => <button key={format} className={`report-export export-${format}`} aria-label={`${report.label}: descargar ${format === 'pdf' ? 'PDF' : 'Excel'}`} disabled={busy || Boolean(from && to && from > to) && report.type === 'asistencia'} onClick={() => void download(report.type, format)}><AdminIcon name="reports"/>{format === 'pdf' ? 'PDF' : 'Excel'}</button>)}</div></div></article>)}</div>
   </section>
 }
 
@@ -419,6 +431,7 @@ function Dashboard({ user }: { user: AuthUser }) {
   const shortcuts = [
     { key: 'members', label: 'Discípulos', icon: 'members', description: 'Registrar / Buscar', href: '#gestion/members', allowed: available.has('members') },
     { key: 'groups', label: 'Grupos de Comunión', icon: 'groups', description: 'Ver grupos', href: '#gestion/groups', allowed: available.has('groups') },
+    { key: 'training', label: 'Adiestramiento', icon: 'training', description: 'Libros / Formación', href: '#gestion/training', allowed: available.has('training') },
     { key: 'attendance', label: 'Asistencia', icon: 'attendance', description: 'Tomar asistencia', href: '#gestion/falls/registro', allowed: has(user, 'asistencia.registrar') || has(user, 'asistencia.ver') },
     { key: 'activities', label: 'Eventos y Cultos', icon: 'activities', description: 'Crear / Consultar', href: '#gestion/activities', allowed: available.has('activities') },
     { key: 'alerts', label: 'Alertas', icon: 'alerts', description: 'Acompañamiento pastoral', href: '#gestion/falls/alertas', allowed: has(user, 'alertas.ver') },
@@ -496,8 +509,8 @@ function Permissions({ notify }: { notify: Message }) {
     {roleId && <form onSubmit={event => { event.preventDefault(); setBusy(true); void api(`permissions/${roleId}`, { grants: Object.entries(grants).filter(([, value]) => value).map(([codigo, alcance]) => ({ codigo, alcance })) }, 'PUT').then(() => { notify('Permisos actualizados.'); void load() }).catch(error => notify(errorMessage(error))).finally(() => setBusy(false)) }}>
       <div className="manage-records">{data?.permissions.map(permission => <label className="manage-permission" key={permission.codigo}>
         <span>{permission.descripcion}<small>{permission.codigo.startsWith('miembros.') ? 'Discípulos' : permission.codigo}</small></span>
-        <AppSelect disabled={protectedRole || busy || discipleRole && !permission.admite_grupo} value={grants[permission.codigo] || ''} onChange={event => setGrants({ ...grants, [permission.codigo]: event.target.value })}>
-          <option value="">Sin permiso</option>{!discipleRole && <option value="todos">Todos</option>}{permission.admite_grupo && <option value="grupo">Grupos a cargo</option>}
+        <AppSelect disabled={protectedRole || busy || discipleRole && !permission.admite_grupo && permission.codigo !== 'adiestramiento.gestionar'} value={grants[permission.codigo] || ''} onChange={event => setGrants({ ...grants, [permission.codigo]: event.target.value })}>
+          <option value="">Sin permiso</option>{(!discipleRole || permission.codigo === 'adiestramiento.gestionar') && <option value="todos">Todos</option>}{permission.admite_grupo && <option value="grupo">Grupos a cargo</option>}
         </AppSelect>
       </label>)}</div>
       {protectedRole ? <p>Este rol conserva su configuración protegida.</p> : <button disabled={busy}>Guardar permisos</button>}
@@ -554,6 +567,7 @@ export default function Management() {
     </section> : !user || !has(user, 'gestion.acceder') ? <p>Necesitas una cuenta con un rol autorizado. <a href="#login">Ir a mi cuenta</a></p> : <>
       <div className="manage-session"><span className="manage-session-dot"/><span>{user.roles.join(', ')}</span><span>Al servicio de nuestra comunidad</span></div>
       {tab === 'dashboard' && <Dashboard key={accessKey} user={user} />}
+      {tab === 'training' && <Training books={catalogs.libros || []} onReload={reloadCatalogs} notify={setMessage} canSeeMembers={has(user, 'miembros.ver')}/>}
       {tab === 'mapa' && <Suspense fallback={<p>Cargando mapa de zonas…</p>}><CoverageMap key={accessKey} user={user}/></Suspense>}
       {(['members', 'groups', 'activities'] as const).map(resource => tab === resource && <Records key={`${resource}-${accessKey}`} resource={resource} user={user} catalogs={catalogs} reloadCatalogs={reloadCatalogs} notify={setMessage} />)}
       {tab === 'falls' && <Falls key={accessKey} user={user} notify={setMessage} />}{tab === 'reports' && <Reports user={user} notify={setMessage} />}

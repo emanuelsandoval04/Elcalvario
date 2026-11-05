@@ -39,10 +39,13 @@ async function createSession(connection, id, response) {
   return () => response.cookie(cookieName, token, { ...cookieOptions, maxAge: sessionMilliseconds })
 }
 export async function readUser(id, connection = pool) {
-  const [users] = await connection.execute("SELECT u.id_usuario AS id, u.id_miembro AS memberId, u.correo_login AS email, u.estado_usuario AS state, p.nombre AS name, f.version AS photoVersion, COALESCE(pr.tamano_interfaz,'normal') AS displaySize FROM usuario u LEFT JOIN perfil_usuario p ON p.id_usuario=u.id_usuario LEFT JOIN foto_perfil_usuario f ON f.id_usuario=u.id_usuario LEFT JOIN preferencia_usuario pr ON pr.id_usuario=u.id_usuario WHERE u.id_usuario = ? AND u.estado_usuario IN ('activo','pendiente')", [id])
+  const [users] = await connection.execute("SELECT u.id_usuario AS id, u.id_miembro AS memberId, u.correo_login AS email, u.estado_usuario AS state, p.nombre AS name, f.version AS photoVersion, COALESCE(pr.tamano_interfaz,'normal') AS displaySize,l.id_libro AS trainingBookId,l.nombre AS trainingBookName FROM usuario u LEFT JOIN perfil_usuario p ON p.id_usuario=u.id_usuario LEFT JOIN foto_perfil_usuario f ON f.id_usuario=u.id_usuario LEFT JOIN preferencia_usuario pr ON pr.id_usuario=u.id_usuario LEFT JOIN miembro m ON m.id_miembro=u.id_miembro AND m.archivado=0 LEFT JOIN libro_adiestramiento l ON l.id_libro=m.id_libro WHERE u.id_usuario = ? AND u.estado_usuario IN ('activo','pendiente')", [id])
   if (!users.length) return null
   users[0].photoUrl = users[0].photoVersion ? `/api/auth/account/photo?v=${users[0].photoVersion}` : null
   delete users[0].photoVersion
+  users[0].trainingBook=users[0].trainingBookId ? {id:users[0].trainingBookId,name:users[0].trainingBookName} : null
+  delete users[0].trainingBookId
+  delete users[0].trainingBookName
   if (users[0].state === 'pendiente') return { ...users[0], roles: [], permissions: {}, pastoralRole: null, registration: { canCreateAdministrative: false, canAssignServices: false, canManageAccounts: false } }
   const [roles] = await connection.execute('SELECT r.nombre FROM usuario_rol ur JOIN rol_sistema r ON r.id_rol = ur.id_rol WHERE ur.id_usuario = ? AND ur.activo = 1 AND r.estado = 1', [id])
   const [grants] = await connection.execute('SELECT rp.codigo_permiso, rp.alcance FROM usuario_rol ur JOIN rol_sistema r ON r.id_rol=ur.id_rol AND r.estado=1 JOIN rol_permiso rp ON rp.id_rol=ur.id_rol WHERE ur.id_usuario=? AND ur.activo=1', [id])

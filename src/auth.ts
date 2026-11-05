@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { applyDisplaySize } from './display-size'
 import type { DisplaySize } from './display-size'
 
-export type AuthUser = { id: number; memberId: number | null; name: string | null; photoUrl: string | null; displaySize: DisplaySize; email: string; state: 'activo' | 'pendiente' | 'inactivo' | 'bloqueado'; roles: string[]; permissions: Record<string, 'todos' | 'grupo'>; pastoralRole: { name: string; level: number } | null; registration: { canCreateAdministrative: boolean; canAssignServices: boolean; canManageAccounts: boolean } }
+export type AuthUser = { id: number; memberId: number | null; name: string | null; photoUrl: string | null; trainingBook?: { id: number; name: string } | null; displaySize: DisplaySize; email: string; state: 'activo' | 'pendiente' | 'inactivo' | 'bloqueado'; roles: string[]; permissions: Record<string, 'todos' | 'grupo'>; pastoralRole: { name: string; level: number } | null; registration: { canCreateAdministrative: boolean; canAssignServices: boolean; canManageAccounts: boolean } }
 export const hasPermission = (user: AuthUser | null, code: string) => user?.state === 'activo' && Boolean(user.permissions[code])
 
 export async function authRequest(path: string, data?: { email?: string; password?: string; name?: string; currentPassword?: string; newPassword?: string; photo?: string | null; displaySize?: DisplaySize }) {

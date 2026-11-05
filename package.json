@@ -34,6 +34,8 @@
     "test:deploy:integration": "node checks/deployment-check.mjs",
     "test:map": "node checks/map-check.mjs",
     "test:map:ui": "node checks/map-check.mjs --ui",
+    "test:training": "node checks/training-check.mjs",
+    "test:training:ui": "node checks/training-check.mjs --ui",
     "db:import:barrios": "node scripts/import-neighborhood-catalog.mjs",
     "db:import:geodata": "node scripts/import-geodata.mjs"
   },

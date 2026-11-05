@@ -8,6 +8,7 @@ import { InstallApp, ConnectionStatus } from './pwa'
 import './admin-frame.css'
 
 const iconPaths: Record<string, ReactNode> = {
+  training: <><path d="M12 5c-3-2-6-2-9-1v15c3-1 6-1 9 1 3-2 6-2 9-1V4c-3-1-6-1-9 1ZM12 5v15"/><path d="M6 8h3M15 8h3M6 12h3M15 12h3"/></>,
   mapa: <><path d="m3 6 6-3 6 3 6-3v15l-6 3-6-3-6 3ZM9 3v15M15 6v15"/></>,
   home: <><path d="m3 11 9-8 9 8v9a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1Z"/></>,
   more: <><path d="M4 6h16M4 12h16M4 18h16"/></>,

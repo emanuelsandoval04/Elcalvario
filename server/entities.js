@@ -56,7 +56,7 @@ export const memberFields = {
   grupo_sanguineo_rh: v => v ? choice(v,['A+','A-','B+','B-','AB+','AB-','O+','O-']) : null,
   eps: v => text(v,100), contacto_emergencia_nombre: v => text(v,150), contacto_emergencia_celular: v => phone(v),
   funcion_iglesia: v => text(v,150), id_sede: optionalId, id_rol_eclesiastico: optionalId,
-  id_grupo: optionalId, id_cobertura_pastoral: optionalId,
+  id_grupo: optionalId, id_cobertura_pastoral: optionalId, id_libro: optionalId,
 }
 export const groupFields = {
   codigo_grupo: v => text(v,30,true), nombre: v => text(v,150,true), id_discipulador: optionalId,

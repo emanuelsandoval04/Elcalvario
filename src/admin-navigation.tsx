@@ -1,21 +1,24 @@
 import type { AuthUser } from './auth'
 import { hasPermission } from './auth'
 import { AdminIcon } from './AdminFrame'
+import { canCreateTrainingBooks } from './Training'
 
 const modules = [
   { key: 'dashboard', label: 'Inicio', permissions: ['gestion.acceder'] },
   { key: 'members', label: 'Discípulos', permissions: ['miembros.ver', 'miembros.editar', 'miembros.registrar'] },
   { key: 'groups', label: 'Grupos de Comunión', permissions: ['grupos.ver'] },
   { key: 'mapa', label: 'Mapa', permissions: ['grupos.ver'] },
+  { key: 'training', label: 'Adiestramiento', permissions: ['adiestramiento.gestionar'] },
   { key: 'activities', label: 'Eventos y Cultos', permissions: ['eventos.editar', 'eventos.publicar', 'grupos.editar', 'asistencia.registrar', 'asistencia.ver'] },
   { key: 'falls', label: 'Asistencia y alertas', permissions: ['asistencia.registrar', 'asistencia.ver', 'alertas.ver'] },
   { key: 'permissions', label: 'Permisos', permissions: ['permisos.gestionar'] },
-  { key: 'reports', label: 'Reportes', permissions: ['reportes.asistencia', 'reportes.cumpleanos', 'reportes.grupos'] },
+  { key: 'reports', label: 'Reportes', permissions: ['reportes.asistencia', 'reportes.cumpleanos', 'reportes.grupos', 'reportes.discipulos'] },
   { key: 'users', label: 'Usuarios y roles', permissions: ['usuarios.gestionar'] },
 ]
 
 export function allowedModules(user: AuthUser | null) {
   return modules.filter(module =>
+    (module.key !== 'training' || canCreateTrainingBooks(user)) &&
     (module.key === 'users' ? Boolean(user?.registration?.canManageAccounts) : hasPermission(user, 'gestion.acceder')) && module.permissions.some(code => hasPermission(user, code)),
   )
 }
