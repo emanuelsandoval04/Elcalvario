@@ -6,7 +6,7 @@ export type CoverageMap = {
   fitBounds(bounds: unknown, padding?: number): void; getZoom(): number | undefined; setZoom(zoom: number): void
   panTo(point: { lat: number; lng: number }): void
 }
-export type MapOverlay = { onAdd(): void; draw(): void; onRemove(): void; setMap(map: CoverageMap | null): void; getPanes(): { overlayMouseTarget: HTMLElement } | null; getProjection(): { fromLatLngToDivPixel(point: unknown): { x: number; y: number } | null } }
+export type MapOverlay = { onAdd(): void; draw(): void; onRemove(): void; setMap(map: CoverageMap | null): void; getPanes(): { overlayMouseTarget: HTMLElement } | null; getProjection(): { fromLatLngToDivPixel(point: unknown): { x: number; y: number } | null } | undefined }
 export type MapsApi = { Map: new (element: HTMLElement, options: unknown) => CoverageMap; LatLng: new (lat: number, lng: number) => unknown; OverlayView: { new (): MapOverlay; preventMapHitsAndGesturesFrom(element: HTMLElement): void }; LatLngBounds: new () => { extend(point: unknown): void }; event: { clearInstanceListeners(instance: unknown): void; addListenerOnce(instance: unknown, event: string, callback: () => void): Listener } }
 declare global { interface Window { google?: { maps: MapsApi }; calvarioMapsReady?: () => void; gm_authFailure?: () => void } }
 let pending: Promise<MapsApi> | null = null

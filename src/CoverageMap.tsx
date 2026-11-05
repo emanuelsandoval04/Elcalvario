@@ -65,7 +65,13 @@ export default function CoverageMap({ user }: { user: AuthUser }) {
   }, [user])
   useEffect(() => {
     let active = true
-    const failed = () => { if (active) { setMapError(true); setMode('list'); setMapReady(false) } }
+    const failed = () => {
+      if (!active) return
+      if (map.current && maps.current) maps.current.event.clearInstanceListeners(map.current)
+      map.current = null
+      markers.current.forEach(marker => marker.remove()); markers.current.clear(); fitted.current = false
+      setMapError(true); setMode('list'); setMapReady(false)
+    }
     window.addEventListener('calvario-map-error', failed)
     void loadGoogleMaps().then(api => {
       if (!active || !host.current) return
@@ -105,10 +111,12 @@ export default function CoverageMap({ user }: { user: AuthUser }) {
   }, [items, filterIds, mapReady])
   function select(item: Coverage, leaderId?: number) {
     setSelected(item); setSelectedLeaderId(leaderId || null)
+    if (mapError) return
     if (!mapError) setMode('map')
     const marker = markers.current.get(item.barrio.id), instance = map.current
     if (!item.barrio.ubicacion || !marker || !instance) return
     window.requestAnimationFrame(() => {
+      if (map.current !== instance) return
       instance.panTo(item.barrio.ubicacion!); instance.setZoom(15)
       markers.current.forEach(item => item.highlight(false)); marker.highlight(true)
       window.clearTimeout(highlightTimer.current)

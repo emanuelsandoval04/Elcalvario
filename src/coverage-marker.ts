@@ -24,7 +24,10 @@ export function createCoverageMarker(api: MapsApi, map: CoverageMap, location: {
   api.OverlayView.preventMapHitsAndGesturesFrom(root)
   overlay.onAdd = () => { overlay.getPanes()?.overlayMouseTarget.appendChild(root) }
   overlay.draw = () => {
-    const pixel = overlay.getProjection().fromLatLngToDivPixel(new api.LatLng(location.lat, location.lng))
+    const projection = overlay.getProjection()
+    // Google can revoke the map asynchronously after its initial callback.
+    if (!projection) return
+    const pixel = projection.fromLatLngToDivPixel(new api.LatLng(location.lat, location.lng))
     if (pixel) { root.style.left = `${pixel.x}px`; root.style.top = `${pixel.y}px` }
   }
   overlay.onRemove = () => root.remove()
