@@ -64,7 +64,7 @@ El primer despliegue crea o enlaza el proyecto. Configura las variables antes de
 - Build command: `npm run build:vercel`.
 - Output directory: `dist`.
 - Install command: `npm ci --include=dev`.
-- API: `api/[...path].js`, una función Node.js que reutiliza Express.
+- API: `api/index.js`, una función Node.js que reutiliza Express. La regla interna `/api/:path* → /api` envía también las rutas anidadas a la misma función.
 - Archivos públicos: la compilación de Vite; las fotos cargadas por usuarios siguen en MySQL.
 
 No uses la antigua configuración **Other / Build Output API** ni un proxy a Railway. El Dockerfile y `.env.railway.example` se conservan para el despliegue opcional en contenedores; Vercel no los utiliza.

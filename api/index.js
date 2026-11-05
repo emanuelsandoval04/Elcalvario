@@ -1,7 +1,8 @@
-// An unknown API root must not fall through to the React page.
-export default function handler(_request, response) {
-  response.setHeader('Cache-Control', 'no-store')
-  response.setHeader('Content-Type', 'application/json; charset=utf-8')
-  response.statusCode = 404
-  response.end(JSON.stringify({ error: 'Recurso no encontrado.' }))
-}
+import { attachDatabasePool } from '@vercel/functions'
+import app from '../server/app.js'
+import { pool, poolIdleTimeout } from '../server/db.js'
+
+// PromisePool exposes events but not config. Supply the public event API and
+// leave one extra second for mysql2's periodic idle-connection reaper.
+attachDatabasePool({ config: { idleTimeout: poolIdleTimeout + 1000 }, on: pool.on.bind(pool) })
+export default app

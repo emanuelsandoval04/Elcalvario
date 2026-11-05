@@ -62,11 +62,11 @@ test('only provider-controlled Vercel domains are admitted automatically', () =>
   }
 })
 
-test('Vercel builds React and a native API without external rewrites or database migration during build', async () => {
+test('Vercel routes every API path to one native function without database migration during build', async () => {
   const config = JSON.parse(await readFile(new URL('../vercel.json', import.meta.url), 'utf8'))
   assert.equal(config.framework, 'vite')
   assert.equal(config.outputDirectory, 'dist')
-  assert.equal(config.rewrites, undefined)
+  assert.deepEqual(config.rewrites, [{ source: '/api/:path*', destination: '/api' }])
   assert.equal(config.headers.find(rule => rule.source === '/api/:path*').headers.find(header => header.key === 'Cache-Control').value, 'no-store')
   assert.ok(config.functions['api/**/*.js'].includeFiles.includes('pdfkit'))
   assert.ok(config.functions['api/**/*.js'].excludeFiles.includes('.env'))
@@ -76,7 +76,7 @@ test('Vercel builds React and a native API without external rewrites or database
 })
 
 test('Vercel entry imports without opening a database connection and accepts the MySQL pool adapter', async () => {
-  const { default: handler } = await import('../api/[...path].js')
+  const { default: handler } = await import('../api/index.js')
   const { pool } = await import('../server/db.js')
   try {
     assert.equal(typeof handler, 'function')
