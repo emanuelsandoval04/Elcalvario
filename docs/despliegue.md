@@ -2,6 +2,8 @@
 
 React y la API Express se alojan juntos en Vercel. MySQL se aloja en Aiven y exige TLS. El navegador utiliza `/api` en su propio dominio, conservando cookies `HttpOnly`, `Secure` y `SameSite=Strict`. No se necesita Railway ni `API_ORIGIN` para esta configuración.
 
+La instancia publicada está en [elcalvario.vercel.app](https://elcalvario.vercel.app). Los cambios enviados a `main` en [el repositorio](https://github.com/emanuelsandoval04/Elcalvario) generan despliegues de producción automáticamente.
+
 ## 1. Configurar Aiven en el equipo
 
 El archivo privado `.env.aiven.local` está excluido de Git, Docker y Vercel. Completa sus valores con **Connection information** del servicio MySQL de Aiven:
@@ -110,6 +112,8 @@ npm run build:vercel
 La integración usa una base y usuario temporales en MySQL local; no modifica la base de la iglesia. El ensayo de construcción no necesita credenciales de Aiven.
 
 En el dominio publicado comprueba:
+
+Para una comprobación real y automatizada desde el equipo con `.env.aiven.local` configurado, ejecuta `node checks/production-smoke.mjs https://elcalvario.vercel.app`. Usa una cuenta aleatoria temporal, le asigna un rol operativo existente para comprobar los reportes y la elimina junto con sus sesiones al finalizar. No modifica las cuentas existentes ni consume el primer registro de Superadmin.
 
 1. `/api/health` responde `{"status":"ok","database":"connected"}`.
 2. Login, recarga de página y logout conservan el comportamiento de sesión.

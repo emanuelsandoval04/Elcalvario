@@ -2,6 +2,8 @@
 
 Plataforma con React, TypeScript, Vite, Express y MySQL. Usa Node.js 24.x.
 
+Producción: [elcalvario.vercel.app](https://elcalvario.vercel.app). La rama `main` de [GitHub](https://github.com/emanuelsandoval04/Elcalvario) despliega automáticamente en Vercel; la API se conecta a MySQL en Aiven por TLS.
+
 ## Despliegue
 
 Consulta [la guía de Aiven + Vercel](docs/despliegue.md). React y la API se alojan juntos en Vercel; MySQL se conecta a Aiven por TLS. La plantilla `.env.vercel.example` contiene las variables del proyecto y `.env.aiven.local` se usa para comprobar la conexión y ejecutar migraciones desde tu equipo. Las credenciales son privadas del servidor.
