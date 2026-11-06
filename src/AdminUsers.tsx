@@ -6,7 +6,6 @@ import './admin.css'
 import { managementRequest } from './management-api'
 import AdminFrame from './AdminFrame'
 import AdminNavigation from './admin-navigation'
-import AccountSecurity from './AccountSecurity'
 
 type ManagedUser = AuthUser & { state: string }
 type Role = { id: number; name: string }
@@ -28,7 +27,7 @@ export default function AdminUsers() {
   const [users, setUsers] = useState<ManagedUser[]>([])
   const [roles, setRoles] = useState<Role[]>([])
   const { user: sessionUser, checking, error, setUser } = useAuthSession()
-  const accessKey = JSON.stringify([sessionUser?.id, sessionUser?.memberId, sessionUser?.state, sessionUser?.permissions, sessionUser?.registration, sessionUser?.mfaSetupRequired])
+  const accessKey = JSON.stringify([sessionUser?.id, sessionUser?.memberId, sessionUser?.state, sessionUser?.permissions, sessionUser?.registration])
   const [choices, setChoices] = useState<Record<number, number>>({})
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState<number | null>(null)
@@ -53,7 +52,7 @@ export default function AdminUsers() {
     finally { setLoading(false) }
   }
   useEffect(() => {
-    if (hasPermission(sessionUser, 'usuarios.gestionar') && sessionUser?.registration?.canManageAccounts && !sessionUser?.mfaSetupRequired) void load()
+    if (hasPermission(sessionUser, 'usuarios.gestionar') && sessionUser?.registration?.canManageAccounts) void load()
     else { setUsers([]); setMembers([]) }
   }, [accessKey])
 
@@ -72,7 +71,7 @@ export default function AdminUsers() {
     <AdminFrame title="Usuarios y roles" sectionName="Usuarios y roles" user={sessionUser} onUserChange={setUser} viewKey="users" navigation={<AdminNavigation user={sessionUser} active="users"/>}>
       <section className="admin-panel" aria-labelledby="panel-page-title">
         <div className="admin-message" role="status" aria-live="polite">{message || error}</div>
-        {checking ? <p>Verificando acceso…</p> : sessionUser?.mfaSetupRequired ? <AccountSecurity user={sessionUser} onUpdate={setUser}/> : !hasPermission(sessionUser, 'usuarios.gestionar') || !sessionUser?.registration?.canManageAccounts ? <p>Solo los cinco cargos pastorales autorizados pueden habilitar cuentas y asignar roles. <a href="#login">Ir a mi cuenta</a></p> : <>
+        {checking ? <p>Verificando acceso…</p> : !hasPermission(sessionUser, 'usuarios.gestionar') || !sessionUser?.registration?.canManageAccounts ? <p>Solo los cinco cargos pastorales autorizados pueden habilitar cuentas y asignar roles. <a href="#login">Ir a mi cuenta</a></p> : <>
         <p>Las cuentas pendientes aparecen primero. Selecciona su rol y pulsa Habilitar cuenta para permitir el acceso correspondiente.</p>
         <button className="admin-save" disabled={loading || saving !== null} onClick={() => void load()}>Actualizar usuarios</button>
         {loading ? <p>Cargando usuarios…</p> : users.length > 0 ? <div className="admin-user-list">

@@ -1,5 +1,4 @@
 import AppSelect from './AppSelect'
-import AccountSecurity from './AccountSecurity'
 import ProfilePhoto from './ProfilePhoto'
 import { lazy, Suspense, useEffect, useId, useRef, useState } from 'react'
 import type { FormEvent, ReactNode } from 'react'
@@ -521,7 +520,7 @@ function Permissions({ notify }: { notify: Message }) {
 
 export default function Management() {
   const { user, checking, error, refresh, setUser } = useAuthSession()
-  const accessKey = JSON.stringify([user?.id, user?.memberId, user?.state, user?.permissions, user?.pastoralRole, user?.registration, user?.mfaSetupRequired])
+  const accessKey = JSON.stringify([user?.id, user?.memberId, user?.state, user?.permissions, user?.pastoralRole, user?.registration])
   const [catalogs, setCatalogs] = useState<Catalogs>(emptyCatalogs)
   const [requestedTab, setRequestedTab] = useState(currentModule)
   const [message, setMessage] = useState('')
@@ -544,7 +543,7 @@ export default function Management() {
   useEffect(() => {
     let active = true
     setCatalogs(emptyCatalogs)
-    if (has(user, 'gestion.acceder') && !user?.mfaSetupRequired) void api<Catalogs>('catalogs').then(result => { if (active) setCatalogs(result) }).catch(cause => { if (active) setMessage(errorMessage(cause)) })
+    if (has(user, 'gestion.acceder')) void api<Catalogs>('catalogs').then(result => { if (active) setCatalogs(result) }).catch(cause => { if (active) setMessage(errorMessage(cause)) })
     return () => { active = false }
   }, [accessKey])
   useEffect(() => {
@@ -565,7 +564,7 @@ export default function Management() {
         <p>Tu sesión está iniciada. Un administrador, pastor o Superadmin debe activar tu cuenta y asignarte un rol para que puedas utilizar las herramientas del panel.</p>
       </div>
       <div className="manage-actions"><button type="button" disabled={accountBusy} onClick={() => void checkActivation()}>{accountBusy ? 'Consultando…' : 'Consultar activación'}</button><button type="button" className="secondary" disabled={accountBusy} onClick={() => void logout()}>Cerrar sesión</button></div>
-    </section> : user?.mfaSetupRequired ? <div className="manage-editor"><AccountSecurity user={user} onUpdate={setUser}/></div> : !user || !has(user, 'gestion.acceder') ? <p>Necesitas una cuenta con un rol autorizado. <a href="#login">Ir a mi cuenta</a></p> : <>
+    </section> : !user || !has(user, 'gestion.acceder') ? <p>Necesitas una cuenta con un rol autorizado. <a href="#login">Ir a mi cuenta</a></p> : <>
       <div className="manage-session"><span className="manage-session-dot"/><span>{user.roles.join(', ')}</span><span>Al servicio de nuestra comunidad</span></div>
       {tab === 'dashboard' && <Dashboard key={accessKey} user={user} />}
       {tab === 'training' && <Training books={catalogs.libros || []} onReload={reloadCatalogs} notify={setMessage} canSeeMembers={has(user, 'miembros.ver')}/>}

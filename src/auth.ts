@@ -2,10 +2,10 @@ import { useCallback, useEffect, useState } from 'react'
 import { applyDisplaySize } from './display-size'
 import type { DisplaySize } from './display-size'
 
-export type AuthUser = { id: number; memberId: number | null; name: string | null; photoUrl: string | null; trainingBook?: { id: number; name: string } | null; mfaEnabled?: boolean; mfaMandatory?: boolean; mfaSetupRequired?: boolean; displaySize: DisplaySize; email: string; state: 'activo' | 'pendiente' | 'inactivo' | 'bloqueado'; roles: string[]; permissions: Record<string, 'todos' | 'grupo'>; pastoralRole: { name: string; level: number } | null; registration: { canCreateAdministrative: boolean; canAssignServices: boolean; canManageAccounts: boolean } }
+export type AuthUser = { id: number; memberId: number | null; name: string | null; photoUrl: string | null; trainingBook?: { id: number; name: string } | null; displaySize: DisplaySize; email: string; state: 'activo' | 'pendiente' | 'inactivo' | 'bloqueado'; roles: string[]; permissions: Record<string, 'todos' | 'grupo'>; pastoralRole: { name: string; level: number } | null; registration: { canCreateAdministrative: boolean; canAssignServices: boolean; canManageAccounts: boolean } }
 export const hasPermission = (user: AuthUser | null, code: string) => user?.state === 'activo' && Boolean(user.permissions[code])
 
-type AuthResult = { user?: AuthUser | null; error?: string; ok?: boolean; mfaRequired?: boolean }
+type AuthResult = { user?: AuthUser | null; error?: string; ok?: boolean }
 export async function authRequest<T extends object = AuthResult>(path: string, data?: object): Promise<T & AuthResult> {
   const response = await fetch(`/api/auth/${path}`, {
     method: data ? 'POST' : 'GET',

@@ -1,6 +1,5 @@
 import { Router } from 'express'
 import { randomBytes, randomUUID, scrypt, timingSafeEqual, createHash } from 'node:crypto'
-import QRCode from 'qrcode'
 import { promisify } from 'node:util'
 import { pool } from './db.js'
 import { isAllowedOrigin } from './origin.js'
@@ -8,14 +7,12 @@ import { pastoralRoleFor, registrationCapabilities, hasPastoralAuthority, pastor
 import { parseProfilePhoto, saveProfilePhoto } from './profile-photo.js'
 import { sessionMilliseconds } from './config.js'
 import { databaseRateLimit } from './rate-limit.js'
-import { requiresMfa, newSecret, encryptSecret, createTotp, verifyFactor, recoveryCodes, requireFactor } from './security.js'
 import { audit } from './audit.js'
 import { invalid } from './entities.js'
 
 const deriveKey = promisify(scrypt)
 const passwordOptions = { N: 32768, r: 8, p: 3, maxmem: 64 * 1024 * 1024 }
 const cookieName = 'calvario_session'
-const challengeCookie = 'calvario_mfa'
 const cookieOptions = { httpOnly: true, sameSite: 'strict', secure: process.env.NODE_ENV === 'production' || process.env.VERCEL==='1', path: '/api' }
 export const authRouter = Router()
 
@@ -38,22 +35,21 @@ function sessionToken(request,name=cookieName) {
   const token = cookie?.slice(name.length + 1)
   return /^[a-f0-9]{64}$/.test(token || '') ? token : null
 }
-async function createSession(connection, id, response, request, verified=false) {
+async function createSession(connection, id, response, request) {
   const token = randomBytes(32).toString('hex')
   await connection.execute('INSERT INTO sesion_usuario (token_hash, id_usuario, fecha_expiracion,fecha_creacion) VALUES (?, ?, ?,UTC_TIMESTAMP())', [tokenDigest(token), id, new Date(Date.now() + sessionMilliseconds)])
-  await connection.execute('INSERT INTO sesion_detalle(token_hash,id_sesion,agente,ip,mfa_verificada) VALUES (?,?,?,?,?)',[tokenDigest(token),randomUUID(),String(request?.get('user-agent') || '').slice(0,255),String(request?.ip || '').slice(0,64),Number(verified)])
+  await connection.execute('INSERT INTO sesion_detalle(token_hash,id_sesion,agente,ip) VALUES (?,?,?,?)',[tokenDigest(token),randomUUID(),String(request?.get('user-agent') || '').slice(0,255),String(request?.ip || '').slice(0,64)])
   await connection.execute('DELETE FROM sesion_usuario WHERE id_usuario=? AND fecha_expiracion<=UTC_TIMESTAMP()',[id])
   return () => response.cookie(cookieName, token, { ...cookieOptions, maxAge: sessionMilliseconds })
 }
 export async function readUser(id, connection = pool) {
-  const [users] = await connection.execute("SELECT u.id_usuario AS id, u.id_miembro AS memberId, u.correo_login AS email, u.estado_usuario AS state, p.nombre AS name, f.version AS photoVersion, COALESCE(pr.tamano_interfaz,'normal') AS displaySize,l.id_libro AS trainingBookId,l.nombre AS trainingBookName,COALESCE(mf.habilitada,0) AS mfaEnabled FROM usuario u LEFT JOIN perfil_usuario p ON p.id_usuario=u.id_usuario LEFT JOIN foto_perfil_usuario f ON f.id_usuario=u.id_usuario LEFT JOIN preferencia_usuario pr ON pr.id_usuario=u.id_usuario LEFT JOIN miembro m ON m.id_miembro=u.id_miembro AND m.archivado=0 LEFT JOIN libro_adiestramiento l ON l.id_libro=m.id_libro LEFT JOIN seguridad_mfa mf ON mf.id_usuario=u.id_usuario WHERE u.id_usuario = ? AND u.estado_usuario IN ('activo','pendiente')", [id])
+  const [users] = await connection.execute("SELECT u.id_usuario AS id, u.id_miembro AS memberId, u.correo_login AS email, u.estado_usuario AS state, p.nombre AS name, f.version AS photoVersion, COALESCE(pr.tamano_interfaz,'normal') AS displaySize,l.id_libro AS trainingBookId,l.nombre AS trainingBookName FROM usuario u LEFT JOIN perfil_usuario p ON p.id_usuario=u.id_usuario LEFT JOIN foto_perfil_usuario f ON f.id_usuario=u.id_usuario LEFT JOIN preferencia_usuario pr ON pr.id_usuario=u.id_usuario LEFT JOIN miembro m ON m.id_miembro=u.id_miembro AND m.archivado=0 LEFT JOIN libro_adiestramiento l ON l.id_libro=m.id_libro WHERE u.id_usuario = ? AND u.estado_usuario IN ('activo','pendiente')", [id])
   if (!users.length) return null
   users[0].photoUrl = users[0].photoVersion ? `/api/auth/account/photo?v=${users[0].photoVersion}` : null
   delete users[0].photoVersion
   users[0].trainingBook=users[0].trainingBookId ? {id:users[0].trainingBookId,name:users[0].trainingBookName} : null
   delete users[0].trainingBookId
   delete users[0].trainingBookName
-  users[0].mfaEnabled=Boolean(users[0].mfaEnabled)
   if (users[0].state === 'pendiente') return { ...users[0], roles: [], permissions: {}, pastoralRole: null, registration: { canCreateAdministrative: false, canAssignServices: false, canManageAccounts: false } }
   const [roles] = await connection.execute('SELECT r.nombre FROM usuario_rol ur JOIN rol_sistema r ON r.id_rol = ur.id_rol WHERE ur.id_usuario = ? AND ur.activo = 1 AND r.estado = 1', [id])
   const [grants] = await connection.execute('SELECT rp.codigo_permiso, rp.alcance FROM usuario_rol ur JOIN rol_sistema r ON r.id_rol=ur.id_rol AND r.estado=1 JOIN rol_permiso rp ON rp.id_rol=ur.id_rol WHERE ur.id_usuario=? AND ur.activo=1', [id])
@@ -65,9 +61,6 @@ export async function readUser(id, connection = pool) {
   if (!user.roles.includes('Superadmin') && user.pastoralRole?.level === 6 && permissions['miembros.editar']) permissions['miembros.editar'] = 'grupo'
   if (!user.roles.includes('Superadmin') && user.pastoralRole?.level === 6 && permissions['miembros.registrar']) permissions['miembros.registrar'] = 'grupo'
   user.registration = registrationCapabilities(user)
-  user.mfaMandatory=requiresMfa(user)
-  const [mfaState]=await connection.execute('SELECT recuperacion_confirmada FROM seguridad_mfa WHERE id_usuario=?',[id])
-  user.mfaSetupRequired=(user.mfaMandatory && !user.mfaEnabled) || (user.mfaEnabled && !mfaState[0]?.recuperacion_confirmada)
   return user
 }
 function emailAddress(value) {
@@ -152,23 +145,11 @@ authRouter.post('/login', rateLimit, accountLimit, async (request, response) => 
     const oldToken = sessionToken(request)
     if (oldToken) await connection.execute('DELETE FROM sesion_usuario WHERE token_hash = ?', [tokenDigest(oldToken)])
     const user = await readUser(rows[0].id_usuario, connection)
-    if(user.mfaEnabled) {
-      const token=randomBytes(32).toString('hex'),oldChallenge=sessionToken(request,challengeCookie)
-      if(oldChallenge) await connection.execute('DELETE FROM reto_mfa WHERE token_hash=?',[tokenDigest(oldChallenge)])
-      await connection.execute('DELETE FROM reto_mfa WHERE id_usuario=? AND vence_en<=UTC_TIMESTAMP()',[user.id])
-      await connection.execute('INSERT INTO reto_mfa(token_hash,id_usuario,vence_en) VALUES (?,?,DATE_ADD(UTC_TIMESTAMP(),INTERVAL 5 MINUTE))',[tokenDigest(token),user.id])
-      await audit(connection,request,'login.factor_requested',200,user.id)
-      await connection.commit()
-      response.clearCookie(cookieName,cookieOptions)
-      response.cookie(challengeCookie,token,{...cookieOptions,maxAge:300000})
-      return response.json({mfaRequired:true})
-    }
     const setCookie = await createSession(connection, rows[0].id_usuario, response, request)
     await connection.execute('UPDATE usuario SET ultimo_acceso = UTC_TIMESTAMP() WHERE id_usuario = ?', [rows[0].id_usuario])
     await audit(connection,request,'login.success',200,user.id)
     await connection.commit()
     setCookie()
-    response.clearCookie(challengeCookie,cookieOptions)
     response.json({ user })
   } catch (error) {
     if (connection) await connection.rollback()
@@ -177,41 +158,13 @@ authRouter.post('/login', rateLimit, accountLimit, async (request, response) => 
   } finally { connection?.release() }
 })
 
-authRouter.post('/login/mfa',rateLimit,async(request,response)=>{
-  const token=sessionToken(request,challengeCookie)
-  if(!token) return response.status(401).json({error:'Vuelve a iniciar sesión para verificar tu identidad.'})
-  const connection=await pool.getConnection()
-  try {
-    const [lookup]=await connection.execute('SELECT id_usuario FROM reto_mfa WHERE token_hash=?',[tokenDigest(token)])
-    if(!lookup.length) throw invalid('La verificación ha vencido. Inicia sesión nuevamente.',401)
-    await connection.beginTransaction()
-    await connection.execute('SELECT id_usuario FROM usuario WHERE id_usuario=? FOR UPDATE',[lookup[0].id_usuario])
-    const [rows]=await connection.execute('SELECT * FROM reto_mfa WHERE token_hash=? FOR UPDATE',[tokenDigest(token)])
-    const challenge=rows[0],user=await readUser(lookup[0].id_usuario,connection)
-    if(!challenge || !user || challenge.intentos>=5 || new Date(challenge.vence_en).getTime()<=Date.now()) throw invalid('La verificación ha vencido. Inicia sesión nuevamente.',401)
-    if(!await verifyFactor(connection,user.id,request.body?.code)) {
-      await connection.execute('UPDATE reto_mfa SET intentos=intentos+1 WHERE token_hash=?',[tokenDigest(token)])
-      await audit(connection,request,'login.factor_failed',401,user.id)
-      await connection.commit()
-      return response.status(401).json({error:'Código incorrecto o ya utilizado. Usa un código vigente o uno de recuperación.'})
-    }
-    await connection.execute('DELETE FROM reto_mfa WHERE token_hash=?',[tokenDigest(token)])
-    const setCookie=await createSession(connection,user.id,response,request,true)
-    await connection.execute('UPDATE usuario SET ultimo_acceso=UTC_TIMESTAMP() WHERE id_usuario=?',[user.id])
-    await audit(connection,request,'login.mfa_success',200,user.id)
-    await connection.commit();setCookie();response.clearCookie(challengeCookie,cookieOptions)
-    response.json({user})
-  }catch(error){await connection.rollback();response.status(error.status || 503).json({error:error.status ? error.message : 'No pudimos verificar tu acceso.'})}
-  finally{connection.release()}
-})
-
 async function loadSession(request) {
   const token=sessionToken(request)
   if(!token) return null
-  const [rows]=await pool.execute('SELECT s.id_usuario,d.mfa_verificada,d.ultima_actividad FROM sesion_usuario s LEFT JOIN sesion_detalle d ON d.token_hash=s.token_hash WHERE s.token_hash=? AND s.fecha_expiracion>UTC_TIMESTAMP() AND (d.ultima_actividad IS NULL OR d.ultima_actividad>DATE_SUB(UTC_TIMESTAMP(),INTERVAL 30 MINUTE))',[tokenDigest(token)])
+  const [rows]=await pool.execute('SELECT s.id_usuario,d.ultima_actividad FROM sesion_usuario s LEFT JOIN sesion_detalle d ON d.token_hash=s.token_hash WHERE s.token_hash=? AND s.fecha_expiracion>UTC_TIMESTAMP() AND (d.ultima_actividad IS NULL OR d.ultima_actividad>DATE_SUB(UTC_TIMESTAMP(),INTERVAL 30 MINUTE))',[tokenDigest(token)])
   if(!rows.length) return null
   const user=await readUser(rows[0].id_usuario)
-  if(!user || (user.mfaEnabled && !rows[0].mfa_verificada)) return null
+  if(!user) return null
   if(!rows[0].ultima_actividad) await pool.execute('INSERT IGNORE INTO sesion_detalle(token_hash,id_sesion,agente,ip) VALUES (?,?,?,?)',[tokenDigest(token),randomUUID(),String(request.get('user-agent') || '').slice(0,255),String(request.ip || '').slice(0,64)])
   else if(Date.now()-new Date(rows[0].ultima_actividad).getTime()>60000) await pool.execute('UPDATE sesion_detalle SET ultima_actividad=UTC_TIMESTAMP() WHERE token_hash=?',[tokenDigest(token)])
   return user
@@ -241,10 +194,7 @@ authRouter.post('/logout', async (request, response) => {
       if(rows.length) await audit(pool,request,'session.logout',200,rows[0].id_usuario)
     }
     if (token) await pool.execute('DELETE FROM sesion_usuario WHERE token_hash = ?', [tokenDigest(token)])
-    const challenge=sessionToken(request,challengeCookie)
-    if(challenge) await pool.execute('DELETE FROM reto_mfa WHERE token_hash=?',[tokenDigest(challenge)])
     response.clearCookie(cookieName, cookieOptions)
-    response.clearCookie(challengeCookie,cookieOptions)
     response.json({ ok: true })
   } catch (error) {
     console.error('Error de cierre de sesión:', error.code || 'LOGOUT_ERROR')
@@ -269,7 +219,6 @@ async function requireAccountSession(request, response, next) {
 export function requireSession(request, response, next) {
   return requireAccountSession(request, response, () => {
     if (request.authUser.state !== 'activo') return response.status(403).json({ error: 'Tu cuenta está pendiente de habilitación. La administración debe asignarte un rol.' })
-    if (request.authUser.mfaSetupRequired) return response.status(403).json({error:'Activa el doble factor en Seguridad de la cuenta antes de continuar.',code:'MFA_SETUP_REQUIRED'})
     next()
   })
 }
@@ -292,10 +241,9 @@ async function confirmPassword(value, account) {
     throw error
   }
 }
-async function replaceSessions(connection, id, response, request, verified=false) {
+async function replaceSessions(connection, id, response, request) {
   await connection.execute('DELETE FROM sesion_usuario WHERE id_usuario=?', [id])
-  await connection.execute('DELETE FROM reto_mfa WHERE id_usuario=?',[id])
-  return createSession(connection, id, response, request, verified)
+  return createSession(connection, id, response, request)
 }
 
 async function securityAction(request,response,action) {
@@ -320,8 +268,7 @@ authRouter.get('/account/security',requireAccountSession,async(request,response)
   try {
     const [sessions]=await pool.execute('SELECT d.id_sesion AS id,d.agente AS device,d.ip,d.ultima_actividad AS lastSeen,s.fecha_creacion AS created,s.fecha_expiracion AS expires,d.token_hash=? AS current FROM sesion_usuario s JOIN sesion_detalle d ON d.token_hash=s.token_hash WHERE s.id_usuario=? AND s.fecha_expiracion>UTC_TIMESTAMP() AND d.ultima_actividad>DATE_SUB(UTC_TIMESTAMP(),INTERVAL 30 MINUTE) ORDER BY d.ultima_actividad DESC',[tokenDigest(sessionToken(request)),request.authUser.id])
     const [events]=await pool.execute('SELECT accion AS action,resultado AS status,fecha AS date,ip,agente AS device FROM auditoria_seguridad WHERE id_usuario=? ORDER BY id_evento DESC LIMIT 40',[request.authUser.id])
-    const [codes]=await pool.execute('SELECT COUNT(*) AS remaining FROM mfa_recuperacion WHERE id_usuario=? AND usado_en IS NULL',[request.authUser.id])
-    response.json({sessions,events,remainingCodes:codes[0].remaining,user:request.authUser})
+    response.json({sessions,events,user:request.authUser})
   }catch(error){response.status(503).json({error:'No pudimos consultar la seguridad de la cuenta.'})}
 })
 
@@ -334,60 +281,11 @@ authRouter.get('/account/security/audit',requireSession,requirePermission('usuar
   }catch(error){response.status(503).json({error:'No pudimos consultar la auditoría.'})}
 })
 
-authRouter.post('/account/security/mfa/setup',requireAccountSession,securityLimit,async(request,response)=>securityAction(request,response,async(connection,user)=>{
-  const account=await lockedAccount(request,connection)
-  await confirmPassword(request.body?.currentPassword,account)
-  if(user.mfaEnabled) throw invalid('El doble factor ya está activo.',409)
-  const secret=newSecret()
-  await connection.execute('INSERT INTO seguridad_mfa(id_usuario,secreto_cifrado,vence_configuracion) VALUES (?,?,DATE_ADD(UTC_TIMESTAMP(),INTERVAL 10 MINUTE)) ON DUPLICATE KEY UPDATE secreto_cifrado=VALUES(secreto_cifrado),vence_configuracion=VALUES(vence_configuracion),ultimo_paso=-1',[user.id,encryptSecret(secret,user.id)])
-  const qrDataUrl=await QRCode.toDataURL(createTotp(secret,user.email).toString(),{width:240,margin:2})
-  await audit(connection,request,'mfa.setup_started')
-  return {body:{secret,qrDataUrl}}
-}))
-
-authRouter.post('/account/security/mfa/confirm',requireAccountSession,securityLimit,async(request,response)=>securityAction(request,response,async(connection,user)=>{
-  if(!await verifyFactor(connection,user.id,request.body?.code,{pending:true})) throw invalid('Código incorrecto, utilizado o configuración vencida. Verifica tu autenticador.',401)
-  await connection.execute('UPDATE seguridad_mfa SET habilitada=1,vence_configuracion=NULL WHERE id_usuario=?',[user.id])
-  const codes=await recoveryCodes(connection,user.id)
-  const setCookie=await replaceSessions(connection,user.id,response,request,true)
-  await audit(connection,request,'mfa.enabled')
-  return {setCookie,body:{user:await readUser(user.id,connection),recoveryCodes:codes}}
-}))
-
-authRouter.post('/account/security/mfa/recovery',requireAccountSession,securityLimit,async(request,response)=>securityAction(request,response,async(connection,user)=>{
-  if(!user.mfaEnabled) throw invalid('Primero activa el doble factor.',409)
-  await confirmPassword(request.body?.currentPassword,await lockedAccount(request,connection))
-  await requireFactor(connection,user,request.body?.code)
-  const codes=await recoveryCodes(connection,user.id)
-  await audit(connection,request,'mfa.recovery_regenerated')
-  return {body:{recoveryCodes:codes}}
-}))
-
-authRouter.post('/account/security/mfa/recovery/ack',requireAccountSession,securityLimit,async(request,response)=>securityAction(request,response,async(connection,user)=>{
-  if(!user.mfaEnabled) throw invalid('Primero activa el doble factor.',409)
-  await connection.execute('UPDATE seguridad_mfa SET recuperacion_confirmada=1 WHERE id_usuario=?',[user.id])
-  await audit(connection,request,'mfa.recovery_saved')
-  return {body:{user:await readUser(user.id,connection)}}
-}))
-
-authRouter.post('/account/security/mfa/disable',requireAccountSession,securityLimit,async(request,response)=>securityAction(request,response,async(connection,user)=>{
-  if(requiresMfa(user)) throw invalid('Tu cargo requiere doble factor. Debe permanecer activo.',403)
-  if(!user.mfaEnabled) throw invalid('El doble factor no está activo.',409)
-  await confirmPassword(request.body?.currentPassword,await lockedAccount(request,connection))
-  await requireFactor(connection,user,request.body?.code)
-  await connection.execute('DELETE FROM mfa_recuperacion WHERE id_usuario=?',[user.id])
-  await connection.execute('DELETE FROM seguridad_mfa WHERE id_usuario=?',[user.id])
-  const setCookie=await replaceSessions(connection,user.id,response,request)
-  await audit(connection,request,'mfa.disabled')
-  return {setCookie,body:{user:await readUser(user.id,connection)}}
-}))
-
 authRouter.post('/account/security/sessions/revoke',requireAccountSession,securityLimit,async(request,response)=>securityAction(request,response,async(connection,user)=>{
   const id=request.body?.sessionId
   if(id!=='others' && (typeof id!=='string' || !/^[a-f0-9-]{36}$/.test(id))) throw invalid('Sesión inválida.')
   const [result]=await connection.execute(`DELETE s FROM sesion_usuario s JOIN sesion_detalle d ON d.token_hash=s.token_hash WHERE s.id_usuario=? AND s.token_hash<>? ${id==='others'?'':'AND d.id_sesion=?'}`,[user.id,tokenDigest(sessionToken(request)),...(id==='others'?[]:[id])])
   if(id!=='others' && !result.affectedRows) throw invalid('La sesión ya terminó o no pertenece a tu cuenta.',404)
-  await connection.execute('DELETE FROM reto_mfa WHERE id_usuario=?',[user.id])
   await audit(connection,request,id==='others'?'session.revoke_others':'session.revoke')
   return {body:{ok:true}}
 }))
@@ -457,10 +355,9 @@ authRouter.post('/account/profile', rateLimit, requireAccountSession, async (req
     const account = await lockedAccount(request, connection)
     const emailChanged = email !== account.correo_login
     if (emailChanged) await confirmPassword(request.body.currentPassword, account)
-    if (emailChanged) await requireFactor(connection,request.authUser,request.body.code)
     await connection.execute('UPDATE usuario SET correo_login=? WHERE id_usuario=?', [email, account.id_usuario])
     await connection.execute('INSERT INTO perfil_usuario (id_usuario,nombre) VALUES (?,?) ON DUPLICATE KEY UPDATE nombre=?', [account.id_usuario, name, name])
-    const setCookie = emailChanged ? await replaceSessions(connection, account.id_usuario, response, request,request.authUser.mfaEnabled) : null
+    const setCookie = emailChanged ? await replaceSessions(connection, account.id_usuario, response, request) : null
     const user = await readUser(account.id_usuario, connection)
     await audit(connection,request,emailChanged?'account.email_changed':'account.profile_updated')
     await connection.commit()
@@ -484,10 +381,9 @@ authRouter.post('/account/password', rateLimit, requireAccountSession, async (re
     await connection.beginTransaction()
     const account = await lockedAccount(request, connection)
     await confirmPassword(request.body.currentPassword, account)
-    await requireFactor(connection,request.authUser,request.body.code)
     const hash = await hashPassword(password)
     await connection.execute('UPDATE usuario SET password_hash=? WHERE id_usuario=?', [hash, account.id_usuario])
-    const setCookie = await replaceSessions(connection, account.id_usuario, response, request,request.authUser.mfaEnabled)
+    const setCookie = await replaceSessions(connection, account.id_usuario, response, request)
     const user = await readUser(account.id_usuario, connection)
     await audit(connection,request,'account.password_changed')
     await connection.commit()

@@ -21,7 +21,6 @@ function AccountSettings({ user, initialSection, onClose, onUpdate }: { user: Au
   const [currentPassword, setCurrentPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [confirmation, setConfirmation] = useState('')
-  const [code, setCode] = useState('')
   const [visible, setVisible] = useState(false)
   const [busy, setBusy] = useState(false)
   const [photo, setPhoto] = useState<string | null>(user.photoUrl)
@@ -62,7 +61,7 @@ function AccountSettings({ user, initialSection, onClose, onUpdate }: { user: Au
     if (section === 'password' && newPassword !== confirmation) { setMessage('Las contraseñas no coinciden.'); setFailure(true); return }
     setBusy(true)
     try {
-      const result = await authRequest(`account/${section === 'display' ? 'preferences' : section}`, section === 'display' ? { displaySize } : section === 'photo' ? { photo } : section === 'profile' ? { name, email, currentPassword, code } : { currentPassword, newPassword, code })
+      const result = await authRequest(`account/${section === 'display' ? 'preferences' : section}`, section === 'display' ? { displaySize } : section === 'photo' ? { photo } : section === 'profile' ? { name, email, currentPassword } : { currentPassword, newPassword })
       if (result.user) {
         onUpdate(result.user)
         setName(result.user.name || ''); setEmail(result.user.email)
@@ -70,19 +69,19 @@ function AccountSettings({ user, initialSection, onClose, onUpdate }: { user: Au
         setDisplaySize(result.user.displaySize)
         window.dispatchEvent(new Event('calvario-account-updated'))
       }
-      setCurrentPassword(''); setNewPassword(''); setConfirmation(''); setCode(''); setVisible(false)
+      setCurrentPassword(''); setNewPassword(''); setConfirmation(''); setVisible(false)
       setMessage(section === 'display' ? 'Tamaño de la interfaz guardado en tu cuenta.' : section === 'photo' ? photo ? 'Foto de perfil actualizada.' : 'Foto de perfil eliminada.' : section === 'profile' ? 'Datos de la cuenta actualizados.' : 'Contraseña actualizada.')
     } catch (cause) { setMessage(describeError(cause)); setFailure(true) }
     finally { setBusy(false) }
   }
-  function select(next: Section) { setSection(next); setCurrentPassword(''); setNewPassword(''); setConfirmation(''); setCode(''); setMessage(''); setVisible(false) }
+  function select(next: Section) { setSection(next); setCurrentPassword(''); setNewPassword(''); setConfirmation(''); setMessage(''); setVisible(false) }
 
   return createPortal(<div className="account-overlay" onClick={event => { if (event.target === event.currentTarget && !busy) onClose() }}>
     <div ref={dialog} className="account-dialog" role="dialog" aria-modal="true" aria-labelledby="account-title">
       <div className="account-dialog-heading"><div><span className="account-eyebrow">TU PERFIL</span><h2 id="account-title">Opciones de la cuenta</h2></div><button type="button" className="account-close" aria-label="Cerrar opciones de la cuenta" disabled={busy} onClick={onClose}>×</button></div>
       <nav className="account-tabs" aria-label="Secciones de la cuenta"><button type="button" aria-pressed={section === 'profile'} disabled={busy || photoBusy} onClick={() => select('profile')}>Nombre y correo</button><button type="button" aria-pressed={section === 'photo'} disabled={busy || photoBusy} onClick={() => select('photo')}>Foto de perfil</button><button type="button" aria-pressed={section === 'password'} disabled={busy || photoBusy} onClick={() => select('password')}>Contraseña</button><button type="button" aria-pressed={section === 'display'} disabled={busy || photoBusy} onClick={() => select('display')}>Tamaño de la interfaz</button></nav>
       <button type="button" className="account-show-password" disabled={busy} onClick={() => select('security')}>Seguridad y dispositivos</button>
-      {section === 'security' ? <AccountSecurity user={user} onUpdate={onUpdate} onBusy={setBusy}/> : <form className="account-form" onSubmit={save} aria-busy={busy}>
+      {section === 'security' ? <AccountSecurity user={user} onBusy={setBusy}/> : <form className="account-form" onSubmit={save} aria-busy={busy}>
         {section === 'display' && <><p className="account-help">Ajusta textos, botones e iconos para leer con más comodidad. La elección se guardará solo en tu cuenta.</p><fieldset className="display-size-options" disabled={busy}><legend>Tamaño de la interfaz</legend>{displaySizes.map(size => <label key={size.value} className="display-size-choice"><input type="radio" name="display-size" value={size.value} checked={displaySize === size.value} onChange={() => { setDisplaySize(size.value); setMessage('') }}/><span><strong>{size.label}</strong><small>{size.detail}</small></span><span className="display-size-example" data-size={size.value} aria-hidden="true">Aa</span></label>)}</fieldset></>}
         {section === 'photo' && <ProfilePhoto value={photo} onChange={setPhoto} onBusyChange={setPhotoBusy} disabled={busy}/>}
         {section === 'profile' && <>
@@ -98,7 +97,6 @@ function AccountSettings({ user, initialSection, onClose, onUpdate }: { user: Au
           <label htmlFor="account-confirmation">Confirmar nueva contraseña<input id="account-confirmation" name="confirmation" type={visible ? 'text' : 'password'} autoComplete="new-password" required minLength={10} maxLength={128} value={confirmation} onChange={event => setConfirmation(event.target.value)} disabled={busy}/></label>
         </>}
         {(section === 'password' || section === 'profile' && emailChanged) && <button className="account-show-password" type="button" aria-pressed={visible} disabled={busy} onClick={() => setVisible(!visible)}>{visible ? 'Ocultar contraseñas' : 'Mostrar contraseñas'}</button>}
-        {user.mfaEnabled && (section === 'password' || section === 'profile' && emailChanged) && <label>Código del autenticador o de recuperación<input autoComplete="one-time-code" required maxLength={25} value={code} onChange={event => setCode(event.target.value)} disabled={busy}/></label>}
         <div className={`account-feedback${failure ? ' is-error' : ''}`} role={failure ? 'alert' : 'status'} aria-live="polite">{message}</div>
         <button className="account-primary" type="submit" disabled={busy || photoBusy || section === 'photo' && photo === user.photoUrl || section === 'display' && displaySize === user.displaySize}>{busy ? 'Guardando…' : section === 'display' ? 'Guardar tamaño' : section === 'photo' ? 'Guardar foto' : section === 'profile' ? 'Guardar datos' : 'Actualizar contraseña'}</button>
       </form>}

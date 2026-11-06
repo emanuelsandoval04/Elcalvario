@@ -8,7 +8,6 @@ export default function Login({ registration = false }: { registration?: boolean
   const [visible, setVisible] = useState(false)
   const [message, setMessage] = useState('')
   const [busy, setBusy] = useState(false)
-  const [mfa, setMfa] = useState(false)
   const [photo, setPhoto] = useState<string | null>(null)
   const [photoBusy, setPhotoBusy] = useState(false)
   const { checking, user, setUser, error, refresh } = useAuthSession()
@@ -30,9 +29,8 @@ export default function Login({ registration = false }: { registration?: boolean
     setBusy(true)
     setMessage('')
     try {
-      const result = await authRequest(mfa ? 'login/mfa' : registration ? 'register' : 'login', mfa ? {code:String(values.get('code') || '')} : { email, password, ...(registration ? { photo } : {}) })
+      const result = await authRequest(registration ? 'register' : 'login', { email, password, ...(registration ? { photo } : {}) })
       form.reset()
-      if(result.mfaRequired) { setMfa(true); setMessage('Confirma el código de tu autenticador para completar el acceso.'); return }
       setPhoto(null)
       setVisible(false)
       setUser(result.user || null)
@@ -86,7 +84,7 @@ export default function Login({ registration = false }: { registration?: boolean
               <button className="account-logout" onClick={logout} disabled={busy}>{busy ? 'Cerrando sesión…' : 'Cerrar sesión'}</button>
               <div className="login-message" role="status" aria-live="polite">{message || error}</div>
             </div>
-          ) : mfa ? <form className="login-form" onSubmit={submit}><p>Escribe el código de tu aplicación de autenticación o uno de tus códigos de recuperación. La verificación vence en 5 minutos.</p><div className="login-field"><label htmlFor="login-code">Código de autenticación o recuperación</label><div className="login-input-wrap"><input id="login-code" name="code" autoComplete="one-time-code" required maxLength={25} disabled={busy}/></div></div><button className="login-submit" disabled={busy}>Verificar e iniciar sesión</button><button className="login-forgot" type="button" disabled={busy} onClick={() => {void authRequest('logout',{}).then(()=>{setMfa(false);setMessage('')}).catch(()=>setMessage('No pudimos reiniciar el acceso. Inténtalo nuevamente.'))}}>Volver a ingresar correo y contraseña</button><div className="login-message" role="status">{message || error}</div></form> : <>
+          ) : <>
           <form className="login-form" onSubmit={submit}>
             {registration && <ProfilePhoto value={photo} onChange={setPhoto} onBusyChange={setPhotoBusy} disabled={busy}/>}
             <div className="login-field">
