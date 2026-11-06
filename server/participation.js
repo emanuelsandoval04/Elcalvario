@@ -5,7 +5,7 @@ import { databaseRateLimit } from './rate-limit.js'
 
 export const participationRouter = Router()
 participationRouter.post('/', (request, response, next) => {
-  if (request.headers['sec-fetch-site'] === 'cross-site' || !isAllowedOrigin(request.headers.origin, request.get('host'), process.env.APP_ORIGINS, process.env.NODE_ENV === 'production')) return response.status(403).json({ error: 'Solicitud no permitida.' })
+  if (request.headers['sec-fetch-site'] === 'cross-site' || !isAllowedOrigin(request.headers.origin, request.get('host'), process.env.APP_ORIGINS, process.env.NODE_ENV === 'production' || process.env.VERCEL==='1')) return response.status(403).json({ error: 'Solicitud no permitida.' })
   if (!request.is('application/json')) return response.status(415).json({ error: 'Formato de solicitud inválido.' })
   next()
 }, databaseRateLimit({ prefix: 'participation', maximum: 10, message: 'Demasiadas solicitudes. Inténtalo de nuevo más tarde.' }), async (request, response) => {

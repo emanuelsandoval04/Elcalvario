@@ -1,6 +1,6 @@
 import { readFile } from 'node:fs/promises'
 
-export const migrationFiles = ['001-auth.sql', '002-superadmin.sql', '003-participation.sql', '004-church-management.sql', '005-pending-users.sql', '006-account-profile.sql', '007-pastoral-registration.sql', '008-profile-photo.sql', '009-display-preference.sql', '010-map-coverage.sql', '011-group-neighborhoods.sql', '012-group-neighborhood-text.sql', '013-shared-rate-limits.sql', '014-training-books.sql']
+export const migrationFiles = ['001-auth.sql', '002-superadmin.sql', '003-participation.sql', '004-church-management.sql', '005-pending-users.sql', '006-account-profile.sql', '007-pastoral-registration.sql', '008-profile-photo.sql', '009-display-preference.sql', '010-map-coverage.sql', '011-group-neighborhoods.sql', '012-group-neighborhood-text.sql', '013-shared-rate-limits.sql', '014-training-books.sql', '015-account-security.sql']
 
 export async function applyMigrations(connection) {
   const files = await Promise.all(migrationFiles.map(file => readFile(new URL(`./migrations/${file}`, import.meta.url), 'utf8')))

@@ -5,6 +5,8 @@ import { authRouter } from './auth.js'
 import { participationRouter } from './participation.js'
 import { managementRouter, publicRouter } from './management.js'
 import { jsonBody } from './body-parser.js'
+import { databaseRateLimit } from './rate-limit.js'
+import { auditManagement } from './audit.js'
 
 const app = express()
 app.disable('x-powered-by')
@@ -15,6 +17,8 @@ app.use((_request, response, next) => {
   next()
 })
 app.use(jsonBody)
+app.use('/api',databaseRateLimit({prefix:'api',maximum:600,seconds:60,key:request=>request.ip,message:'Hay demasiadas solicitudes desde tu conexión. Espera un minuto.'}))
+app.use(auditManagement)
 
 app.get('/api/health', async (_request, response) => {
   try {
@@ -32,7 +36,7 @@ app.use('/api/public', publicRouter)
 app.use('/api/management', managementRouter)
 app.use((_request, response) => response.status(404).json({ error: 'Recurso no encontrado.' }))
 app.use((error, _request, response, _next) => {
-  const status = error.type === 'entity.too.large' ? 413 : error.type === 'entity.parse.failed' ? 400 : 500
+  const status = error.type === 'entity.too.large' ? 413 : error.type === 'encoding.unsupported' ? 415 : error.type === 'entity.parse.failed' ? 400 : 500
   if (status === 500) console.error('Error de API:', error.code || 'INTERNAL_ERROR')
   response.status(status).json({ error: status === 500 ? 'No pudimos completar la solicitud.' : 'Solicitud inválida.' })
 })

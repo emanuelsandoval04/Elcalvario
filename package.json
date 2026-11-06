@@ -36,6 +36,9 @@
     "test:map:ui": "node checks/map-check.mjs --ui",
     "test:training": "node checks/training-check.mjs",
     "test:training:ui": "node checks/training-check.mjs --ui",
+    "test:security": "node checks/security-check.mjs",
+    "test:security:ui": "npm run build:vercel && node checks/security-check.mjs --ui",
+    "security:maintenance": "node scripts/security-maintenance.mjs",
     "db:import:barrios": "node scripts/import-neighborhood-catalog.mjs",
     "db:import:geodata": "node scripts/import-geodata.mjs"
   },
@@ -47,7 +50,9 @@
     "express": "^5.2.1",
     "gsap": "^3.15.0",
     "mysql2": "^3.24.5",
+    "otpauth": "^9.6.0",
     "pdfkit": "^0.20.2",
+    "qrcode": "^1.5.4",
     "react": "^19.3.0",
     "react-dom": "^19.3.0"
   },

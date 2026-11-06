@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs'
 import { readEnvironment } from './environment.js'
 
 // Hosted deployments use the provider's variables. Loading .env is opt-in there.
-if (process.env.NODE_ENV !== 'production' || process.env.ENV_FILE) {
+if ((process.env.NODE_ENV !== 'production' && process.env.VERCEL!=='1') || process.env.ENV_FILE) {
   dotenv.config({ path: process.env.ENV_FILE || fileURLToPath(new URL('../.env', import.meta.url)), quiet: true })
 }
 

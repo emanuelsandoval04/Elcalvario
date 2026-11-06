@@ -2,10 +2,11 @@ import { useCallback, useEffect, useState } from 'react'
 import { applyDisplaySize } from './display-size'
 import type { DisplaySize } from './display-size'
 
-export type AuthUser = { id: number; memberId: number | null; name: string | null; photoUrl: string | null; trainingBook?: { id: number; name: string } | null; displaySize: DisplaySize; email: string; state: 'activo' | 'pendiente' | 'inactivo' | 'bloqueado'; roles: string[]; permissions: Record<string, 'todos' | 'grupo'>; pastoralRole: { name: string; level: number } | null; registration: { canCreateAdministrative: boolean; canAssignServices: boolean; canManageAccounts: boolean } }
+export type AuthUser = { id: number; memberId: number | null; name: string | null; photoUrl: string | null; trainingBook?: { id: number; name: string } | null; mfaEnabled?: boolean; mfaMandatory?: boolean; mfaSetupRequired?: boolean; displaySize: DisplaySize; email: string; state: 'activo' | 'pendiente' | 'inactivo' | 'bloqueado'; roles: string[]; permissions: Record<string, 'todos' | 'grupo'>; pastoralRole: { name: string; level: number } | null; registration: { canCreateAdministrative: boolean; canAssignServices: boolean; canManageAccounts: boolean } }
 export const hasPermission = (user: AuthUser | null, code: string) => user?.state === 'activo' && Boolean(user.permissions[code])
 
-export async function authRequest(path: string, data?: { email?: string; password?: string; name?: string; currentPassword?: string; newPassword?: string; photo?: string | null; displaySize?: DisplaySize }) {
+type AuthResult = { user?: AuthUser | null; error?: string; ok?: boolean; mfaRequired?: boolean }
+export async function authRequest<T extends object = AuthResult>(path: string, data?: object): Promise<T & AuthResult> {
   const response = await fetch(`/api/auth/${path}`, {
     method: data ? 'POST' : 'GET',
     credentials: 'same-origin',
@@ -16,9 +17,9 @@ export async function authRequest(path: string, data?: { email?: string; passwor
   if ([502, 504].includes(response.status)) {
     throw new Error('El servidor de inicio de sesión no está disponible. Inténtalo nuevamente en unos minutos.')
   }
-  const result = await response.json() as { user?: AuthUser; error?: string; ok?: boolean }
+  const result = await response.json() as T & AuthResult
   if (!response.ok) {
-    if (path === 'me' && response.status === 401) { applyDisplaySize('normal'); return { user: null } }
+    if (path === 'me' && response.status === 401) { applyDisplaySize('normal'); return { user: null } as T & AuthResult }
     throw new Error(result.error || 'No pudimos completar la solicitud.')
   }
   if ('user' in result) applyDisplaySize(result.user?.displaySize)

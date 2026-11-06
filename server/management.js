@@ -7,6 +7,7 @@ import { invalid, identifier, text, choice, boolean, date, url, fields, memberFi
 import { recalculateAlerts } from './alerts.js'
 import { facebookTransmission } from './facebook.js'
 import { sendReport, discipleReportRows, discipleColumns } from './reports.js'
+import { databaseRateLimit } from './rate-limit.js'
 import { canManageTraining, requireTraining, trainingBooks, trainingBook, checkBookVersion, validateTrainingBook } from './training.js'
 import { parseProfilePhoto, saveProfilePhoto } from './profile-photo.js'
 import { mapRouter } from './map.js'
@@ -133,6 +134,8 @@ publicRouter.get('/ministries',async (_req,res) => {
 publicRouter.get('/transmission',async (_req,res) => res.json(await facebookTransmission()))
 
 managementRouter.use(protectMutation,requireSession,requirePermission('gestion.acceder'))
+const exportLimit=databaseRateLimit({prefix:'exports',maximum:12,key:req=>String(req.authUser.id),message:'Has solicitado varios reportes. Espera unos minutos antes de descargar más.'})
+managementRouter.use((req,res,next)=>req.path.startsWith('/reports/') || /^\/members\/\d+\/excel$/.test(req.path) ? exportLimit(req,res,next) : next())
 managementRouter.use('/mapa',mapRouter)
 managementRouter.get('/training/books', requireTraining, async (_req,res) => res.json({items:await trainingBooks()}))
 managementRouter.post('/training/books', requireTraining, async (req,res) => {

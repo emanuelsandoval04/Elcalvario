@@ -15,7 +15,7 @@ function boolean(value, fallback, name) {
 }
 
 export function readEnvironment(env = process.env) {
-  const production = env.NODE_ENV === 'production'
+  const production = env.NODE_ENV === 'production' || env.VERCEL === '1'
   const host = env.DB_HOST || env.MYSQLHOST || (production ? '' : 'localhost')
   const user = env.DB_USER || env.MYSQLUSER
   const database = env.DB_NAME || env.MYSQLDATABASE

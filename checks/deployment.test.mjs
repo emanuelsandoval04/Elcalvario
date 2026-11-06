@@ -62,6 +62,13 @@ test('only provider-controlled Vercel domains are admitted automatically', () =>
   }
 })
 
+test('Vercel retains production validation even without NODE_ENV', () => {
+  const hosted={...production,NODE_ENV:undefined,VERCEL:'1',DB_SSL:'true'}
+  assert.equal(readEnvironment(hosted).trustProxy,1)
+  assert.throws(()=>readEnvironment({...hosted,DB_PASSWORD:''}))
+  assert.throws(()=>readEnvironment({...hosted,APP_ORIGINS:'http://localhost:5173'}))
+})
+
 test('Vercel routes every API path to one native function without database migration during build', async () => {
   const config = JSON.parse(await readFile(new URL('../vercel.json', import.meta.url), 'utf8'))
   assert.equal(config.framework, 'vite')
