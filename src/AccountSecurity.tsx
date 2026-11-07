@@ -13,6 +13,7 @@ export default function AccountSecurity({ user, onBusy }: { user: AuthUser; onBu
   const [data, setData] = useState<SecurityData | null>(null), [busy, setBusy] = useState(false)
   const [error, setError] = useState(''), [message, setMessage] = useState('')
   const [confirmRevoke, setConfirmRevoke] = useState<string | null>(null), [audit, setAudit] = useState<SecurityEvent[] | null>(null)
+  const canViewAudit = user.registration?.canManageAccounts && (user.roles.includes('Superadmin') || Boolean(user.pastoralRole && user.pastoralRole.level >= 1 && user.pastoralRole.level <= 5))
   async function load() { setData(await authRequest<SecurityData>('account/security')) }
   useEffect(() => { void load().catch(cause => setError(cause instanceof Error ? cause.message : 'No pudimos consultar tu seguridad.')) }, [])
   async function perform(action: () => Promise<void>) {
@@ -31,6 +32,6 @@ export default function AccountSecurity({ user, onBusy }: { user: AuthUser; onBu
       {Boolean(data?.sessions.some(session => !session.current)) && <button type="button" disabled={busy} onClick={() => setConfirmRevoke('others')}>Cerrar todas las otras sesiones</button>}
       {confirmRevoke && <div className="security-confirm" role="group" aria-label="Confirmar cierre de sesiones"><p>¿Quieres desconectar {confirmRevoke==='others'?'los otros dispositivos':'este dispositivo'}? Tendrán que iniciar sesión de nuevo.</p><button type="button" disabled={busy} onClick={() => void perform(async () => {await authRequest('account/security/sessions/revoke',{sessionId:confirmRevoke});setConfirmRevoke(null);await load();setMessage('Sesión revocada.')})}>Confirmar cierre</button><button type="button" disabled={busy} onClick={() => setConfirmRevoke(null)}>Cancelar</button></div>}
       <h3>Actividad reciente de tu cuenta</h3>{data?.events.map((event,index) => <p key={index}><strong>{eventName(event.action)}</strong><br/>{localDate(event.date)} · IP {event.ip || 'No disponible'}{event.status>=400?' · Rechazado':''}</p>)}
-      {user.registration?.canManageAccounts && <><button type="button" disabled={busy} onClick={() => void perform(async () => {setAudit((await authRequest<{events:SecurityEvent[]}>('account/security/audit')).events)})}>Consultar auditoría administrativa</button>{audit && <div className="security-audit" aria-label="Auditoría administrativa">{audit.map(event => <p key={event.id}><strong>{eventName(event.action)}</strong><br/>{localDate(event.date)} · Cuenta {event.userId ?? 'sin identificar'} · Estado {event.status}<br/>{event.resource}</p>)}</div>}</>}
+      {canViewAudit && <><button type="button" disabled={busy} onClick={() => void perform(async () => {setAudit((await authRequest<{events:SecurityEvent[]}>('account/security/audit')).events)})}>Consultar auditoría administrativa</button>{audit && <div className="security-audit" aria-label="Auditoría administrativa">{audit.map(event => <p key={event.id}><strong>{eventName(event.action)}</strong><br/>{localDate(event.date)} · Cuenta {event.userId ?? 'sin identificar'} · Estado {event.status}<br/>{event.resource}</p>)}</div>}</>}
   </section>
 }

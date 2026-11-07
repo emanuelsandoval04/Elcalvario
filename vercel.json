@@ -11,7 +11,7 @@
   "functions": {
     "api/**/*.js": {
       "maxDuration": 60,
-      "includeFiles": "node_modules/pdfkit/js/data/**",
+      "includeFiles": "{node_modules/pdfkit/js/data/**,server/mail-assets/**}",
       "excludeFiles": "{.env,.env.*,.secrets/**,.backups/**,checks/**,docs/**,database/**}"
     }
   },

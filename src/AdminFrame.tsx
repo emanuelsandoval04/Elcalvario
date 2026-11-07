@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import { gsap, useGSAP, useAdminMotion, useMediaQuery } from './admin-motion'
 import AccountMenu from './AccountMenu'
+import AccountNotifications from './AccountNotifications'
 import type { AuthUser } from './auth'
 import { hasPermission } from './auth'
 import { InstallApp, ConnectionStatus } from './pwa'
@@ -116,7 +117,7 @@ export default function AdminFrame({ title, sectionName, navigation, children, v
       </button>
       {!home && <a href="#gestion" className="panel-mobile-back" aria-label="Volver al inicio"><AdminIcon name="back"/></a>}
       <a className={`panel-brand${!home ? ' panel-brand-section' : ''}`} href="#gestion" aria-label="El Calvario, panel de gestión"><img src="/logo1.png" alt=""/><span><span className="panel-brand-name">El Calvario</span><span className="panel-mobile-title">{sectionName}</span><small>MI COMUNIDAD · VILLAVICENCIO</small></span></a>
-      {canUse(['alertas.ver']) && <a className="panel-notifications" href="#gestion/falls/alertas" aria-label="Ver alertas pastorales"><AdminIcon name="alerts"/></a>}
+      <AccountNotifications user={user} disabled={mobile && open}/>
       <AccountMenu user={user} onUpdate={onUserChange} disabled={mobile && open}/>
     </header>
     <div className="panel-body">

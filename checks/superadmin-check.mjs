@@ -150,7 +150,7 @@ try {
  await mobilePage.getByRole('heading',{name:'Tu cuenta está pendiente por activación.',exact:true}).waitFor()
  assert.equal(await mobilePage.locator('.panel-nav [data-panel-item]').count(),0)
  await mobilePage.goto(`${uiOrigin}/#usuarios`,{waitUntil:'domcontentloaded'})
- await mobilePage.getByText('Solo los cinco cargos pastorales autorizados pueden habilitar cuentas',{exact:false}).waitFor()
+ await mobilePage.getByText('Solo los administradores y cargos pastorales autorizados pueden habilitar cuentas',{exact:false}).waitFor()
  assert.equal(await mobilePage.locator('.admin-user-row').count(),0)
  await mobilePage.goto(`${uiOrigin}/#gestion`,{waitUntil:'domcontentloaded'})
  await mobilePage.getByRole('heading',{name:'Tu cuenta está pendiente por activación.',exact:true}).waitFor()
@@ -170,7 +170,7 @@ try {
  await mobilePage.locator('.manage-session').filter({hasText:'Multimedia'}).waitFor({state:'attached'})
  const expectedMenus={
   Superadmin:['Inicio','Discípulos','Grupos de Comunión','Eventos y Cultos','Asistencia y alertas','Permisos','Reportes','Usuarios y roles'],
-  Administrador:['Inicio','Discípulos','Grupos de Comunión','Eventos y Cultos','Asistencia y alertas','Permisos','Reportes'],
+  Administrador:['Inicio','Discípulos','Grupos de Comunión','Eventos y Cultos','Asistencia y alertas','Permisos','Reportes','Usuarios y roles'],
   Pastor:['Inicio','Discípulos','Grupos de Comunión','Eventos y Cultos','Asistencia y alertas','Permisos','Reportes'],
   'Asistencia Pastoral':['Inicio','Discípulos','Grupos de Comunión','Eventos y Cultos','Asistencia y alertas','Reportes','Usuarios y roles'],
   Discipulador:['Inicio','Discípulos','Grupos de Comunión','Eventos y Cultos','Asistencia y alertas','Reportes'],

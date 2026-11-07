@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict'
-import { randomUUID } from 'node:crypto'
+import { randomUUID, randomBytes, scrypt, createHash } from 'node:crypto'
+import { promisify } from 'node:util'
 import { readFile } from 'node:fs/promises'
 import dotenv from 'dotenv'
 import mysql from 'mysql2/promise'
@@ -15,7 +16,9 @@ assert.ok(databaseConfig.host.endsWith('.aivencloud.com') && databaseConfig.ssl.
 const database = await mysql.createConnection(databaseConfig)
 const email = `deploy-${randomUUID()}@example.invalid`
 const password = `Deploy-${randomUUID()}`
-let cookie = '', attemptedRegistration = false
+let cookie = '', attemptedRegistration = false, fixtureId = null
+const temporaryActivities = new Set()
+let temporarySeries = null
 
 async function request(path, body, overrides = {}) {
   return fetch(new URL(path, origin), {
@@ -50,12 +53,17 @@ try {
   const [roles] = await database.execute(`SELECT r.id_rol FROM rol_sistema r
     JOIN rol_permiso g ON g.id_rol=r.id_rol AND g.codigo_permiso='gestion.acceder'
     JOIN rol_permiso p ON p.id_rol=r.id_rol AND p.codigo_permiso='reportes.grupos'
+    JOIN rol_permiso e ON e.id_rol=r.id_rol AND e.codigo_permiso='eventos.eliminar'
     WHERE r.estado=1 AND r.nombre NOT IN ('Superadmin','Usuario')
     ORDER BY r.nombre='Multimedia' DESC,r.id_rol LIMIT 1`)
   assert.ok(roles.length, 'No hay un rol operativo para probar las exportaciones.')
   attemptedRegistration = true
   const registered = await request('/api/auth/register', { email, password })
-  assert.equal(registered.status, 201)
+  assert.equal(registered.status, 403, 'El registro público debe permanecer cerrado.')
+  const salt=randomBytes(16).toString('hex')
+  const key=await promisify(scrypt)(password,salt,64,{N:32768,r:8,p:3,maxmem:64*1024*1024})
+  const [fixture]=await database.execute("INSERT INTO usuario(correo_login,password_hash,estado_usuario) VALUES (?,?,'activo')",[email,`scrypt$${salt}$${key.toString('hex')}`])
+  fixtureId=fixture.insertId
   const [accounts] = await database.execute('SELECT id_usuario FROM usuario WHERE correo_login=? AND id_miembro IS NULL', [email])
   assert.equal(accounts.length, 1)
   await database.beginTransaction()
@@ -88,13 +96,60 @@ try {
     assert.ok(bytes.length > 100)
     assert.ok(format === 'pdf' ? bytes.subarray(0, 5).toString() === '%PDF-' : bytes.subarray(0, 2).toString() === 'PK')
   }
+  assert.equal((await request('/api/auth/notifications')).status,200)
+  const fixedResponse=await request('/api/management/activities',{tipo_actividad:'culto',titulo:`Prueba privada ${fixtureId}`,fixed:true,hora:'09:00',lugar:'Comprobacion temporal',estado_actividad:'programada',recurrence:{dayOfWeek:0}})
+  assert.equal(fixedResponse.status,201)
+  const fixed=await fixedResponse.json();temporarySeries=fixed.seriesId
+  const [generated]=await database.execute('SELECT id_actividad FROM actividad_repetida WHERE id_serie=?',[temporarySeries])
+  for(const row of generated)temporaryActivities.add(row.id_actividad)
+  assert.ok(generated.length>=12)
+  const publicFeed=await request('/api/public/events')
+  assert.ok(!(await publicFeed.json()).items.some(row=>row.id_serie===temporarySeries))
+  const [pastDate]=await database.query('SELECT DATE_SUB(DATE(DATE_SUB(UTC_TIMESTAMP(),INTERVAL 5 HOUR)),INTERVAL 7 DAY) AS fecha')
+  await database.execute('UPDATE actividad SET fecha=? WHERE id_actividad=?',[pastDate[0].fecha,fixed.id])
+  const attendance=await request('/api/management/attendance',{id_actividad:fixed.id,estado_asistencia:'visitante',nombre_visitante:'Prueba temporal de historial'})
+  assert.equal(attendance.status,201)
+  const edited=await fetch(new URL(`/api/management/activities/${fixed.id}`,origin),{method:'PATCH',headers:{Origin:origin.origin,Cookie:cookie,'Content-Type':'application/json'},body:JSON.stringify({fixed:true,edit_scope:'following',hora:'10:00',recurrence:{dayOfWeek:4}}),signal:AbortSignal.timeout(45000)})
+  assert.equal(edited.status,200)
+  const deleted=await fetch(new URL(`/api/management/activities/${fixed.id}`,origin),{method:'DELETE',headers:{Origin:origin.origin,Cookie:cookie,'Content-Type':'application/json'},body:JSON.stringify({scope:'series'}),signal:AbortSignal.timeout(45000)})
+  assert.equal(deleted.status,200)
+  const historical=await request(`/api/management/attendance?activityId=${fixed.id}`)
+  assert.equal(historical.status,200);assert.equal((await historical.json()).items.length,1)
+  // Invalid input exercises the deployed recovery route without sending mail.
+  assert.equal((await request('/api/auth/forgot-password',{email:'invalid'})).status,400)
   assert.equal((await request('/api/auth/logout', {})).status, 200)
   assert.equal((await request('/api/auth/me')).status, 401)
-  console.log('PASS HTTPS: página y assets, Aiven, API anidada, origen, registro/login, cookie segura, perfil, foto y exportaciones PDF/Excel.')
+  const token=randomBytes(32).toString('hex'),digest=value=>createHash('sha256').update(value).digest('hex')
+  const [credential]=await database.execute('SELECT password_hash FROM usuario WHERE id_usuario=?',[fixtureId])
+  await database.execute('INSERT INTO recuperacion_contrasena(id_usuario,token_hash,credencial_hash,enviado,fecha_expiracion) VALUES (?,?,?,1,DATE_ADD(UTC_TIMESTAMP(),INTERVAL 15 MINUTE))',[fixtureId,digest(token),digest(`${email}\0${credential[0].password_hash}`)])
+  assert.equal((await request('/api/auth/reset-password/validate',{token})).status,200)
+  await database.execute('UPDATE recuperacion_contrasena SET fecha_expiracion=DATE_SUB(UTC_TIMESTAMP(),INTERVAL 1 SECOND) WHERE id_usuario=?',[fixtureId])
+  assert.equal((await request('/api/auth/reset-password/validate',{token})).status,400)
+  await database.execute('UPDATE recuperacion_contrasena SET fecha_expiracion=DATE_ADD(UTC_TIMESTAMP(),INTERVAL 15 MINUTE) WHERE id_usuario=?',[fixtureId])
+  const replacement=`Changed-${randomUUID()}`
+  assert.equal((await request('/api/auth/reset-password',{token,newPassword:replacement,confirmation:replacement})).status,200)
+  assert.equal((await request('/api/auth/reset-password/validate',{token})).status,400)
+  const recovered=await request('/api/auth/login',{email,password:replacement})
+  assert.equal(recovered.status,200)
+  cookie=recovered.headers.get('set-cookie').split(';')[0]
+  assert.equal((await request('/api/auth/logout',{})).status,200)
+  console.log('PASS HTTPS: assets, Aiven, registro cerrado, login seguro, perfil/foto, reportes, avisos, recuperación, creación/edición/eliminación de fijo privado y conservación de asistencia histórica.')
 } finally {
   // Only the exact synthetic account generated by this run can be removed.
   if (attemptedRegistration) {
     await database.rollback()
+    if(fixtureId) {
+      const [owned]=await database.execute('SELECT id_actividad FROM actividad WHERE id_usuario_creacion=?',[fixtureId])
+      for(const row of owned)temporaryActivities.add(row.id_actividad)
+      if(temporarySeries)await database.execute('DELETE FROM actividad_repetida WHERE id_serie=?',[temporarySeries])
+      for(const id of temporaryActivities) {
+        await database.execute('DELETE FROM alerta_ausencia WHERE id_actividad=?',[id])
+        await database.execute('DELETE FROM asistencia WHERE id_actividad=?',[id])
+        await database.execute('DELETE FROM culto WHERE id_actividad=?',[id])
+        await database.execute('DELETE FROM actividad WHERE id_actividad=? AND id_usuario_creacion=?',[id,fixtureId])
+      }
+      if(temporarySeries)await database.execute('DELETE FROM serie_actividad WHERE id_serie=? AND id_usuario_creacion=?',[temporarySeries,fixtureId])
+    }
     await database.execute('DELETE FROM usuario WHERE correo_login=? AND id_miembro IS NULL', [email])
     const [left] = await database.execute('SELECT COUNT(*) AS total FROM usuario WHERE correo_login=?', [email])
     assert.equal(left[0].total, 0)

@@ -2,7 +2,7 @@ import { Router } from 'express'
 import { randomUUID } from 'node:crypto'
 import { pool } from './db.js'
 import { requireSession, requirePermission, hasPermission, protectMutation, readUser, hashPassword, credentials } from './auth.js'
-import { hasPastoralAuthority, pastoralRoles } from './pastoral-policy.js'
+import { hasPastoralAuthority, pastoralRoles, canAdministerAccounts } from './pastoral-policy.js'
 import { invalid, identifier, text, choice, boolean, date, url, fields, memberFields, sensitiveMemberFields, groupFields, activityFields, bogotaToday } from './entities.js'
 import { recalculateAlerts } from './alerts.js'
 import { facebookTransmission } from './facebook.js'
@@ -13,6 +13,9 @@ import { parseProfilePhoto, saveProfilePhoto } from './profile-photo.js'
 import { mapRouter } from './map.js'
 import { applyGroupCoverage } from './group-coverage.js'
 import { readNeighborhoodCatalog } from './neighborhood-catalog.js'
+import { welcomeContext, sendAccountWelcome } from './account-welcome.js'
+import { parseRecurrence, fixedStart } from './recurrence-dates.js'
+import { recurrenceColumns, recurrenceJoins, nearestPublicDate, seriesTemplate, createRecurringActivity, ensureRecurringActivities, reviseFixedActivity, retireFutureDates } from './recurring-activities.js'
 
 export const managementRouter = Router()
 export const publicRouter = Router()
@@ -55,7 +58,7 @@ async function getGroup(req,id,code,connection=pool) {
 }
 async function getActivity(req,id,code,connection=pool) {
   const filter = activityFilter(req,code)
-  const [rows] = await connection.execute(`SELECT ac.*,rg.id_grupo,e.requiere_inscripcion,e.url_inscripcion FROM actividad ac LEFT JOIN reunion_grupo rg ON rg.id_actividad=ac.id_actividad LEFT JOIN evento e ON e.id_actividad=ac.id_actividad WHERE ac.id_actividad=? AND ac.archivado=0 ${filter.sql}`,[identifier(id),...filter.params])
+  const [rows] = await connection.execute(`SELECT ac.*,CAST(ac.fecha AS CHAR) AS fecha,rg.id_grupo,e.requiere_inscripcion,e.url_inscripcion,${recurrenceColumns},CAST(ar.fecha_programada AS CHAR) AS fecha_programada FROM actividad ac LEFT JOIN reunion_grupo rg ON rg.id_actividad=ac.id_actividad LEFT JOIN evento e ON e.id_actividad=ac.id_actividad ${recurrenceJoins} WHERE ac.id_actividad=? AND ac.archivado=0 ${filter.sql}`,[identifier(id),...filter.params])
   if (!rows.length) throw invalid('Actividad no disponible en tu alcance.',404)
   return rows[0]
 }
@@ -121,10 +124,11 @@ publicRouter.get('/institution',async (_req,res) => {
   res.json(rows[0])
 })
 publicRouter.get('/events',async (_req,res) => {
-  const [rows]=await pool.execute(`SELECT ac.id_actividad,ac.tipo_actividad,ac.titulo,CAST(ac.fecha AS CHAR) AS fecha,ac.hora,ac.lugar,ac.imagen,ac.descripcion,ac.estado_actividad,e.requiere_inscripcion,e.url_inscripcion
-    FROM actividad ac LEFT JOIN evento e ON e.id_actividad=ac.id_actividad
+  await ensureRecurringActivities()
+  const [rows]=await pool.execute(`SELECT ac.id_actividad,ac.tipo_actividad,ac.titulo,CAST(ac.fecha AS CHAR) AS fecha,ac.hora,ac.lugar,ac.imagen,ac.descripcion,ac.estado_actividad,e.requiere_inscripcion,e.url_inscripcion,${recurrenceColumns}
+    FROM actividad ac LEFT JOIN evento e ON e.id_actividad=ac.id_actividad ${recurrenceJoins}
     WHERE ac.publicado=1 AND ac.archivado=0 AND ac.tipo_actividad IN ('culto','evento')
-      AND ac.fecha>=DATE(DATE_SUB(UTC_TIMESTAMP(),INTERVAL 5 HOUR)) ORDER BY ac.fecha,ac.hora LIMIT 100`)
+      AND ac.fecha>=DATE(DATE_SUB(UTC_TIMESTAMP(),INTERVAL 5 HOUR)) ${nearestPublicDate} ORDER BY ac.fecha,ac.hora LIMIT 100`)
   res.json({items:rows})
 })
 publicRouter.get('/ministries',async (_req,res) => {
@@ -258,9 +262,13 @@ managementRouter.post('/members',(req,res,next)=>can(req,'miembros.registrar') |
     }
     if(ministryId) await insert(connection,'miembro_ministerio',{id_miembro:id,id_ministerio:ministryId,activo:1})
     if(leadsGroup) await update(connection,'grupo_comunion','id_grupo',values.id_grupo,{id_discipulador:id})
-    return {id,accountCreated:Boolean(accountId)}
+    const welcomeUser=accountId ? await readUser(accountId,connection) : null
+    const context=welcomeUser ? await welcomeContext(connection,welcomeUser,actor) : null
+    return {id,accountCreated:Boolean(accountId),welcomeUser,context}
   })
-  res.status(201).json(result)
+  const {welcomeUser,context,...created}=result
+  const emailDelivery=welcomeUser ? await sendAccountWelcome(welcomeUser,account.password,context) : undefined
+  res.status(201).json({...created,...(emailDelivery ? {emailDelivery} : {})})
 })
 managementRouter.patch('/members/:id',requirePermission('miembros.editar'),async (req,res) => {
   const values=fields(req.body,memberFields)
@@ -410,10 +418,12 @@ managementRouter.post('/groups/:id/processes',requirePermission('grupos.editar')
 managementRouter.get('/activities',async(req,res)=>{
   const codes=['asistencia.registrar','asistencia.ver','eventos.editar','eventos.publicar','grupos.editar'].filter(code=>can(req,code))
   if(!codes.length) throw invalid('No tienes permiso para consultar actividades.',403)
+  await ensureRecurringActivities()
   const accessCode=codes.find(code=>req.authUser.permissions[code]==='todos') || codes[0]
   const filter=activityFilter(req,accessCode)
-  const [items]=await pool.execute(`SELECT ac.*,CAST(ac.fecha AS CHAR) AS fecha,rg.id_grupo,e.requiere_inscripcion,e.url_inscripcion FROM actividad ac
+  const [items]=await pool.execute(`SELECT ac.*,CAST(ac.fecha AS CHAR) AS fecha,rg.id_grupo,e.requiere_inscripcion,e.url_inscripcion,${recurrenceColumns} FROM actividad ac
     LEFT JOIN reunion_grupo rg ON rg.id_actividad=ac.id_actividad LEFT JOIN evento e ON e.id_actividad=ac.id_actividad
+    ${recurrenceJoins}
     WHERE ac.archivado=0 ${filter.sql} ORDER BY ac.fecha DESC,ac.hora DESC LIMIT 500`,filter.params)
   res.json({items})
 })
@@ -424,7 +434,17 @@ async function saveActivity(req,res,create) {
   if(!create && req.body.tipo_actividad && req.body.tipo_actividad!==type) throw invalid('El tipo de una actividad existente no puede cambiar.')
   const permission=type==='reunion_grupo'?'grupos.editar':'eventos.editar'
   if(!can(req,permission)) throw invalid('No tienes permiso para gestionar esta actividad.',403)
-  const values=fields(req.body,activityFields,create,!create)
+  const fixed=Object.hasOwn(req.body,'fixed') && boolean(req.body.fixed)
+  const input=fixed ? {...req.body,fecha:fixedStart(req.body.recurrence?.dayOfWeek,req.body.hora || existing?.hora)} : req.body
+  const values=fields(input,activityFields,create,!create)
+  const recurrence=parseRecurrence(fixed ? {...req.body.recurrence,until:null} : req.body.recurrence,values.fecha || existing?.fecha)
+  const following=!create && req.body.edit_scope==='following'
+  if(req.body.edit_scope && !['single','following'].includes(req.body.edit_scope)) throw invalid('Selecciona cómo aplicar los cambios.')
+  if(!create && existing.id_serie && recurrence && !(fixed && following)) throw invalid('Para modificar el evento fijo selecciona todas las próximas fechas.')
+  if(recurrence && type==='reunion_grupo') throw invalid('La repetición semanal está disponible para cultos y eventos.')
+  if(recurrence && (values.estado_actividad || existing?.estado_actividad)==='cancelada') throw invalid('Para crear una repetición selecciona el estado programada.')
+  if(following && !existing.id_serie) throw invalid('Esta actividad no pertenece a una repetición.')
+  if(following && !fixed && values.fecha && values.fecha!==existing.fecha) throw invalid('Para cambiar la fecha, aplica los cambios solo a esta fecha.')
   if(Object.hasOwn(req.body,'publicado')) {
     if(type==='reunion_grupo' || !can(req,'eventos.publicar')) throw invalid('No tienes permiso para publicar.',403)
     values.publicado=boolean(req.body.publicado)
@@ -437,8 +457,55 @@ async function saveActivity(req,res,create) {
     const effective={...existing,...eventValues}
     if(effective.requiere_inscripcion && !effective.url_inscripcion) throw invalid('Indica el enlace de inscripción.')
   }
-  if(!create && !Object.keys(values).length && !Object.keys(eventValues || {}).length && !Object.hasOwn(req.body,'id_grupo')) throw invalid('No hay cambios para guardar.')
+  if(!create && !recurrence && !Object.keys(values).length && !Object.keys(eventValues || {}).length && !Object.hasOwn(req.body,'id_grupo')) throw invalid('No hay cambios para guardar.')
   const result=await transaction(async connection=>{
+    const actor=await currentActor(req,connection)
+    if(!hasPermission(actor,permission)) throw invalid('Ya no tienes permiso para gestionar esta actividad.',403)
+    if(Object.hasOwn(values,'publicado') && !hasPermission(actor,'eventos.publicar')) throw invalid('Ya no tienes permiso para publicar.',403)
+    if(fixed && existing?.id_serie) {
+      const [series]=await connection.execute('SELECT * FROM serie_actividad WHERE id_serie=? FOR UPDATE',[existing.id_serie])
+      await getActivity(req,id,permission,connection)
+      const stored=typeof series[0].plantilla==='string' ? JSON.parse(series[0].plantilla) : series[0].plantilla
+      if(stored.activity.publicado && (Number(series[0].dia_semana)!==recurrence.dayOfWeek || !series[0].activa) && !hasPermission(actor,'eventos.publicar')) throw invalid('Para cambiar la programación publicada necesitas permiso para publicar.',403)
+      const {fecha:ignored,...changes}=values
+      return {id,...await reviseFixedActivity(connection,series[0],recurrence,{activity:{...stored.activity,...changes},event:eventValues ? {...stored.event,...eventValues} : null})}
+    }
+    if(recurrence) {
+      let effective=values, effectiveEvent=eventValues
+      if(!create) {
+        await getActivity(req,id,permission,connection)
+        if(existing.publicado && !hasPermission(actor,'eventos.publicar')) throw invalid('Para repetir una actividad publicada necesitas permiso para publicar.',403)
+        const [attendance]=await connection.execute('SELECT id_asistencia FROM asistencia WHERE id_actividad=? LIMIT 1',[id])
+        if(attendance.length) throw invalid('Esta actividad tiene asistencia registrada. Crea una nueva con repetición para conservar su historial.',409)
+        effective={...Object.fromEntries(Object.keys(activityFields).map(key=>[key,existing[key]])),publicado:existing.publicado,...values}
+        if(type==='evento') effectiveEvent={requiere_inscripcion:existing.requiere_inscripcion,url_inscripcion:existing.url_inscripcion,...eventValues}
+      }
+      return createRecurringActivity(connection,recurrence,seriesTemplate(type,effective,effectiveEvent),actor.id,bogotaToday(),create ? null : id)
+    }
+    if(existing?.id_serie) {
+      await connection.execute('SELECT id_serie FROM serie_actividad WHERE id_serie=? FOR UPDATE',[existing.id_serie])
+      await getActivity(req,id,permission,connection)
+    }
+    if(following) {
+      const [series]=await connection.execute('SELECT plantilla FROM serie_actividad WHERE id_serie=?',[existing.id_serie])
+      const template=typeof series[0].plantilla==='string' ? JSON.parse(series[0].plantilla) : series[0].plantilla
+      const {fecha:ignored,...changes}=values
+      template.activity={...template.activity,...changes}
+      if(eventValues) template.event={...template.event,...eventValues}
+      await update(connection,'serie_actividad','id_serie',existing.id_serie,{plantilla:JSON.stringify(template),fecha_actualizacion:new Date(),...(Object.hasOwn(changes,'estado_actividad') ? {activa:changes.estado_actividad==='programada' ? 1 : 0} : {})})
+      const [targets]=await connection.execute(`SELECT ac.id_actividad FROM actividad ac JOIN actividad_repetida ar ON ar.id_actividad=ac.id_actividad
+        WHERE ar.id_serie=? AND ar.fecha_programada>=? AND TIMESTAMP(ac.fecha,ac.hora)>=DATE_SUB(UTC_TIMESTAMP(),INTERVAL 5 HOUR) AND ac.archivado=0 ORDER BY ac.id_actividad FOR UPDATE`,[existing.id_serie,existing.fecha_programada])
+      if(!targets.length) throw invalid('Selecciona una próxima fecha para actualizar las siguientes.',409)
+      for(const target of targets) {
+        await update(connection,'actividad','id_actividad',target.id_actividad,{...changes,fecha_actualizacion:new Date()})
+        if(eventValues && Object.keys(eventValues).length) await update(connection,'evento','id_actividad',target.id_actividad,eventValues)
+        if(changes.hora || changes.estado_actividad) {
+          const [members]=await connection.execute('SELECT DISTINCT id_miembro FROM asistencia WHERE id_actividad=? AND id_miembro IS NOT NULL ORDER BY id_miembro',[target.id_actividad])
+          for(const member of members) { await connection.execute('SELECT id_miembro FROM miembro WHERE id_miembro=? FOR UPDATE',[member.id_miembro]); await recalculateAlerts(connection,member.id_miembro) }
+        }
+      }
+      return {id,seriesId:existing.id_serie,occurrences:targets.length}
+    }
     const resultId=create?await insert(connection,'actividad',{...values,tipo_actividad:type,id_usuario_creacion:req.authUser.id}):id
     if(!create) await update(connection,'actividad','id_actividad',id,{...values,fecha_actualizacion:new Date()})
     if(create) await insert(connection,type,{id_actividad:resultId,...(group?{id_grupo:group.id_grupo}:{}),...eventValues})
@@ -448,15 +515,40 @@ async function saveActivity(req,res,create) {
       const [members]=await connection.execute('SELECT DISTINCT id_miembro FROM asistencia WHERE id_actividad=? AND id_miembro IS NOT NULL ORDER BY id_miembro',[id])
       for(const row of members) { await connection.execute('SELECT id_miembro FROM miembro WHERE id_miembro=? FOR UPDATE',[row.id_miembro]); await recalculateAlerts(connection,row.id_miembro) }
     }
-    return resultId
+    return {id:resultId}
   })
-  res.status(create?201:200).json({id:result})
+  res.status(create?201:200).json(result)
 }
 managementRouter.post('/activities',(req,res)=>saveActivity(req,res,true))
 managementRouter.patch('/activities/:id',(req,res)=>saveActivity(req,res,false))
+managementRouter.post('/activities/:id/recurrence/stop',requirePermission('eventos.editar'),async(req,res)=>{
+  const existing=await getActivity(req,req.params.id,'eventos.editar')
+  if(!existing.id_serie) throw invalid('Esta actividad no tiene repetición semanal.')
+  await transaction(async connection=>{
+    const actor=await currentActor(req,connection)
+    if(!hasPermission(actor,'eventos.editar')) throw invalid('Ya no tienes permiso para detener esta repetición.',403)
+    await connection.execute('SELECT id_serie FROM serie_actividad WHERE id_serie=? FOR UPDATE',[existing.id_serie])
+    await getActivity(req,req.params.id,'eventos.editar',connection)
+    await connection.execute('UPDATE serie_actividad SET activa=0,fecha_actualizacion=UTC_TIMESTAMP() WHERE id_serie=?',[existing.id_serie])
+    await connection.execute(`UPDATE actividad ac JOIN actividad_repetida ar ON ar.id_actividad=ac.id_actividad SET ac.estado_actividad='cancelada',ac.fecha_actualizacion=UTC_TIMESTAMP()
+      WHERE ar.id_serie=? AND ac.archivado=0 AND TIMESTAMP(ac.fecha,ac.hora)>=DATE_SUB(UTC_TIMESTAMP(),INTERVAL 5 HOUR)`,[existing.id_serie])
+  })
+  res.json({ok:true})
+})
 managementRouter.delete('/activities/:id',requirePermission('eventos.eliminar'),async(req,res)=>{
   const row=await getActivity(req,req.params.id,'eventos.eliminar')
   await transaction(async connection=>{
+    const actor=await currentActor(req,connection)
+    if(!hasPermission(actor,'eventos.eliminar')) throw invalid('Ya no tienes permiso para eliminar esta actividad.',403)
+    if(req.body?.scope && req.body.scope!=='series') throw invalid('Selecciona un alcance válido.')
+    if(req.body?.scope==='series') {
+      if(!row.id_serie) throw invalid('Esta actividad no es un evento fijo.')
+      await connection.execute('SELECT id_serie FROM serie_actividad WHERE id_serie=? FOR UPDATE',[row.id_serie])
+      await getActivity(req,row.id_actividad,'eventos.eliminar',connection)
+      await connection.execute('UPDATE serie_actividad SET activa=0,fecha_actualizacion=UTC_TIMESTAMP() WHERE id_serie=?',[row.id_serie])
+      await retireFutureDates(connection,row.id_serie)
+      return
+    }
     await update(connection,'actividad','id_actividad',row.id_actividad,{archivado:1})
     const [members]=await connection.execute('SELECT DISTINCT id_miembro FROM asistencia WHERE id_actividad=? AND id_miembro IS NOT NULL ORDER BY id_miembro',[row.id_actividad])
     for(const m of members) { await connection.execute('SELECT id_miembro FROM miembro WHERE id_miembro=? FOR UPDATE',[m.id_miembro]); await recalculateAlerts(connection,m.id_miembro) }
@@ -487,6 +579,8 @@ managementRouter.post('/attendance',requirePermission('asistencia.registrar'),as
   }
   if(!id && state!=='visitante') throw invalid('Selecciona un discípulo o registra un visitante.')
   const result=await transaction(async connection=>{
+    const [locked]=await connection.execute('SELECT archivado,estado_actividad FROM actividad WHERE id_actividad=? FOR UPDATE',[activity.id_actividad])
+    if(!locked.length || locked[0].archivado || locked[0].estado_actividad==='cancelada') throw invalid('La actividad ya no admite registros de asistencia.',409)
     if(id) {
       const [rows]=await connection.execute('SELECT id_grupo FROM miembro WHERE id_miembro=? AND archivado=0 FOR UPDATE',[id])
       if(!rows.length || (activity.id_grupo && rows[0].id_grupo!==activity.id_grupo)) throw invalid('Discípulo no disponible para esta actividad.',404)
@@ -593,7 +687,7 @@ managementRouter.post('/users/:id/member',requirePermission('usuarios.gestionar'
   const id=identifier(req.params.id), linkedId=identifier(req.body?.memberId,true)
   await transaction(async connection=>{
   const actor=await currentActor(req,connection)
-  if(!hasPastoralAuthority(actor) || !hasPermission(actor,'usuarios.gestionar')) throw invalid('Solo los cinco cargos pastorales autorizados pueden vincular cuentas.',403)
+  if(!canAdministerAccounts(actor)) throw invalid('Solo los administradores y cargos pastorales autorizados pueden vincular cuentas.',403)
   const [users]=await connection.execute('SELECT id_usuario FROM usuario WHERE id_usuario=?',[id])
   if(!users.length) throw invalid('Cuenta no disponible.',404)
   if(!actor.roles.includes('Superadmin')) {

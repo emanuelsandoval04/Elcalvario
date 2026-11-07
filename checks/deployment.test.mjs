@@ -76,6 +76,7 @@ test('Vercel routes every API path to one native function without database migra
   assert.deepEqual(config.rewrites, [{ source: '/api/:path*', destination: '/api' }])
   assert.equal(config.headers.find(rule => rule.source === '/api/:path*').headers.find(header => header.key === 'Cache-Control').value, 'no-store')
   assert.ok(config.functions['api/**/*.js'].includeFiles.includes('pdfkit'))
+  assert.ok(config.functions['api/**/*.js'].includeFiles.includes('server/mail-assets'))
   assert.ok(config.functions['api/**/*.js'].excludeFiles.includes('.env'))
   const build = await readFile(new URL('../scripts/build-vercel.mjs', import.meta.url), 'utf8')
   assert.equal(build.includes('migrate.js'), false)

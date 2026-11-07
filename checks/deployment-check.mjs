@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict'
-import { randomBytes, randomUUID } from 'node:crypto'
+import { randomBytes, randomUUID, scrypt } from 'node:crypto'
+import { promisify } from 'node:util'
 import { createServer } from 'node:http'
 import { spawn } from 'node:child_process'
 import { once } from 'node:events'
@@ -110,8 +111,15 @@ try {
   assert.equal((await request('auth/register', credentials, '', { Origin: 'https://evil.example' })).status, 403)
   assert.equal((await request('auth/register', credentials, '', { 'Sec-Fetch-Site': 'cross-site' })).status, 403)
   const registered = await request('auth/register', credentials)
-  assert.equal(registered.status, 201, await registered.clone().text())
-  const setCookie = registered.headers.get('set-cookie')
+  assert.equal(registered.status, 403, await registered.clone().text())
+  const salt=randomBytes(16).toString('hex')
+  const key=await promisify(scrypt)(credentials.password,salt,64,{N:32768,r:8,p:3,maxmem:64*1024*1024})
+  const [fixture]=await connection.execute(`INSERT INTO \`${testDatabase}\`.usuario(correo_login,password_hash,estado_usuario) VALUES (?,?,'activo')`,[credentials.email,`scrypt$${salt}$${key.toString('hex')}`])
+  await connection.execute(`INSERT INTO \`${testDatabase}\`.usuario_rol(id_usuario,id_rol) SELECT ?,id_rol FROM \`${testDatabase}\`.rol_sistema WHERE nombre='Superadmin'`,[fixture.insertId])
+  await connection.query(`UPDATE \`${testDatabase}\`.configuracion_sistema SET bootstrap_completado=1 WHERE id=1`)
+  const authenticated=await request('auth/login',credentials)
+  assert.equal(authenticated.status,200)
+  const setCookie = authenticated.headers.get('set-cookie')
   assert.match(setCookie, /; HttpOnly/i)
   assert.match(setCookie, /; Secure/i)
   assert.match(setCookie, /; SameSite=Strict/i)
@@ -138,17 +146,18 @@ try {
   assert.match(account[0].password_hash, /^scrypt\$/)
   assert.equal(logs.includes(databasePassword), false)
   // Concurrent attempts share an atomic fixed window in MySQL.
-  const attempts = await Promise.all(Array.from({ length: 8 }, () => request('auth/register', { email: 'invalid', password: 'invalid' })))
-  assert.equal(attempts.filter(response => response.status === 400).length, 7)
+  await connection.execute(`DELETE FROM \`${testDatabase}\`.limite_solicitud`)
+  const attempts = await Promise.all(Array.from({ length: 21 }, (_,index) => request('auth/login', { email: `invalid-${index}`, password: 'invalid' })))
+  assert.equal(attempts.filter(response => response.status === 400).length, 20)
   assert.equal(attempts.filter(response => response.status === 429).length, 1)
   assert.ok(Number(attempts.find(response => response.status === 429).headers.get('retry-after')) > 0)
   // Replace the listener with a fresh process using the real Vercel export.
   await stopChild()
   await startChild('checks/vercel-api-runner.mjs')
-  assert.equal((await request('auth/register', { email: 'invalid', password: 'invalid' })).status, 429)
+  assert.equal((await request('auth/login', { email: 'invalid', password: 'invalid' })).status, 429)
   assert.equal((await request('auth/me', undefined, loggedIn.headers.get('set-cookie').split(';')[0])).status, 200)
   clientIp = '203.0.113.21'
-  assert.equal((await request('auth/register', { email: 'invalid', password: 'invalid' })).status, 400)
+  assert.equal((await request('auth/login', { email: 'invalid', password: 'invalid' })).status, 400)
   assert.equal(logs.includes('Unsupported database pool type'), false)
   console.log('PASS producción: migraciones con usuario limitado, proxy, salud, cookies seguras, login/logout, entrada real de Vercel, sesión entre procesos y límites concurrentes persistentes por IP.')
 } finally {

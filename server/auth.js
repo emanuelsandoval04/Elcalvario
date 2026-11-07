@@ -3,12 +3,15 @@ import { randomBytes, randomUUID, scrypt, timingSafeEqual, createHash } from 'no
 import { promisify } from 'node:util'
 import { pool } from './db.js'
 import { isAllowedOrigin } from './origin.js'
-import { pastoralRoleFor, registrationCapabilities, hasPastoralAuthority, pastoralRoles } from './pastoral-policy.js'
+import { pastoralRoleFor, registrationCapabilities, hasPastoralAuthority, pastoralRoles, canAdministerAccounts } from './pastoral-policy.js'
+import { readNotifications, dismissNotification } from './notifications.js'
 import { parseProfilePhoto, saveProfilePhoto } from './profile-photo.js'
 import { sessionMilliseconds } from './config.js'
 import { databaseRateLimit } from './rate-limit.js'
 import { audit } from './audit.js'
-import { invalid } from './entities.js'
+import { invalid, identifier, text } from './entities.js'
+import { createPasswordRecoveryRouter } from './password-recovery.js'
+import { welcomeContext, sendAccountWelcome } from './account-welcome.js'
 
 const deriveKey = promisify(scrypt)
 const passwordOptions = { N: 32768, r: 8, p: 3, maxmem: 64 * 1024 * 1024 }
@@ -89,43 +92,15 @@ authRouter.use((request, response, next) => {
   next()
 })
 
-const rateLimit = databaseRateLimit({ prefix: 'auth', maximum: request => request.path === '/register' ? 8 : 20 })
+authRouter.use(createPasswordRecoveryRouter({ hashPassword }))
+
+const rateLimit = databaseRateLimit({ prefix: 'auth', maximum: 20 })
 const accountLimit = databaseRateLimit({prefix:'auth-account',maximum:15,key:request=>String(request.body?.email || '').trim().toLowerCase().slice(0,120)})
 const securityLimit = databaseRateLimit({prefix:'security',maximum:12,key:request=>String(request.authUser.id)})
+const notificationLimit = databaseRateLimit({prefix:'notifications-dismiss',maximum:120,seconds:60,key:request=>String(request.authUser.id)})
 
-authRouter.post('/register', rateLimit, async (request, response) => {
-  const { email, password, error } = credentials(request.body, true)
-  if (error) return response.status(400).json({ error })
-  let connection
-  try {
-    const photo = parseProfilePhoto(request.body?.photo)
-    const hash = await hashPassword(password)
-    connection = await pool.getConnection()
-    await connection.beginTransaction()
-    const [configuration] = await connection.execute('SELECT bootstrap_completado FROM configuracion_sistema WHERE id = 1 FOR UPDATE')
-    if (!configuration.length) throw new Error('BOOTSTRAP_NOT_CONFIGURED')
-    const initialAdmin = configuration[0].bootstrap_completado === 0
-    const [result] = await connection.execute('INSERT INTO usuario (correo_login, password_hash, estado_usuario) VALUES (?, ?, ?)', [email, hash, initialAdmin ? 'activo' : 'pendiente'])
-    if (photo) await saveProfilePhoto(connection, result.insertId, photo)
-    if (initialAdmin) {
-      const [roles] = await connection.execute("SELECT id_rol FROM rol_sistema WHERE nombre = 'Superadmin' AND estado = 1")
-      if (!roles.length) throw new Error('ROLE_NOT_CONFIGURED')
-      await connection.execute('INSERT INTO usuario_rol (id_usuario, id_rol) VALUES (?, ?)', [result.insertId, roles[0].id_rol])
-      await connection.execute('UPDATE configuracion_sistema SET bootstrap_completado = 1, id_superadmin_inicial = ?, fecha_inicializacion = UTC_TIMESTAMP() WHERE id = 1', [result.insertId])
-    }
-    const setCookie = await createSession(connection, result.insertId, response, request)
-    const user = await readUser(result.insertId, connection)
-    await audit(connection,request,'account.register',201,result.insertId)
-    await connection.commit()
-    setCookie()
-    response.status(201).json({ user })
-  } catch (error) {
-    if (connection) await connection.rollback()
-    if (error.status) return response.status(error.status).json({ error: error.message })
-    if (error.code === 'ER_DUP_ENTRY') return response.status(409).json({ error: 'No se pudo crear la cuenta con ese correo. Intenta iniciar sesión o consulta con la administración.' })
-    console.error('Error de registro:', error.code || 'REGISTER_ERROR')
-    response.status(503).json({ error: 'No pudimos crear tu cuenta. Inténtalo de nuevo más tarde.' })
-  } finally { connection?.release() }
+authRouter.post('/register', (request, response) => {
+  response.status(403).json({ error: 'El registro público está deshabilitado. Solicita tu cuenta a la administración o al equipo pastoral.' })
 })
 
 authRouter.post('/login', rateLimit, accountLimit, async (request, response) => {
@@ -408,18 +383,150 @@ export function protectMutation(request, response, next) {
   next()
 }
 
-authRouter.use('/admin', requireSession, requirePermission('usuarios.gestionar'), (request, response, next) => hasPastoralAuthority(request.authUser) ? next() : response.status(403).json({ error: 'Solo los cinco cargos pastorales autorizados pueden administrar cuentas.' }))
+authRouter.get('/notifications', requireAccountSession, async (request, response) => {
+  try { response.json(await readNotifications(request.authUser)) }
+  catch (error) {
+    console.error('Error de notificaciones:',error.code || 'NOTIFICATIONS_ERROR')
+    response.status(503).json({error:'No pudimos consultar las notificaciones.'})
+  }
+})
+
+authRouter.post('/notifications/dismiss', requireAccountSession, notificationLimit, async (request, response) => {
+  try {
+    await dismissNotification(request.authUser,request.body?.id)
+    response.json({ok:true})
+  } catch (error) {
+    if (error.status) return response.status(error.status).json({error:error.message})
+    console.error('Error al descartar notificación:',error.code || 'NOTIFICATION_DISMISS_ERROR')
+    response.status(503).json({error:'No pudimos descartar la notificación. Inténtalo nuevamente.'})
+  }
+})
+
+authRouter.use('/admin', requireSession, requirePermission('usuarios.gestionar'), (request, response, next) => canAdministerAccounts(request.authUser) ? next() : response.status(403).json({ error: 'Solo los administradores y cargos pastorales autorizados pueden administrar cuentas.' }))
+
+authRouter.post('/admin/users', securityLimit, async (request, response) => {
+  const { email, password, error } = credentials(request.body, true)
+  if (error) return response.status(400).json({ error })
+  if (request.body.confirmation !== password) return response.status(400).json({ error: 'Las contraseñas no coinciden.' })
+  let connection
+  try {
+    const name = text(request.body.name, 100, true)
+    const roleId = identifier(request.body.roleId)
+    const memberId = identifier(request.body.memberId, true)
+    const photo = parseProfilePhoto(request.body.photo)
+    const hash = await hashPassword(password)
+    connection = await pool.getConnection()
+    await connection.beginTransaction()
+    await connection.execute('SELECT id FROM configuracion_sistema WHERE id=1 FOR UPDATE')
+    await lockedAccount(request, connection)
+    const actor = await readUser(request.authUser.id, connection)
+    if (!canAdministerAccounts(actor)) throw invalid('Ya no tienes permiso para crear cuentas.', 403)
+    const [roles] = await connection.execute('SELECT nombre FROM rol_sistema WHERE id_rol=? AND estado=1', [roleId])
+    if (!roles.length) throw invalid('Selecciona un rol disponible.')
+    if (roles[0].nombre === 'Superadmin' && !actor.roles.includes('Superadmin')) throw invalid('El rol técnico Superadmin solo puede asignarlo el propietario de la instalación.', 403)
+    if (memberId) {
+      if (actor.permissions['miembros.ver'] !== 'todos') throw invalid('No tienes permiso para vincular esta ficha.', 403)
+      const [members] = await connection.execute('SELECT id_miembro FROM miembro WHERE id_miembro=? AND archivado=0 FOR UPDATE', [memberId])
+      if (!members.length) throw invalid('Ficha del discípulo no disponible.', 404)
+      const [linked] = await connection.execute('SELECT id_usuario FROM usuario WHERE id_miembro=?', [memberId])
+      if (linked.length) throw invalid('La ficha del discípulo ya tiene una cuenta vinculada.', 409)
+    }
+    const [result] = await connection.execute("INSERT INTO usuario(correo_login,password_hash,estado_usuario,id_miembro) VALUES (?,?,'activo',?)", [email, hash, memberId])
+    await connection.execute('INSERT INTO perfil_usuario(id_usuario,nombre) VALUES (?,?)', [result.insertId, name])
+    await connection.execute('INSERT INTO usuario_rol(id_usuario,id_rol) VALUES (?,?)', [result.insertId, roleId])
+    if (photo) await saveProfilePhoto(connection, result.insertId, photo)
+    const pastoral = pastoralRoles.find(role => role.systemRole === roles[0].nombre)
+    if (memberId && pastoral) {
+      const [ranks] = await connection.execute('SELECT id_rol_eclesiastico FROM rol_eclesiastico WHERE nivel_jerarquico=?', [pastoral.level])
+      if (ranks.length) await connection.execute('UPDATE miembro SET id_rol_eclesiastico=?,id_usuario_actualizacion=? WHERE id_miembro=?', [ranks[0].id_rol_eclesiastico, actor.id, memberId])
+    }
+    await audit(connection, request, 'account.created', 201, result.insertId)
+    const user = await readUser(result.insertId, connection)
+    const context = await welcomeContext(connection, user, actor)
+    await connection.commit()
+    connection.release(); connection = null
+    const emailDelivery = await sendAccountWelcome(user, password, context)
+    response.status(201).json({ user, emailDelivery })
+  } catch (error) {
+    if (connection) await connection.rollback()
+    if (error.status) return response.status(error.status).json({ error: error.message })
+    if (error.code === 'ER_DUP_ENTRY') return response.status(409).json({ error: 'Ya existe una cuenta con ese correo o ficha del discípulo.' })
+    console.error('Error de creación de cuenta:', error.code || 'ACCOUNT_CREATE_ERROR')
+    response.status(503).json({ error: 'No pudimos crear la cuenta. Inténtalo nuevamente.' })
+  } finally { connection?.release() }
+})
+
+authRouter.get('/admin/notifications', async (request, response) => {
+  try {
+    const {total,items} = await readNotifications(request.authUser,{accountsOnly:true})
+    response.json({ total, items:items.map(item=>({id:Number(item.id.slice(8)),email:item.title,createdAt:item.createdAt})) })
+  } catch (error) {
+    console.error('Error de notificaciones de cuentas:', error.code || 'NOTIFICATIONS_ERROR')
+    response.status(503).json({ error: 'No pudimos consultar las solicitudes de cuentas.' })
+  }
+})
 
 authRouter.get('/admin/users', async (request, response) => {
+  const page = Number(request.query.page || 1)
+  const search = typeof request.query.q === 'string' ? request.query.q.trim() : ''
+  const state = request.query.state || ''
+  if (!Number.isSafeInteger(page) || page < 1 || page > 1000000 || search.length > 120 || !['', 'pendiente', 'activo', 'inactivo', 'bloqueado'].includes(state)) return response.status(400).json({ error: 'Filtro de usuarios inválido.' })
   try {
-    const [users] = await pool.execute("SELECT id_usuario AS id, id_miembro AS memberId, correo_login AS email, estado_usuario AS state FROM usuario ORDER BY estado_usuario = 'pendiente' DESC, id_usuario DESC LIMIT 200")
+    const where = " WHERE (?='' OR estado_usuario=?) AND (?='' OR LOCATE(?,correo_login)>0)"
+    const params = [state, state, search, search]
+    const [counts] = await pool.execute(`SELECT COUNT(*) AS total FROM usuario${where}`, params)
+    const [users] = await pool.execute(`SELECT id_usuario AS id, id_miembro AS memberId, correo_login AS email, estado_usuario AS state, fecha_creacion AS createdAt, ultimo_acceso AS lastAccess FROM usuario${where} ORDER BY estado_usuario = 'pendiente' DESC, id_usuario DESC LIMIT 50 OFFSET ${ (page - 1) * 50 }`, params)
     const [assignments] = await pool.execute('SELECT ur.id_usuario, r.nombre FROM usuario_rol ur JOIN rol_sistema r ON r.id_rol = ur.id_rol WHERE ur.activo = 1 AND r.estado = 1')
     const [roles] = await pool.execute('SELECT id_rol AS id, nombre AS name FROM rol_sistema WHERE estado = 1 ORDER BY nombre')
-    response.json({ users: users.map(user => ({ ...user, roles: assignments.filter(role => role.id_usuario === user.id).map(role => role.nombre) })), roles: request.authUser.roles.includes('Superadmin') ? roles : roles.filter(role => role.name !== 'Superadmin') })
+    response.json({ users: users.map(user => ({ ...user, roles: assignments.filter(role => role.id_usuario === user.id).map(role => role.nombre) })), roles: request.authUser.roles.includes('Superadmin') ? roles : roles.filter(role => role.name !== 'Superadmin'), total: counts[0].total, page, pageSize: 50 })
   } catch (error) {
     console.error('Error de consulta de usuarios:', error.code || 'USERS_ERROR')
     response.status(503).json({ error: 'No pudimos cargar los usuarios.' })
   }
+})
+
+authRouter.delete('/admin/users/:id', async (request, response) => {
+  const id = Number(request.params.id)
+  const { action, expectedEmail, expectedState } = request.body || {}
+  if (!Number.isSafeInteger(id) || id < 1 || !['reject', 'delete'].includes(action) || typeof expectedEmail !== 'string' || !['pendiente', 'activo', 'inactivo', 'bloqueado'].includes(expectedState)) return response.status(400).json({ error: 'Solicitud de eliminación inválida.' })
+  if (id === request.authUser.id) return response.status(409).json({ error: 'No puedes eliminar tu propia cuenta desde este panel.' })
+  let connection
+  try {
+    connection = await pool.getConnection()
+    await connection.beginTransaction()
+    // Serialize with account activation and role changes, then recheck authority.
+    const [configuration] = await connection.execute('SELECT id_superadmin_inicial FROM configuracion_sistema WHERE id=1 FOR UPDATE')
+    await lockedAccount(request, connection)
+    const actor = await readUser(request.authUser.id, connection)
+    if (!canAdministerAccounts(actor)) {
+      await connection.rollback()
+      return response.status(403).json({ error: 'Ya no tienes permiso para administrar cuentas.' })
+    }
+    const [targets] = await connection.execute('SELECT correo_login, estado_usuario FROM usuario WHERE id_usuario=? FOR UPDATE', [id])
+    if (!targets.length) {
+      await connection.rollback()
+      return response.status(404).json({ error: 'La cuenta ya no existe.' })
+    }
+    const [owners] = await connection.execute("SELECT ur.id_usuario FROM usuario_rol ur JOIN rol_sistema r ON r.id_rol=ur.id_rol WHERE ur.id_usuario=? AND ur.activo=1 AND r.nombre='Superadmin'", [id])
+    if (owners.length || configuration[0]?.id_superadmin_inicial === id) {
+      await connection.rollback()
+      return response.status(403).json({ error: 'La cuenta del propietario técnico está protegida.' })
+    }
+    if (targets[0].correo_login !== expectedEmail || targets[0].estado_usuario !== expectedState || action === 'reject' && targets[0].estado_usuario !== 'pendiente') {
+      await connection.rollback()
+      return response.status(409).json({ error: 'La cuenta cambió. Actualiza los usuarios y revisa la solicitud nuevamente.' })
+    }
+    // Account-only data cascades. Operational records keep their history with a null actor.
+    await connection.execute('DELETE FROM usuario WHERE id_usuario=?', [id])
+    await audit(connection, request, action === 'reject' ? 'account.rejected' : 'account.deleted')
+    await connection.commit()
+    response.json({ ok: true })
+  } catch (error) {
+    if (connection) await connection.rollback()
+    console.error('Error de eliminación de cuenta:', error.code || 'ACCOUNT_DELETE_ERROR')
+    if (error.status) return response.status(error.status).json({ error: error.message })
+    response.status(503).json({ error: 'No pudimos eliminar la cuenta. Inténtalo nuevamente.' })
+  } finally { connection?.release() }
 })
 
 authRouter.post('/admin/users/:id/role', async (request, response) => {
@@ -433,7 +540,7 @@ authRouter.post('/admin/users/:id/role', async (request, response) => {
     await connection.beginTransaction()
     await connection.execute('SELECT id FROM configuracion_sistema WHERE id = 1 FOR UPDATE')
     const actor = await readUser(request.authUser.id, connection)
-    if (!hasPermission(actor, 'usuarios.gestionar') || !hasPastoralAuthority(actor)) {
+    if (!canAdministerAccounts(actor)) {
       await connection.rollback()
       return response.status(403).json({ error: 'Ya no tienes permiso para asignar roles.' })
     }

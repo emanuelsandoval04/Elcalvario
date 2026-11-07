@@ -158,7 +158,7 @@ IGLESIA/
 │   ├── Events.tsx            # Cartelera pública de eventos y reproductor de Facebook
 │   ├── Ministries.tsx        # Tarjetas de ministerios públicos
 │   ├── Participation.tsx     # Formulario público "Quiero participar"
-│   ├── Login.tsx             # Pantallas de Inicio de sesión (#login) y Registro (#registro)
+│   ├── Login.tsx             # Inicio de sesión (#login), sin registro público
 │   ├── Management.tsx        # Panel administrativo "Mi comunidad" (#gestion)
 │   ├── AdminFrame.tsx        # Marco visual, barra lateral y barra móvil inferior
 │   ├── admin-navigation.tsx  # Definición y filtrado de módulos según permisos
@@ -199,7 +199,7 @@ IGLESIA/
 | --- | --- | --- |
 | `/#inicio`, `/#nosotros`, `/#eventos`, `/#ministerios`, `/#grupos-de-comunion`, `/#contacto` | Secciones del sitio público | Público (sin sesión) |
 | `/#login` | Inicio de sesión | Público |
-| `/#registro` | Registro de cuenta nueva | Público |
+| `/#registro` | Redirige a `/#login`; registro público deshabilitado | Público |
 | `/#gestion` | Dashboard "Mi comunidad" (o aviso de cuenta pendiente) | Sesión activa o pendiente |
 | `/#gestion/members` | Módulo de Discípulos | `miembros.ver`, `miembros.editar` o `miembros.registrar` |
 | `/#gestion/groups` | Módulo de Grupos de Comunión | `grupos.ver` |
@@ -209,7 +209,7 @@ IGLESIA/
 | `/#gestion/falls/alertas` (o `/#gestion/alerts`) | Alertas Pastorales | `alertas.ver` |
 | `/#gestion/reports` | Módulo de Reportes (PDF y Excel) | `reportes.asistencia`, `reportes.cumpleanos` o `reportes.grupos` |
 | `/#gestion/permissions` | Editor de Permisos por Rol (RBAC) | `permisos.gestionar` |
-| `/#usuarios` | Administración de Usuarios y Roles | `usuarios.gestionar` + Autoridad pastoral (niveles 1–5 o Superadmin) |
+| `/#usuarios` | Creación y administración de usuarios y roles | `usuarios.gestionar` + Administrador, autoridad pastoral (niveles 1–5) o Superadmin |
 
 ---
 
@@ -227,10 +227,10 @@ IGLESIA/
 - **Ministerios y Grupos de Comunión (`Ministries.tsx`):** presenta los tres ministerios confirmados (*Alabanza / Adoración*, *Multimedia* y *Servidores / Ujieres*) y la reseña de los 5 Grupos de Comunión Familiar cuyo propósito es crecer en comunidad y abrir una nueva iglesia.
 
 ### 3.2. Registro e inicio de sesión
-- **Registro (`/#registro`):** solicita correo electrónico (máx. 120 caracteres), contraseña (10 a 128 caracteres) y foto de perfil opcional.
-- **Bootstrap del primer usuario:** en una base de datos recién inicializada (`bootstrap_completado = 0`), la primera cuenta que se registra adquiere un bloqueo transaccional y recibe automáticamente el rol **Superadmin** en estado `activo`. Esta marca es permanente: aunque se borren usuarios, nunca se vuelve a entregar Superadmin por registro público.
-- **Cuentas posteriores (estado pendiente):** a partir del segundo registro, toda cuenta nueva se crea con estado `pendiente`, sin roles ni permisos. Crear una cuenta no crea una ficha de discípulo.
-- **Inicio de sesión (`/#login`):** valida las credenciales con `scrypt` en tiempo constante. Tanto el login como el registro abren directamente `/#gestion`. Si la cuenta está `pendiente`, ve el aviso **"Tu cuenta está pendiente por activación"** con un botón para consultar su estado sin cerrar sesión.
+- **Registro público deshabilitado:** `/#registro` redirige a `/#login` y `POST /api/auth/register` devuelve 403, incluso con una base vacía.
+- **Bootstrap del propietario:** se ejecuta exclusivamente desde el servidor con `npm run account:bootstrap`, usando `INITIAL_ADMIN_EMAIL`, `INITIAL_ADMIN_PASSWORD` e `INITIAL_ADMIN_NAME`. Requiere una instalación vacía con `bootstrap_completado = 0`, toma un bloqueo transaccional y crea un único Superadmin activo. La marca es permanente.
+- **Creación autorizada:** en Usuarios y roles, Administrador, Superadmin y los cinco cargos pastorales con `usuarios.gestionar` asignan nombre, correo (máx. 120 caracteres), contraseña (10 a 128), rol, foto opcional y ficha opcional. La cuenta se crea activa, sin sustituir la sesión del creador. Los demás datos personales se administran en la ficha del discípulo. Crear una cuenta no crea una ficha.
+- **Inicio de sesión (`/#login`):** valida las credenciales asignadas con `scrypt` y abre `/#gestion`. Las cuentas pendientes anteriores conservan el aviso **"Tu cuenta está pendiente por activación"** y la consulta de habilitación.
 - **Revalidación automática:** la sesión dura 8 horas (cookie `HttpOnly`, `SameSite=Strict`) y el frontend consulta `/api/auth/me` cada 15 segundos mientras la pestaña está visible y cada vez que recupera el foco. Si un administrador le cambia el rol o le revoca permisos, la interfaz se actualiza al instante.
 
 ### 3.3. Perfil de cuenta ("Mi cuenta")
@@ -402,7 +402,7 @@ Prioridad: **Alta** (esencial para la operación) · **Media** (importante) · *
 | --- | --- | :-: |
 | **RF-10** | El sistema debe permitir registrar una cuenta con correo electrónico válido (máx. 120 caracteres), contraseña de 10 a 128 caracteres y foto de perfil opcional. | Alta |
 | **RF-11** | El sistema debe otorgar el rol `Superadmin` activo únicamente a la primera cuenta registrada en una instalación nueva, de forma atómica y permanente mediante bloqueo transaccional. | Alta |
-| **RF-12** | El sistema debe dejar en estado `pendiente`, sin roles ni permisos, a toda cuenta registrada después del bootstrap inicial. | Alta |
+| **RF-12** | El sistema debe bloquear el registro público y permitir a administradores y pastoral autorizados crear cuentas activas con correo, contraseña y rol asignados. | Alta |
 | **RF-13** | El sistema debe permitir iniciar sesión con correo y contraseña a cuentas `activo` o `pendiente`, rechazando las `inactivo` o `bloqueado`, y abrir directamente `/#gestion`. | Alta |
 | **RF-14** | El sistema debe permitir cerrar sesión eliminando la sesión en base de datos y borrando la cookie del navegador. | Alta |
 | **RF-15** | El sistema debe mostrar a las cuentas pendientes el aviso de espera de activación, un botón para consultar su estado y revalidar la sesión cada 15 segundos. | Alta |
@@ -600,7 +600,7 @@ Prioridad: **Alta** (esencial para la operación) · **Media** (importante) · *
 
 | Código | Regla de negocio |
 | --- | --- |
-| **RN-01** | Solo la primera cuenta registrada en una base nueva obtiene el rol `Superadmin` activo; la marca `bootstrap_completado` es permanente aunque se borren usuarios. |
+| **RN-01** | El propietario inicial se crea únicamente desde el servidor en una instalación vacía; la marca `bootstrap_completado` es permanente aunque se borren usuarios. |
 | **RN-02** | Crear una cuenta de usuario no crea una ficha de discípulo; la vinculación mediante `usuario.id_miembro` es opcional y administrada. |
 | **RN-03** | Una cuenta en estado `pendiente` no tiene permisos operativos hasta que un usuario autorizado le asigne un rol en `/#usuarios`. |
 | **RN-04** | Asignar un rol activa una cuenta `pendiente`, pero no desbloquea cuentas en estado `inactivo` o `bloqueado`. |
@@ -743,7 +743,8 @@ Prefijo base: `/api`. Todas las respuestas se entregan en JSON (salvo fotos en `
 
 | Método | Endpoint | Autenticación / Permiso | Descripción y parámetros |
 | :-: | --- | --- | --- |
-| `POST` | `/api/auth/register` | Público (límite 8/15m por IP) | Recibe `{email, password, photo?}`. Crea cuenta (`Superadmin` activo si es la primera; `pendiente` las demás) e inicia sesión. |
+| `POST` | `/api/auth/register` | Deshabilitado | Devuelve 403; no crea cuentas ni sesiones. |
+| `POST` | `/api/auth/admin/users` | `usuarios.gestionar` + Administrador, pastoral autorizado o Superadmin | Recibe `{name,email,password,confirmation,roleId,memberId?,photo?}`. Crea una cuenta activa en una transacción, sin reemplazar la sesión del creador. |
 | `POST` | `/api/auth/login` | Público (límite 20/15m por IP) | Recibe `{email, password}`. Inicia sesión para cuentas `activo` o `pendiente` y emite cookie `HttpOnly`. |
 | `GET` | `/api/auth/me` | Cookie de sesión | Devuelve `{user}` con `id`, `memberId`, `email`, `name`, `state`, `photoUrl`, `displaySize`, `roles`, `permissions`, `pastoralRole` y `registration`. |
 | `POST` | `/api/auth/logout` | Cookie de sesión | Elimina la sesión en base de datos y limpia la cookie. |
@@ -806,18 +807,19 @@ Prefijo base: `/api`. Todas las respuestas se entregan en JSON (salvo fotos en `
 
 ## 10. Casos de Uso Principales (7 Casos de Uso)
 
-### CU-01: Registrar cuenta e iniciar sesión
-- **Actor:** Visitante o integrante de la iglesia.
-- **Precondición:** Acceso al sitio web en `/#registro` o `/#login`.
+### CU-01: Crear cuenta e iniciar sesión
+- **Actor:** Administrador o integrante del equipo pastoral autorizado; titular de la cuenta para el login.
+- **Precondición:** Sesión autorizada en `/#usuarios`; propietario inicial configurado desde el servidor.
 - **Flujo principal:**
-  1. El usuario abre `/#registro`, ingresa su correo electrónico, una contraseña de 10 a 128 caracteres y opcionalmente selecciona una foto de perfil.
-  2. El navegador normaliza la foto a JPEG de 512 × 512 px y envía `POST /api/auth/register`.
-  3. El servidor valida el formato, bloquea `configuracion_sistema` y verifica si `bootstrap_completado` es 0.
-  4. Si es la primera cuenta de la instalación, la crea como `activo` con rol `Superadmin`; en caso contrario, la crea con estado `pendiente` sin roles.
-  5. El servidor crea la sesión de 8 horas, envía la cookie `HttpOnly` y el navegador abre `/#gestion`.
+  1. El administrador abre **Crear cuenta** y asigna nombre, correo, contraseña, confirmación, rol y opcionalmente foto y ficha del discípulo.
+  2. El navegador prepara la foto y envía `POST /api/auth/admin/users` con la sesión del administrador.
+  3. El servidor valida los datos y vuelve a comprobar los permisos dentro de la transacción.
+  4. Crea la cuenta activa con perfil y rol, registra la auditoría y conserva la sesión del administrador.
+  5. El titular inicia sesión en `/#login` con las credenciales asignadas; recibe su propia sesión y abre `/#gestion`.
 - **Flujos alternos:**
-  - *Correo ya registrado:* devuelve HTTP 409 indicando iniciar sesión o consultar con la administración.
-  - *Más de 8 intentos en 15 minutos desde la misma IP:* devuelve HTTP 429 con el tiempo de espera en `Retry-After`.
+  - *Correo o ficha ya vinculados:* devuelve HTTP 409 sin crear una cuenta parcial.
+  - *Creación no autorizada:* devuelve HTTP 401/403. El registro público siempre devuelve 403.
+  - *Límite de operaciones de seguridad excedido:* devuelve HTTP 429 con `Retry-After`.
 
 ### CU-02: Habilitar una cuenta pendiente y asignarle rol
 - **Actor:** Liderazgo pastoral (niveles 1–5) o Superadmin con permiso `usuarios.gestionar`.
@@ -946,7 +948,7 @@ npm run preview
 ```
 
 **Pasos recomendados para publicar en un servidor de producción:**
-1. **Base de datos limpia para el propietario:** en el servidor de producción, crear una cuenta MySQL exclusiva para la aplicación (con permisos sobre `el_calvario`, sin usar `root`), ejecutar `npm run db:init` y `npm run db:migrate`. No copiar usuarios de desarrollo: la primera persona que se registre en `/#registro` en producción será automáticamente el **Superadmin** de la iglesia.
+1. **Base de datos limpia para el propietario:** en producción, crear una cuenta MySQL exclusiva para la aplicación, ejecutar `npm run db:init` y `npm run db:migrate`. No copiar usuarios de desarrollo. Definir las variables `INITIAL_ADMIN_EMAIL`, `INITIAL_ADMIN_PASSWORD` e `INITIAL_ADMIN_NAME` en el entorno del servidor y ejecutar `npm run account:bootstrap`; el registro público permanece cerrado.
 2. **Variables de producción:** definir `NODE_ENV=production` y configurar en `APP_ORIGINS` el dominio HTTPS real de la iglesia (por ejemplo, `https://elcalvariovillavicencio.org`).
 3. **Servidor web y proxy inverso HTTPS:** publicar la carpeta estática `dist/` mediante Nginx, Caddy o Apache bajo **HTTPS** (indispensable para que la cookie `Secure` y la instalación de la PWA funcionen en celulares) y redirigir el prefijo `/api` hacia `http://127.0.0.1:3001`.
 4. **Proceso del backend:** ejecutar `npm run start:api` (`node server/index.js`) bajo un administrador de procesos como PM2 o un servicio `systemd`.

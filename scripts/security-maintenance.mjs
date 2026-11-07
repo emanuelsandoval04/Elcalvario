@@ -8,6 +8,7 @@ try{
  const tasks=[
   ['sesiones vencidas','DELETE FROM sesion_usuario WHERE fecha_expiracion<=UTC_TIMESTAMP() LIMIT 1000',[]],
   ['retos vencidos','DELETE FROM reto_mfa WHERE vence_en<=UTC_TIMESTAMP() LIMIT 1000',[]],
+  ['enlaces de recuperación vencidos','DELETE FROM recuperacion_contrasena WHERE fecha_expiracion<=UTC_TIMESTAMP() LIMIT 1000',[]],
   ['límites vencidos','DELETE FROM limite_solicitud WHERE vence_en<DATE_SUB(UTC_TIMESTAMP(),INTERVAL 1 DAY) LIMIT 1000',[]],
   ['eventos fuera de retención','DELETE FROM auditoria_seguridad WHERE fecha<DATE_SUB(UTC_TIMESTAMP(),INTERVAL ? DAY) LIMIT 1000',[retentionDays]],
  ]

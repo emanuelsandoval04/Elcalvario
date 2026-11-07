@@ -55,11 +55,6 @@
 .account-summary a { text-decoration: none; }
 .account-logout { padding: 12px; border: 1px solid #e7e3dd; border-radius: 14px; background: white; color: #535b65; font: inherit; font-size: 13px; cursor: pointer; }
 .account-logout:hover { background: #f7f5f1; }
-.register-page .login-welcome-icon { display: none; }
-.register-page .login-form-panel h1 { font-size: 36px; }
-.register-page .login-back { margin-bottom: 14px; }
-.register-page .login-intro { margin-bottom: 18px; }
-.register-page .login-form { gap: 12px; }
 @keyframes auth-spin { to { transform: rotate(360deg); } }
 @keyframes login-enter { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
 @media (max-width: 1023px) { .login-layout { max-width: 880px; gap: 36px; } .login-story-content { padding: 24px; } .login-story h2 { font-size: 32px; } }
@@ -120,6 +115,9 @@
   .login-message { font-size: 11px; padding: 8px 10px; }
 }
 @media (prefers-reduced-motion: reduce) { .login-page *, .login-page *::after { animation: none !important; transition: none !important; } }
-@media (max-width: 767px) { .register-page .login-form-panel h1 { font-size: 29px; } .register-page .login-story { height: 8svh; } }
-@media (max-height: 740px) { .register-page .login-form-panel h1 { font-size: 27px; } .register-page .login-input-wrap { min-height: 42px; } .register-page .login-input-wrap input { padding: 10px 0; } .register-page .login-form { gap: 9px; } .register-page .login-intro { margin-bottom: 12px; } }
 .account-status.is-pending { background: #fff0d5; color: #8c5415; }
+.recovery-action { text-decoration:none; text-align:center; }
+.recovery-options { display:grid; gap:12px; }
+.recovery-checking { display:flex; align-items:center; gap:12px; font-size:13px; }
+.recovery-feedback { margin:18px 0 0; overflow-wrap:anywhere; }
+.recovery-page .login-form-panel h1 { overflow-wrap:anywhere; }

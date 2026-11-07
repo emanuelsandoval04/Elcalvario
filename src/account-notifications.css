@@ -1,0 +1,25 @@
+.account-notifications { position:relative; margin-left:auto; }
+.account-notifications .panel-notifications { position:relative; border:0; background:transparent; cursor:pointer; }
+.account-notifications .panel-notifications:hover { background:#fff0e5; }
+.account-notifications .panel-notifications:focus-visible { outline:2px solid #c74418; outline-offset:3px; }
+.account-notifications-badge { position:absolute; top:0; right:0; min-width:18px; padding:2px 4px; border-radius:12px; background:#c43f10; color:#fff; font-size:10px; font-weight:700; }
+.account-notifications-panel { position:absolute; right:0; top:calc(100% + 12px); width:340px; max-width:calc(100vw - 24px); padding:18px; border:1px solid #e8ebf0; border-radius:16px; background:#fff; box-shadow:0 12px 38px #171d2c26; color:#171d2c; z-index:60; }
+.account-notifications-panel h2 { margin:0 0 12px; font-size:16px; }
+.account-notifications-panel p, .account-notifications-panel a { font-size:13px; }
+.account-notifications-panel ul { list-style:none; padding:0; margin:12px 0; max-height:45svh; overflow:auto; }
+.account-notifications-panel li { position:relative; overflow:hidden; margin:8px 0; border:1px solid #eee9e3; border-radius:12px; font-size:12px; overflow-wrap:anywhere; }
+.notification-card { position:relative; display:flex; align-items:start; gap:8px; padding:12px; background:#fff; touch-action:pan-y; transition:transform .18s ease; }
+.notification-card.is-dragging { transition:none; user-select:none; }
+.notification-content { display:grid; flex:1; gap:6px; min-width:0; }
+.notification-content > span, .notification-content > small { color:#666f7c; }
+.notification-content > a { display:flex; align-items:center; min-height:44px; font-weight:700; }
+.notification-swipe-hint { position:absolute; inset:0; display:grid; place-items:center; background:#fff0e5; color:#a13914; font-weight:700; }
+.notification-dismiss { display:grid; place-items:center; flex:none; width:44px; min-height:44px; border:1px solid #eee9e3; border-radius:10px; background:#fff6f0; color:#a13914; font:inherit; font-size:24px; cursor:pointer; }
+.notification-dismiss:disabled { opacity:.5; cursor:wait; }
+.notification-dismiss:focus-visible, .notification-content a:focus-visible { outline:2px solid #c74418; outline-offset:2px; }
+.account-notifications-panel .notification-help { color:#666f7c; font-size:11px; line-height:1.5; }
+.account-notifications-panel [role=status]:empty { display:none; }
+.account-notifications-panel > a { display:flex; align-items:center; min-height:44px; color:#b63e0d; font-weight:700; }
+.admin-workspace .account-notifications + .panel-account-menu { margin-left:0; }
+@media(max-width:639px) { .account-notifications-panel { position:fixed; top:76px; left:12px; right:12px; width:auto; } }
+@media(prefers-reduced-motion:reduce) { .notification-card { transition:none; } }

@@ -9,6 +9,9 @@ import './management.css'
 import './app-dashboard.css'
 import AdminFrame, { AdminIcon } from './AdminFrame'
 import AdminNavigation, { allowedModules, currentModule } from './admin-navigation'
+import { welcomeEmailMessage } from './account-mail'
+import type { WelcomeEmailStatus } from './account-mail'
+import EventRecurrence, { weeklySchedule } from './EventRecurrence'
 import { CoverageAssignments, GroupTerritory, canManageCoverage } from './CoverageAssignments'
 import GroupNeighborhoodField from './GroupNeighborhoodField'
 import type { Barrio } from './GroupNeighborhoodField'
@@ -20,7 +23,7 @@ const CoverageMap = lazy(() => import('./CoverageMap'))
 type Row = Record<string, string | number | null>
 type Catalogs = { roles: Row[]; ministerios: Row[]; grupos: Row[]; registrationGroups?: Row[]; barrios?: Barrio[]; libros?: TrainingBook[] }
 type Option = { value: string | number; label: string }
-type Field = { key: string; label: string; type?: string; required?: boolean; max?: number; options?: Option[]; step?: string; render?: (props: { initial: Row; disabled: boolean; labelId: string; onBusy: (busy: boolean) => void }) => ReactNode }
+type Field = { key: string; label: string; type?: string; required?: boolean; max?: number; options?: Option[]; step?: string; virtual?: boolean; render?: (props: { initial: Row; disabled: boolean; labelId: string; onBusy: (busy: boolean) => void }) => ReactNode }
 type Message = (message: string) => void
 const errorMessage = (error: unknown) => error instanceof Error ? error.message : 'No pudimos completar la operación.'
 const searchable = (value: string) => value.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase()
@@ -72,7 +75,7 @@ function DataForm({ fields, initial = {}, onSave, onCancel, label = 'Guardar', m
     {memberWizard && <div className="wizard-progress manage-wide"><span>Paso {page + 1} de {steps.length}</span><span>{['Lo esencial', 'Un poco más de ti', 'Último paso'][page]}</span><progress value={page + 1} max={steps.length} aria-label="Progreso del registro"/></div>}
     {steps.map((group, index) => <fieldset key={index} data-form-step={index} hidden={index !== page} className="manage-form-fields manage-wide">
     {memberWizard && <div className="wizard-step-heading manage-wide"><h3 ref={index === page ? heading : undefined} tabIndex={-1}>{group.title}</h3><p>{['Empecemos por conocer a la persona.', 'Completa los datos que tengas disponibles.', 'Ya casi está. Revisa y guarda su información.'][index]}</p></div>}
-    {group.fields.map(field => field.render ? <div key={field.key} className="manage-wide"><span id={`${formId}-${field.key}`}>{field.label}{field.required ? ' *' : ''}</span>{field.render({ initial, disabled: busy, labelId: `${formId}-${field.key}`, onBusy: setInlineBusy })}</div> : field.type === 'photo' ? <div key={field.key} className="manage-wide"><ProfilePhoto name={field.key} defaultValue={initial[field.key] ? String(initial[field.key]) : null} onBusyChange={setPhotoBusy} disabled={busy}/></div> : <label key={field.key} className={field.type === 'textarea' ? 'manage-wide' : ''}>
+    {group.fields.filter(field => !field.virtual).map(field => field.render ? <div key={field.key} className="manage-wide"><span id={`${formId}-${field.key}`}>{field.label}{field.required ? ' *' : ''}</span>{field.render({ initial, disabled: busy, labelId: `${formId}-${field.key}`, onBusy: setInlineBusy })}</div> : field.type === 'photo' ? <div key={field.key} className="manage-wide"><ProfilePhoto name={field.key} defaultValue={initial[field.key] ? String(initial[field.key]) : null} onBusyChange={setPhotoBusy} disabled={busy}/></div> : <label key={field.key} className={field.type === 'textarea' ? 'manage-wide' : ''}>
       <span id={`${formId}-${field.key}`}>{field.label}{field.required && <span className="field-required"> *</span>}</span>
       {field.options ? <AppSelect aria-labelledby={`${formId}-${field.key}`} name={field.key} required={field.required} defaultValue={String(initial[field.key] ?? '')} disabled={busy}>
         <option value="">{field.required ? 'Selecciona…' : 'Sin asignar'}</option>
@@ -105,6 +108,7 @@ function Records({ resource, user, catalogs, reloadCatalogs, notify }: { resourc
   const titleRef = useRef<HTMLHeadingElement>(null)
   const listRequest = useRef(0)
   const [activityType, setActivityType] = useState('evento')
+  const [stoppingRepeat, setStoppingRepeat] = useState(false)
   const [registrationType, setRegistrationType] = useState<'discipulo' | 'administrativo'>('discipulo')
   const editorRef = useRef<HTMLDivElement>(null)
   const canServices = Boolean(user.registration?.canAssignServices)
@@ -180,8 +184,12 @@ function Records({ resource, user, catalogs, reloadCatalogs, notify }: { resourc
   ]
   else {
     formFields = [
-      { key: 'titulo', label: 'Título', required: true, max: 150 }, { key: 'fecha', label: 'Fecha', type: 'date', required: true },
-      { key: 'hora', label: 'Hora (Colombia)', type: 'time', required: true }, { key: 'lugar', label: 'Lugar', required: true, max: 200 },
+      { key: 'titulo', label: 'Título', required: true, max: 150 },
+      ...(activityType === 'reunion_grupo' ? [{ key: 'fecha', label: 'Fecha', type: 'date', required: true }, { key: 'hora', label: 'Hora (Colombia)', type: 'time', required: true }] : [
+        { key: 'fecha', label: 'Fecha y horario', render: ({ initial, disabled, labelId }: { initial: Row; disabled: boolean; labelId: string }) => <EventRecurrence initial={initial} disabled={disabled} labelledBy={labelId}/> },
+        { key: 'hora', label: '', virtual: true }, { key: 'recurrence', label: '', virtual: true }, { key: 'fixed', label: '', type: 'number', virtual: true }, { key: 'edit_scope', label: '', virtual: true },
+      ]),
+      { key: 'lugar', label: 'Lugar', required: true, max: 200 },
       { key: 'imagen', label: 'Imagen: URL HTTPS o archivo del sitio', max: 500 }, { key: 'descripcion', label: 'Descripción', type: 'textarea', max: 10000 },
       { key: 'estado_actividad', label: 'Estado', required: true, options: options(['programada', 'cancelada']) },
     ]
@@ -198,13 +206,14 @@ function Records({ resource, user, catalogs, reloadCatalogs, notify }: { resourc
     if (selection?.removedNames?.length && !window.confirm(`¿Quitar estos barrios del grupo: ${selection.removedNames.join(', ')}?`)) throw new Error('Guardado cancelado. Se conservan tus cambios en el formulario.')
     const groupValues = { ...recordValues, ...(selection ? { barrios: { ...selection, confirmRemoval: Boolean(selection.removedNames?.length) } } : {}) }
     if (resource === 'members' && registrationType === 'administrativo' && !id && values.account_password !== values.account_confirmation) throw new Error('Las contraseñas de la cuenta no coinciden.')
-    const result = await api<{ id?: number; accountCreated?: boolean }>(id ? `${resource}/${id}` : resource, resource === 'groups' ? groupValues : resource === 'activities' ? { ...values, tipo_actividad: activityType } : resource === 'members' && !id ? { ...values, tipo_registro: registrationType } : values, id ? 'PATCH' : 'POST')
+    const result = await api<{ id?: number; accountCreated?: boolean; emailDelivery?: WelcomeEmailStatus; seriesId?: number; occurrences?: number }>(id ? `${resource}/${id}` : resource, resource === 'groups' ? groupValues : resource === 'activities' ? { ...values, tipo_actividad: activityType, ...(Object.hasOwn(values, 'recurrence') ? { recurrence: values.recurrence ? JSON.parse(String(values.recurrence)) : null } : {}) } : resource === 'members' && !id ? { ...values, tipo_registro: registrationType } : values, id ? 'PATCH' : 'POST')
+    if (result.seriesId) { setEdit(null); notify(id ? 'Programación semanal guardada. Se conservan las asistencias de cada fecha.' : 'Programación semanal creada. Las próximas fechas se prepararán automáticamente.'); await load(); return }
     if (resource === 'groups') window.dispatchEvent(new Event('calvario-coverage-updated'))
     if (resource === 'groups' && !id && result.id) {
       window.location.hash = `#gestion/groups/ficha/${result.id}`
       setEdit(null); notify('Grupo de Comunión creado. Los barrios seleccionados ya están vinculados al mapa.'); await load(); await reloadCatalogs(); return
     }
-    setEdit(null); notify(result.accountCreated ? 'Administrativo y cuenta de acceso creados. Ya puede iniciar sesión con sus credenciales.' : resource === 'members' && !has(user, 'miembros.ver') ? values.id_grupo ? 'Discípulo registrado y asignado al Grupo de Comunión Familiar.' : 'Discípulo registrado. El grupo puede asignarse después.' : 'Cambios guardados.'); await load(); await reloadCatalogs()
+    setEdit(null); notify(result.accountCreated ? `Administrativo y cuenta de acceso creados. Ya puede iniciar sesión con sus credenciales. ${welcomeEmailMessage(result.emailDelivery)}` : resource === 'members' && !has(user, 'miembros.ver') ? values.id_grupo ? 'Discípulo registrado y asignado al Grupo de Comunión Familiar.' : 'Discípulo registrado. El grupo puede asignarse después.' : 'Cambios guardados.'); await load(); await reloadCatalogs()
   }
   async function archive(row: Row) {
     try { await api(`${resource}/${row[ids[resource]]}`, {}, 'DELETE'); setDetail(null); notify('Registro archivado. Se conserva su historial.'); await load(); await reloadCatalogs() } catch (error) { notify(errorMessage(error)) }
@@ -220,7 +229,14 @@ function Records({ resource, user, catalogs, reloadCatalogs, notify }: { resourc
     if (resource === 'activities') return filter === 'pasados' ? String(row.fecha) < today : String(row.fecha) >= today
     return true
   })
-  const openEdit = (row: Row) => { setRegistrationType(row.id_rol_eclesiastico ? 'administrativo' : 'discipulo'); setActivityType(String(row.tipo_actividad || 'evento')); setEdit(row); setDetail(null) }
+  const openEdit = (row: Row) => { setRegistrationType(row.id_rol_eclesiastico ? 'administrativo' : 'discipulo'); setActivityType(String(row.tipo_actividad || 'evento')); setEdit({ ...row, edit_scope: 'single' }); setDetail(null) }
+  async function stopRepetition(row: Row) {
+    if (stoppingRepeat || !window.confirm(`¿Eliminar el evento fijo «${row.titulo}» de las próximas fechas? Las fechas ya realizadas y sus asistencias se conservan.`)) return
+    setStoppingRepeat(true)
+    try { await api(`activities/${row.id_actividad}`, { scope: 'series' }, 'DELETE'); setDetail(null); notify('Evento fijo eliminado de la agenda. Las asistencias anteriores se conservan.'); await load() }
+    catch (error) { notify(errorMessage(error)) }
+    finally { setStoppingRepeat(false) }
+  }
   const canEdit = (row: Row) => has(user, resource === 'activities' ? row.tipo_actividad === 'reunion_grupo' ? 'grupos.editar' : 'eventos.editar' : write[resource])
   const createOnly = resource === 'members' && !has(user, 'miembros.ver')
   return <section className={`records-page records-${resource}`}>
@@ -250,6 +266,7 @@ function Records({ resource, user, catalogs, reloadCatalogs, notify }: { resourc
         }}><option value="discipulo">Discípulo normal</option><option value="administrativo">Administrativo con cuenta de acceso</option></AppSelect><p>{registrationType === 'administrativo' ? 'Se crearán la ficha, el cargo pastoral y una cuenta activa para la persona.' : 'Registra la ficha y selecciona su Grupo de Comunión Familiar.'}</p></> : <p>Tu cargo permite registrar discípulos para sus Grupos de Comunión Familiar. La asignación de cargos y servicios corresponde a los niveles pastorales 1 al 5.</p>}
       </div>}
       {resource === 'activities' && !edit.id_actividad && <label>Tipo de actividad <AppSelect value={activityType} onChange={event => setActivityType(event.target.value)}>{(has(user, 'eventos.editar') ? ['culto', 'evento'] : []).concat(has(user, 'grupos.editar') ? ['reunion_grupo'] : []).map(type => <option key={type} value={type}>{typeNames[type]}</option>)}</AppSelect></label>}
+      {resource === 'activities' && edit.id_serie && <p className="event-repeat-note">Evento fijo. Los cambios de programación se aplican a las próximas fechas y conservan el historial de asistencia.</p>}
       <DataForm key={`${edit[ids[resource]] || 'new'}-${activityType}-${registrationType}`} fields={formFields} initial={edit} onSave={save} onCancel={() => { setEdit(null); if (resource === 'groups' && window.location.hash === '#gestion/groups/nuevo') window.location.hash = '#gestion/groups' }} memberWizard={resource === 'members'} groupNeighborhoods={resource === 'groups' && Boolean(canManageCoverage(user))} availableBarrios={catalogs.barrios} label={resource === 'members' ? registrationType === 'administrativo' && !edit.id_miembro ? 'Crear administrativo y cuenta' : 'Guardar discípulo' : resource === 'groups' ? 'Guardar grupo' : 'Guardar'} />
     </div>}
     {!edit && !detail && (loading ? <div className="app-empty" role="status"><span className="auth-spinner"/>Cargando tu comunidad…</div> : !visibleItems.length ? <div className="app-empty"><span className="empty-icon"><AdminIcon name={resource}/></span><h3>{createOnly ? 'Registra un discípulo' : items.length ? 'No encontramos coincidencias' : resource === 'members' ? 'Aquí comienza tu comunidad' : resource === 'groups' ? 'Un lugar para compartir la fe' : 'Preparemos el próximo encuentro'}</h3><p>{createOnly ? 'Crea su ficha y selecciona el Grupo de Comunión Familiar al que pertenece.' : items.length ? 'Prueba otra búsqueda o cambia el filtro.' : 'Los registros que crees aparecerán aquí.'}</p></div> : <div className="manage-records app-record-list">{visibleItems.map(row => {
@@ -257,12 +274,12 @@ function Records({ resource, user, catalogs, reloadCatalogs, notify }: { resourc
       return <article key={row[ids[resource]]}>
       <button className="record-open" aria-label={`Ver ficha de ${name}`} onClick={() => { setDetail(row); setEdit(null) }}>
         {resource === 'members' ? <span className="member-avatar" aria-hidden="true">{`${String(row.nombres || '').slice(0, 1)}${String(row.apellidos || '').slice(0, 1)}`}</span> : resource === 'groups' ? <span className="group-avatar"><AdminIcon name="members"/></span> : <span className="event-cover">{row.imagen ? <img src={String(row.imagen)} alt="" loading="lazy"/> : <AdminIcon name="activities"/>}<span className="event-date"><small>{new Date(`${row.fecha}T12:00:00-05:00`).toLocaleDateString('es-CO', { month: 'short', timeZone: 'America/Bogota' }).replace('.', '')}</small><b>{String(row.fecha).slice(8, 10)}</b></span></span>}
-        <span className="record-copy"><strong>{name}</strong>{resource === 'members' ? <><span>{row.tipo_identificacion} {row.numero_identificacion}</span><span>Libro: {row.libro_actual || 'Sin asignar'}</span><span className="record-state" data-state={row.estado_miembro}>{row.estado_miembro}</span></> : resource === 'groups' ? <><span>{row.miembros} discípulos</span><span>{row.dia_reunion || 'Día por definir'}{row.hora_reunion ? ` · ${String(row.hora_reunion).slice(0, 5)}` : ''}</span></> : <><span>{row.fecha} · {String(row.hora).slice(0, 5)}</span><span>{row.lugar}</span><span className="event-type" data-state={row.estado_actividad}>{row.estado_actividad === 'cancelada' ? 'Cancelada' : typeNames[String(row.tipo_actividad)]}</span></>}</span>
+        <span className="record-copy"><strong>{name}</strong>{resource === 'members' ? <><span>{row.tipo_identificacion} {row.numero_identificacion}</span><span>Libro: {row.libro_actual || 'Sin asignar'}</span><span className="record-state" data-state={row.estado_miembro}>{row.estado_miembro}</span></> : resource === 'groups' ? <><span>{row.miembros} discípulos</span><span>{row.dia_reunion || 'Día por definir'}{row.hora_reunion ? ` · ${String(row.hora_reunion).slice(0, 5)}` : ''}</span></> : <><span>{row.fecha} · {String(row.hora).slice(0, 5)}</span>{row.id_serie && <span>{weeklySchedule(Number(row.dia_semana), String(row.repeticion_hora || row.hora), Boolean(row.repeticion_activa))}</span>}<span>{row.lugar}</span><span className="event-type" data-state={row.estado_actividad}>{row.estado_actividad === 'cancelada' ? 'Cancelada' : typeNames[String(row.tipo_actividad)]}</span></>}</span>
         <AdminIcon name="chevron"/>
       </button>
-      {(canEdit(row) || has(user, remove[resource])) && <details className="record-menu"><summary aria-label={`Acciones de ${name}`}>•••</summary><div>{canEdit(row) && <button className="secondary" onClick={() => openEdit(row)}>Editar</button>}{has(user, remove[resource]) && <button className="secondary" onClick={() => void archive(row)}>Archivar</button>}</div></details>}
+      {(canEdit(row) || has(user, remove[resource])) && <details className="record-menu"><summary aria-label={`Acciones de ${name}`}>•••</summary><div>{canEdit(row) && <button className="secondary" onClick={() => openEdit(row)}>Editar</button>}{has(user, remove[resource]) && <button className="secondary" onClick={() => void (resource === 'activities' && row.id_serie ? stopRepetition(row) : archive(row))}>{resource === 'activities' && row.id_serie ? 'Eliminar fijo' : 'Archivar'}</button>}</div></details>}
     </article>})}</div>)}
-    {detail && resource === 'activities' && <aside className="manage-editor activity-detail">{detail.imagen && <img className="activity-detail-image" src={String(detail.imagen)} alt=""/>}<span className="event-type">{typeNames[String(detail.tipo_actividad)]}</span><h3>{detail.titulo}</h3><p>{detail.fecha} · {String(detail.hora).slice(0, 5)} · {detail.lugar}</p><p>{detail.descripcion || 'Sin descripción adicional.'}</p><p>Estado: {detail.estado_actividad}</p><div className="manage-actions">{canEdit(detail) && <button onClick={() => openEdit(detail)}>Editar actividad</button>}{(has(user, 'asistencia.registrar') || has(user, 'asistencia.ver')) && <a className="app-action secondary" href={`#gestion/falls/registro/actividad/${detail.id_actividad}`}>Ver asistencia</a>}</div></aside>}
+    {detail && resource === 'activities' && <aside className="manage-editor activity-detail">{detail.imagen && <img className="activity-detail-image" src={String(detail.imagen)} alt=""/>}<span className="event-type">{typeNames[String(detail.tipo_actividad)]}</span><h3>{detail.titulo}</h3><p>{detail.fecha} · {String(detail.hora).slice(0, 5)} · {detail.lugar}</p>{detail.id_serie && <p className="event-repeat-note">{weeklySchedule(Number(detail.dia_semana), String(detail.repeticion_hora || detail.hora), Boolean(detail.repeticion_activa))}{detail.repeticion_fin ? ` · Hasta ${detail.repeticion_fin}` : ''}</p>}<p>{detail.descripcion || 'Sin descripción adicional.'}</p><p>Estado: {detail.estado_actividad}</p><div className="manage-actions">{canEdit(detail) && <button onClick={() => openEdit(detail)}>Editar actividad</button>}{detail.id_serie && has(user, 'eventos.eliminar') && <button className="secondary" disabled={stoppingRepeat} onClick={() => void stopRepetition(detail)}>{stoppingRepeat ? 'Eliminando…' : 'Eliminar evento fijo'}</button>}{(has(user, 'asistencia.registrar') || has(user, 'asistencia.ver')) && <a className="app-action secondary" href={`#gestion/falls/registro/actividad/${detail.id_actividad}`}>Ver asistencia</a>}</div></aside>}
     {detail && resource === 'members' && <MemberDetail key={detail.id_miembro} row={detail} user={user} catalogs={catalogs} reloadCatalogs={reloadCatalogs} notify={notify} onSaved={load} onClose={() => setDetail(null)} />}
     {detail && resource === 'groups' && <GroupDetail key={detail.id_grupo} row={detail} user={user} onClose={() => setDetail(null)} onEdit={canEdit(detail) ? () => openEdit(detail) : undefined} />}
   </section>

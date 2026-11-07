@@ -2,8 +2,9 @@ import CommunityIcon from './CommunityIcon'
 import Participation from './Participation'
 import './events.css'
 import { useEffect, useState } from 'react'
+import { weeklySchedule } from './EventRecurrence'
 
-type PublicEvent = { id_actividad: number; tipo_actividad: 'culto' | 'evento'; titulo: string; fecha: string; hora: string; lugar: string; imagen: string | null; descripcion: string | null; estado_actividad: string; requiere_inscripcion: number | null; url_inscripcion: string | null }
+type PublicEvent = { id_actividad: number; tipo_actividad: 'culto' | 'evento'; titulo: string; fecha: string; hora: string; lugar: string; imagen: string | null; descripcion: string | null; estado_actividad: string; requiere_inscripcion: number | null; url_inscripcion: string | null; id_serie?: number | null; dia_semana?: number | null; repeticion_activa?: number; repeticion_fin?: string | null; repeticion_hora?: string; fecha_programada?: string }
 type Transmission = { videoUrl: string | null; pageUrl: string; automatic: boolean; live: boolean }
 
 export default function Events() {
@@ -38,6 +39,7 @@ export default function Events() {
               {event.imagen && <div className="event-image-wrap"><img src={event.imagen} alt={event.titulo} loading="lazy" /><span className="event-image-label">{event.tipo_actividad === 'culto' ? 'Culto' : 'Evento especial'}</span></div>}
               <div className="event-information"><span className="events-eyebrow">{event.tipo_actividad === 'culto' ? 'CULTO' : 'EVENTO ESPECIAL'}</span>
                 <div className="event-schedule">{new Intl.DateTimeFormat('es-CO', { dateStyle: 'long', timeZone: 'America/Bogota' }).format(new Date(`${event.fecha}T12:00:00-05:00`))} · {event.hora.slice(0, 5)}</div>
+                {event.id_serie && event.dia_semana != null && <p className="event-repeat-note">{weeklySchedule(event.dia_semana, event.repeticion_hora || event.hora, Boolean(event.repeticion_activa))}{event.repeticion_activa && (event.fecha_programada !== event.fecha || (event.repeticion_hora || event.hora).slice(0, 5) !== event.hora.slice(0, 5)) ? ' · Horario especial para esta fecha' : ''}</p>}
                 <h4>{event.titulo}</h4><p>{event.descripcion}</p><div className="event-location"><CommunityIcon name="location" /><span>{event.lugar}</span></div>
                 {event.estado_actividad === 'cancelada' ? <p className="event-cancelled">Cancelado</p> : Boolean(event.requiere_inscripcion) && event.url_inscripcion && <a className="facebook-link" href={event.url_inscripcion} target="_blank" rel="noopener noreferrer">Inscribirme ↗</a>}
               </div>

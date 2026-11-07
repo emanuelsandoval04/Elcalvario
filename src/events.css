@@ -21,6 +21,7 @@
 .participation-error { margin: 0; padding: 12px; border-radius: 12px; background: #fff0e6; color: #82441d; font-size: 12px; line-height: 1.6; }
 @media (max-width: 639px) { .serve-invitation { flex-direction: column; align-items: flex-start; padding: 24px; gap: 20px; } .serve-invitation h3 { font-size: 25px; } .participation-dialog { padding: 28px 22px; border-radius: 22px; } }
 .events-eyebrow { color: #a2694e; font-size: 10px; letter-spacing: .12em; font-weight: 700; }
+.event-information .event-repeat-note { margin:0 0 12px; font-size:12px; font-weight:600; color:#82502f; }
 .events-heading h2 { margin: 16px 0; max-width: 740px; font-size: clamp(32px, 3.4vw, 48px); line-height: 1.15; letter-spacing: -.045em; font-weight: 700; }
 .events-heading h2 em { font-family: Georgia, serif; font-weight: 400; }
 .events-heading > p { margin: 0; color: #7b8490; font-size: 15px; line-height: 1.6; }

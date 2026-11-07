@@ -27,6 +27,11 @@ export function registrationCapabilities(user) {
   return {
     canCreateAdministrative: authority && Boolean(user.permissions['miembros.editar'] || user.permissions['miembros.registrar']) && Boolean(user.permissions['usuarios.gestionar']),
     canAssignServices: authority,
-    canManageAccounts: authority && Boolean(user.permissions['usuarios.gestionar']),
+    canManageAccounts: canAdministerAccounts(user),
   }
+}
+
+export function canAdministerAccounts(user) {
+  return user?.state === 'activo' && Boolean(user.permissions['usuarios.gestionar']) &&
+    (hasPastoralAuthority(user) || user.roles.includes('Administrador'))
 }

@@ -81,6 +81,10 @@ En **Settings → Environment Variables**, configura para **Production** los val
 | `DB_CONNECTION_LIMIT` | `2` conexiones por instancia. |
 | `SESSION_HOURS` | `8`, salvo que quieras otra duración. |
 | `APP_ORIGINS` | Opcional para dominios personalizados, separados por comas y sin barra final. |
+| `APP_PUBLIC_URL` | `https://elcalvario.vercel.app`: destino de ingreso y recuperación en los correos, también cuando la API se ejecuta localmente. |
+| `MAIL_PROVIDER` | `gmail` para el proyecto universitario sin dominio propio; `resend` como alternativa. |
+| `GMAIL_USER`, `GMAIL_APP_PASSWORD` | Para Gmail: dirección remitente y contraseña de aplicación de Google. Nunca usar prefijo `VITE_`. |
+| `RESEND_API_KEY`, `RESEND_FROM_EMAIL` | Solo para `MAIL_PROVIDER=resend`: clave privada y remitente de un dominio verificado. Nunca usar prefijo `VITE_`. |
 | `VITE_GOOGLE_MAPS_API_KEY` | Opcional; pública y restringida por dominio en Google Cloud. |
 | `FACEBOOK_PAGE_ID`, `FACEBOOK_PAGE_ACCESS_TOKEN`, `FACEBOOK_GRAPH_VERSION`, `FACEBOOK_FALLBACK_VIDEO` | Integración opcional; los tokens son privados de la función. |
 
@@ -89,6 +93,8 @@ Vercel proporciona `NODE_ENV`, `VERCEL_URL` y `VERCEL_PROJECT_PRODUCTION_URL`. S
 Selecciona una región de funciones cercana a Aiven en **Settings → Functions** y mantén activado Fluid Compute. El pool cierra conexiones inactivas y usa la integración oficial `attachDatabasePool`. Ten en cuenta el límite total de conexiones del plan de Aiven: cada instancia puede abrir hasta dos. Los contadores de login y participación se comparten en MySQL.
 
 Para previews, utiliza otro servicio o esquema de pruebas con sus variables de **Preview**. No apuntes previews al esquema real de la iglesia por defecto.
+
+La recuperación por correo requiere la migración `018-password-recovery.sql` y permisos de lectura/escritura sobre `recuperacion_contrasena` para la cuenta de aplicación. Su preparación local no publica código ni aplica migraciones remotas. Seguir [la guía de recuperación](recuperacion-contrasena.md) únicamente cuando se autorice activar y publicar esta actualización.
 
 Después de configurar los valores:
 
@@ -119,6 +125,6 @@ Para una comprobación real y automatizada desde el equipo con `.env.aiven.local
 2. Login, recarga de página y logout conservan el comportamiento de sesión.
 3. Listados, guardado de perfil, fotos y una exportación PDF y Excel funcionan.
 
-Si importaste los datos, usa una cuenta existente. Si la base es nueva, registra primero al propietario: el primer registro obtiene Superadmin.
+Si importaste los datos, usa una cuenta existente. Si la base es nueva, crea al propietario con `npm run account:bootstrap`. El registro público está cerrado; las siguientes cuentas las crean administradores y cargos pastorales autorizados.
 
 Referencias: [funciones Node.js en Vercel](https://vercel.com/docs/functions/runtimes/node-js), [conexiones de base de datos](https://vercel.com/kb/guide/connection-pooling-with-functions), [TLS de Aiven](https://aiven.io/docs/platform/concepts/tls-ssl-certificates).

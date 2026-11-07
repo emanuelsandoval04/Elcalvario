@@ -4,6 +4,8 @@
 
 Por decisión de la administración, todas las cuentas entran con correo y contraseña. No se solicita autenticador, QR ni código adicional. Cambiar el correo o la contraseña exige confirmar la contraseña actual y cierra las otras sesiones.
 
+La recuperación sin sesión se realiza por correo con Gmail o Resend: enlace aleatorio de 256 bits, almacenado solo como SHA-256, de un solo uso y con vencimiento de 15 minutos fijado por MySQL. Gmail utiliza una contraseña de aplicación y SMTP con TLS por el puerto 465; las credenciales y errores completos no se registran. El cambio consume el enlace y revoca todas las sesiones en una transacción, sin modificar roles ni activar cuentas pendientes. Las solicitudes responden igual para direcciones registradas y no registradas. Ver [requisitos de configuración y pruebas locales](recuperacion-contrasena.md); esta actualización aún no está publicada.
+
 Se retiraron las pantallas, rutas y dependencias de doble factor. Las cuentas que lo hubieran configurado también pueden entrar directamente con su contraseña. Las tablas históricas de la migración 015 permanecen para conservar compatibilidad con instalaciones existentes; no intervienen en el acceso ni se exponen por la API. No se necesita ninguna variable `MFA_*`.
 
 ## Sesiones y actividad

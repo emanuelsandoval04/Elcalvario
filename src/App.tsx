@@ -3,6 +3,7 @@ import Navbar from './Navbar'
 import HeroSlideshow from './HeroSlideshow'
 import CommunityIcon from './CommunityIcon'
 import Login from './Login'
+import PasswordRecovery from './PasswordRecovery'
 import Events from './Events'
 import AdminUsers from './AdminUsers'
 import Ministries from './Ministries'
@@ -15,14 +16,15 @@ const churchMapsUrl = 'https://www.google.com/maps/search/?api=1&query=Carrera%2
 export default function App() {
   useEffect(() => { void authRequest('me').catch(() => {}) }, [])
   const [selected, setSelected] = useState('Inicio')
+  const [recoveryRoute, setRecoveryRoute] = useState(() => window.location.hash)
   const [loginOpen, setLoginOpen] = useState(() => ['#login', '#registro'].includes(window.location.hash))
-  const [registration, setRegistration] = useState(() => window.location.hash === '#registro')
   const [adminOpen, setAdminOpen] = useState(() => window.location.hash === '#usuarios')
   const [managementOpen, setManagementOpen] = useState(() => window.location.hash === '#gestion' || window.location.hash.startsWith('#gestion/'))
   useEffect(() => {
     const updatePage = () => {
+      setRecoveryRoute(window.location.hash)
       setLoginOpen(['#login', '#registro'].includes(window.location.hash))
-      setRegistration(window.location.hash === '#registro')
+      if (window.location.hash === '#registro') window.location.replace('#login')
       setAdminOpen(window.location.hash === '#usuarios')
       setManagementOpen(window.location.hash === '#gestion' || window.location.hash.startsWith('#gestion/'))
       if (window.location.hash === '#inicio') setSelected('Inicio')
@@ -41,7 +43,7 @@ export default function App() {
   return (
     <>
     {!managementOpen && !adminOpen && <Navbar onNavigate={setSelected} />}
-    {managementOpen ? <Management /> : adminOpen ? <AdminUsers /> : loginOpen ? <Login key={registration ? 'register' : 'login'} registration={registration} /> : (
+    {managementOpen ? <Management /> : adminOpen ? <AdminUsers /> : ['#recuperar', '#restablecer'].includes(recoveryRoute.split('?')[0]) ? <PasswordRecovery key={recoveryRoute} reset={recoveryRoute.split('?')[0] === '#restablecer'} /> : loginOpen ? <Login /> : (
     <main>
     <section className="welcome" id="inicio" aria-label="Bienvenidos a El Calvario">
       <div className="hero-copy">
