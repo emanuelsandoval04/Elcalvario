@@ -45,3 +45,87 @@
 .admin-panel button:focus-visible, .admin-panel select:focus-visible { outline: 2px solid #c74418; outline-offset: 3px; }
 @media (max-width: 639px) { .admin-page { padding: 110px 20px 24px; align-items: start; } .admin-panel { padding: 24px 20px; } .admin-user-row { grid-template-columns: 1fr 80px; gap: 10px; } .admin-user-info { grid-column: 1 / -1; } }
 @media (prefers-reduced-motion: reduce) { .admin-panel { animation: none; } .admin-save { transition: none; } }
+
+/* Account cards own their layout, including the custom select controls. */
+.admin-workspace .admin-users-panel { container: accounts / inline-size; }
+.admin-workspace .admin-users-panel .admin-users-heading { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:18px; margin-bottom:24px; }
+.admin-workspace .admin-users-panel .admin-users-heading > div { flex:1 1 280px; min-width:0; }
+.admin-workspace .admin-users-panel .admin-users-heading h2 { margin:0 0 8px; color:#202837; font-size:21px; line-height:1.3; letter-spacing:-.035em; }
+.admin-workspace .admin-users-panel .admin-users-heading p { max-width:620px; margin:0; color:#737b89; font-size:13px; line-height:1.7; }
+.admin-workspace .admin-users-panel .admin-save { flex-shrink:0; min-height:46px; max-width:100%; line-height:1.4; white-space:normal; overflow-wrap:anywhere; }
+.admin-workspace .admin-users-panel .admin-save > svg { width:18px; height:18px; }
+.admin-workspace .admin-users-panel .admin-secondary { background:#f0f2f5; border:1px solid #e4e7ed; color:#434c5d; box-shadow:none; }
+.admin-workspace .admin-users-panel .admin-secondary:hover:not(:disabled) { background:#e7ebf0; border-color:#d8dee7; }
+.admin-workspace .admin-users-panel .admin-user-filters { display:grid; grid-template-columns:minmax(0,1fr) minmax(180px,240px) auto; gap:16px; align-items:end; padding:20px; margin:0 0 26px; border:1px solid #e5e9f0; border-radius:16px; background:#fff; }
+.admin-workspace .admin-users-panel .admin-user-filters label { display:grid; gap:8px; min-width:0; color:#525d6e; font-size:12px; font-weight:600; }
+.admin-workspace .admin-users-panel .admin-user-filters input { min-height:46px; font-size:14px; background:#fff; border-color:#dfe3ea; }
+.admin-workspace .admin-users-panel .admin-search-input { display:block; position:relative; min-width:0; }
+.admin-workspace .admin-users-panel .admin-search-input > svg { position:absolute; z-index:1; left:13px; top:14px; width:18px; height:18px; color:#939baa; pointer-events:none; }
+.admin-workspace .admin-users-panel .admin-search-input input { padding-left:40px; }
+.admin-workspace .admin-users-panel :is(.admin-filter-actions,.admin-pagination-actions) { display:flex; gap:10px; }
+.admin-workspace .admin-users-panel .admin-filter-actions .admin-save { padding-inline:16px; }
+.admin-workspace .admin-users-panel .admin-list-heading { display:flex; align-items:center; justify-content:space-between; gap:12px; margin:0 0 14px; }
+.admin-workspace .admin-users-panel .admin-list-heading h2 { margin:0; font-size:15px; letter-spacing:-.025em; }
+.admin-workspace .admin-users-panel .admin-list-heading > span { flex-shrink:0; padding:6px 10px; border:1px solid #e5e9f0; border-radius:8px; background:#fff; color:#778191; font-size:11px; }
+.admin-workspace .admin-users-panel .admin-user-list { display:grid; gap:16px; max-height:none; margin:0; padding:0; overflow:visible; }
+.admin-workspace .admin-users-panel .admin-user-row { display:flex; flex-direction:column; align-items:stretch; gap:0; min-width:0; margin:0; padding:22px; border:1px solid #e3e8ef; border-radius:18px; background:#fff; box-shadow:0 3px 12px #26314503; }
+.admin-workspace .admin-users-panel .admin-user-header { display:grid; grid-template-columns:44px minmax(0,1fr) auto; align-items:center; gap:14px; min-width:0; }
+.admin-workspace .admin-users-panel .admin-user-avatar { display:grid; place-items:center; width:44px; height:44px; border:1px solid #ffe2ce; border-radius:14px; background:#fff4eb; color:#e7671d; font-size:18px; font-weight:750; }
+.admin-workspace .admin-users-panel .admin-user-info { grid-column:auto; gap:5px; }
+.admin-workspace .admin-users-panel .admin-user-info strong { color:#263043; font-size:14px; font-weight:750; line-height:1.5; }
+.admin-workspace .admin-users-panel .admin-user-info > span { color:#7a8494; font-size:12px; line-height:1.5; overflow-wrap:anywhere; }
+.admin-workspace .admin-users-panel .admin-user-info .admin-user-email { color:#596577; }
+.admin-workspace .admin-users-panel .admin-user-state { max-width:100%; padding:6px 10px; border:1px solid #d6eadf; border-radius:8px; background:#eff8f3; color:#377557; font-size:11px; line-height:1.5; text-align:center; overflow-wrap:anywhere; }
+.admin-workspace .admin-users-panel .admin-user-state.is-pendiente { border-color:#f3dfb8; background:#fff8eb; color:#94651f; }
+.admin-workspace .admin-users-panel .admin-user-state.is-inactivo { border-color:#e1e5eb; background:#f2f4f7; color:#798291; }
+.admin-workspace .admin-users-panel .admin-user-state.is-bloqueado { border-color:#f0d9dc; background:#fff2f3; color:#ac4b58; }
+.admin-workspace .admin-users-panel .admin-user-controls { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:20px; margin:22px 0; }
+.admin-workspace .admin-users-panel .admin-user-control { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:end; gap:10px; min-width:0; }
+.admin-workspace .admin-users-panel :is(.admin-role-label,.admin-member-link) { display:grid; grid-column:auto; gap:8px; min-width:0; color:#596577; font-size:12px; font-weight:600; }
+.admin-workspace .admin-users-panel .admin-user-control > .admin-save { min-width:90px; padding-inline:14px; }
+.admin-workspace .admin-users-panel .admin-user-footer { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:16px; padding-top:16px; border-top:1px solid #edf0f4; }
+.admin-workspace .admin-users-panel .admin-user-dates { display:flex; flex-wrap:wrap; gap:14px 24px; margin:0; }
+.admin-workspace .admin-users-panel .admin-user-dates > div { display:grid; gap:4px; }
+.admin-workspace .admin-users-panel .admin-user-dates dt { color:#939ba8; font-size:10px; }
+.admin-workspace .admin-users-panel .admin-user-dates dd { margin:0; color:#606d80; font-size:11px; font-weight:600; }
+.admin-workspace .admin-users-panel .admin-user-removal { display:flex; grid-column:auto; flex-wrap:wrap; align-items:center; justify-content:flex-end; gap:12px; min-width:0; }
+.admin-workspace .admin-users-panel .admin-user-removal small { display:flex; align-items:center; gap:5px; max-width:100%; color:#9098a5; font-size:10px; line-height:1.6; }
+.admin-workspace .admin-users-panel .admin-user-removal small svg { width:14px; height:14px; }
+.admin-workspace .admin-users-panel .admin-delete { min-height:44px; max-width:100%; padding:10px 13px; border-color:#f0d9dc; background:#fff; color:#b34e5b; font-size:11px; font-weight:650; line-height:1.5; overflow-wrap:anywhere; }
+.admin-workspace .admin-users-panel .admin-delete:hover:not(:disabled) { background:#fff2f3; border-color:#e9c1c8; }
+.admin-workspace .admin-users-panel .admin-user-pagination { display:flex; align-items:center; justify-content:space-between; gap:14px; margin-top:22px; color:#828c9b; font-size:12px; }
+.admin-workspace .admin-users-panel .admin-note { margin-top:24px; padding:16px 18px; border:1px solid #e8ecf2; border-radius:12px; color:#7c8797; font-size:12px; line-height:1.8; }
+.admin-workspace .admin-users-panel .admin-users-empty { margin:0; padding:36px 20px; border:1px dashed #dce2eb; border-radius:16px; color:#8b95a4; text-align:center; line-height:1.7; }
+.admin-workspace .admin-users-panel .admin-create-account { padding:24px; margin:0 0 24px; border:1px solid #e3e8ef; border-radius:18px; background:#fff; }
+.admin-workspace .admin-users-panel .admin-create-account > p { max-width:720px; color:#7b8594; line-height:1.8; }
+.admin-workspace .admin-users-panel .admin-create-account > fieldset { grid-template-columns:repeat(2,minmax(0,1fr)); gap:20px; }
+.admin-workspace .admin-users-panel .admin-create-account .profile-photo-field { grid-column:1/-1; }
+.admin-workspace .admin-users-panel .admin-create-actions { justify-content:flex-end; gap:12px; padding-top:20px; border-top:1px solid #edf0f4; }
+.admin-workspace .admin-users-panel :is(input,button):focus-visible { outline:2px solid #ff7524; outline-offset:3px; }
+@container accounts (max-width:850px) {
+  .admin-workspace .admin-users-panel .admin-user-filters { grid-template-columns:minmax(0,1fr) auto; }
+  .admin-workspace .admin-users-panel .admin-user-search { grid-column:1/-1; }
+  .admin-workspace .admin-users-panel .admin-user-controls { grid-template-columns:minmax(0,1fr); gap:18px; }
+}
+@container accounts (max-width:540px) {
+  .admin-workspace .admin-users-panel .admin-users-heading > .admin-save { width:100%; }
+  .admin-workspace .admin-users-panel .admin-user-filters { grid-template-columns:minmax(0,1fr); padding:16px; }
+  .admin-workspace .admin-users-panel .admin-filter-actions > .admin-save { flex:1; }
+  .admin-workspace .admin-users-panel .admin-user-row { padding:18px 16px; }
+  .admin-workspace .admin-users-panel .admin-user-header { grid-template-columns:40px minmax(0,1fr); gap:10px 12px; }
+  .admin-workspace .admin-users-panel .admin-user-avatar { width:40px; height:40px; }
+  .admin-workspace .admin-users-panel .admin-user-state { grid-column:2; justify-self:start; }
+  .admin-workspace .admin-users-panel .admin-user-controls { margin:20px 0; }
+  .admin-workspace .admin-users-panel .admin-user-removal { width:100%; justify-content:space-between; }
+  .admin-workspace .admin-users-panel .admin-user-pagination { flex-wrap:wrap; }
+  .admin-workspace .admin-users-panel .admin-pagination-actions { margin-left:auto; }
+  .admin-workspace .admin-users-panel .admin-create-account { padding:20px 16px; }
+  .admin-workspace .admin-users-panel .admin-create-account > fieldset { grid-template-columns:minmax(0,1fr); }
+  .admin-workspace .admin-users-panel .admin-create-account input { font-size:16px; }
+}
+@container accounts (max-width:380px) {
+  .admin-workspace .admin-users-panel .admin-user-control { grid-template-columns:minmax(0,1fr); }
+  .admin-workspace .admin-users-panel .admin-user-removal { justify-content:flex-start; }
+  .admin-workspace .admin-users-panel .admin-user-removal .admin-delete { width:100%; }
+  .admin-workspace .admin-users-panel .admin-create-actions > .admin-save { flex:1 1 100%; }
+}
