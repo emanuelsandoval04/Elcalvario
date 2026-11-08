@@ -91,7 +91,13 @@ html body .pastoral-page .pastoral-case.is-selected { border-color:#f1b58b; back
 .import-steps { display:flex; flex-wrap:wrap; gap:12px; margin:0 0 22px; }
 .import-steps span { padding:8px 12px; border-radius:8px; background:#f0f3f8; color:#7687a0; font-size:12px; }
 .member-import .import-selection { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:16px; color:#7c8a9f; font-size:12px; }
-.member-import .import-preview { max-height:560px; margin-bottom:24px; }
+.member-import .import-scroll-hint { display:flex; align-items:center; gap:8px; margin:12px 0; color:#718096; font-size:12px; line-height:1.7; }
+.member-import .import-scroll-hint > span { flex-shrink:0; font-size:20px; color:#e67632; }
+.member-import .import-preview { display:block; min-width:0; max-width:100%; max-height:560px; margin-bottom:24px; overflow-x:auto; overflow-y:auto; touch-action:pan-x pan-y pinch-zoom; overscroll-behavior-x:contain; -webkit-overflow-scrolling:touch; scrollbar-width:thin; scrollbar-color:#bac6d6 #f1f4f8; }
+.member-import .import-preview:focus-visible { outline:2px solid #f77c35; outline-offset:3px; }
+.member-import .import-preview::-webkit-scrollbar { width:10px; height:10px; }
+.member-import .import-preview::-webkit-scrollbar-track { background:#f1f4f8; }
+.member-import .import-preview::-webkit-scrollbar-thumb { border:2px solid #f1f4f8; border-radius:8px; background:#bac6d6; }
 .member-import .import-preview thead { position:sticky; top:0; z-index:1; }
 .member-import .import-preview table { min-width:950px; }
 .member-import .import-preview td:last-child { min-width:200px; }
