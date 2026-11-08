@@ -32,6 +32,8 @@
     "preview:emails": "node checks/mail-preview.mjs",
     "test:recurrence": "node --test --test-isolation=none checks/recurrence-dates.test.mjs && node checks/recurring-events-check.mjs",
     "test:recurrence:ui": "npm run build && node --test --test-isolation=none checks/recurrence-dates.test.mjs && node checks/recurring-events-check.mjs --ui",
+    "test:community-tools": "node checks/community-tools-check.mjs",
+    "test:community-tools:ui": "npm run build && node checks/community-tools-check.mjs --ui",
     "test:church": "node checks/church-check.mjs",
     "test:church:ui": "node checks/church-ui-check.mjs",
     "test:account": "node checks/account-check.mjs",

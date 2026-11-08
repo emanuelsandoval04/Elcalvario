@@ -1,5 +1,7 @@
 # API de gestión
 
+Las rutas de seguimiento pastoral, estadísticas, calendario e importación Excel, sus permisos y la migración 020 se documentan en [Herramientas de la comunidad](herramientas-comunidad.md).
+
 Los cultos y eventos admiten `recurrence: {dayOfWeek:0..6,until:null|"YYYY-MM-DD"}` al crearse o al convertir una actividad individual sin asistencia. Cada fecha se guarda por separado; la agenda y los avisos muestran el próximo encuentro. La edición admite `edit_scope:'single'|'following'` y `POST /api/management/activities/:id/recurrence/stop` detiene futuras fechas sin borrar historial. Ver [permisos, migración 019 y pruebas](eventos-recurrentes.md).
 
 La creación por `POST /api/auth/admin/users` y el registro administrativo por `POST /api/management/members` incorporan `emailDelivery: 'sent' | 'failed' | 'not_configured'` en la respuesta 201. El correo de bienvenida se envía después del commit, con la contraseña inicial, el rol, la vinculación y las funciones permitidas. No devuelve credenciales en la respuesta. Un fallo de envío conserva la cuenta creada. Ver [detalles y pruebas](correos-cuentas.md).

@@ -13,6 +13,8 @@ export const pool = mysql.createPool({
   enableKeepAlive: true,
   timezone: 'Z',
 })
+// DATETIME defaults and JavaScript dates must share UTC, including local MySQL.
+pool.on('connection', connection => connection.query("SET time_zone = '+00:00'"))
 
 export async function checkDatabase() {
   const [rows] = await pool.execute('SELECT 1 AS connected')

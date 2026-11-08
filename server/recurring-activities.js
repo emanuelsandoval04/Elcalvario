@@ -18,9 +18,9 @@ export function seriesTemplate(type, values, eventValues) {
   return { activity: { ...activity, tipo_actividad: type }, event: eventValues || null }
 }
 
-async function generateDates(connection, series, today) {
+async function generateDates(connection, series, today, requestedThrough = null) {
   const from = series.fecha_inicio > today ? series.fecha_inicio : today
-  const through = recurrenceHorizon(from)
+  const through = requestedThrough && requestedThrough>recurrenceHorizon(from) ? requestedThrough : recurrenceHorizon(from)
   if (series.generada_hasta && series.generada_hasta >= through) return []
   const template = typeof series.plantilla === 'string' ? JSON.parse(series.plantilla) : series.plantilla
   const dates = weeklyDates(series.fecha_inicio, Number(series.dia_semana), series.fecha_fin, from, through)
@@ -81,16 +81,16 @@ export async function reviseFixedActivity(connection, series, rule, template) {
   return { seriesId: series.id_serie, occurrences: generated.length }
 }
 
-export async function ensureRecurringActivities(today = bogotaToday()) {
+export async function ensureRecurringActivities(today = bogotaToday(), through = recurrenceHorizon(today)) {
   const [series] = await pool.execute(`SELECT id_serie FROM serie_actividad WHERE activa=1
-    AND (fecha_fin IS NULL OR fecha_fin>=?) AND (generada_hasta IS NULL OR generada_hasta<?) ORDER BY id_serie`, [today, recurrenceHorizon(today)])
+    AND (fecha_fin IS NULL OR fecha_fin>=?) AND (generada_hasta IS NULL OR generada_hasta<?) ORDER BY id_serie`, [today, through])
   for (const row of series) {
     const connection = await pool.getConnection()
     try {
       await connection.beginTransaction()
       const [locked] = await connection.execute(`SELECT id_serie,dia_semana,CAST(fecha_inicio AS CHAR) AS fecha_inicio,CAST(fecha_fin AS CHAR) AS fecha_fin,
         CAST(generada_hasta AS CHAR) AS generada_hasta,plantilla,id_usuario_creacion FROM serie_actividad WHERE id_serie=? AND activa=1 FOR UPDATE`, [row.id_serie])
-      if (locked.length) await generateDates(connection, locked[0], today)
+      if (locked.length) await generateDates(connection, locked[0], today, through)
       await connection.commit()
     } catch (error) { await connection.rollback(); throw error }
     finally { connection.release() }

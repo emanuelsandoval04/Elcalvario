@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import { authRequest, hasPermission, useAuthSession } from './auth'
 import './login.css'
+import ValidatedForm from './ValidatedForm'
 
 export default function Login() {
   const [visible, setVisible] = useState(false)
@@ -77,7 +78,7 @@ export default function Login() {
               <div className="login-message" role="status" aria-live="polite">{message || error}</div>
             </div>
           ) : <>
-          <form className="login-form" onSubmit={submit}>
+          <ValidatedForm className="login-form" onSubmit={submit}>
             <div className="login-field">
               <label htmlFor="login-email">Correo electrónico</label>
               <div className="login-input-wrap">
@@ -98,7 +99,7 @@ export default function Login() {
             <a className="login-forgot" href="#recuperar">¿Olvidaste tu contraseña?</a>
             <button className="login-submit" type="submit" disabled={busy || checking} aria-busy={busy || checking}><span>{checking ? 'Verificando sesión…' : busy ? 'Iniciando sesión…' : 'Iniciar sesión'}</span>{busy || checking ? <span className="auth-spinner" aria-hidden="true" /> : <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg>}</button>
             <div className="login-message" role="status" aria-live="polite">{message || error}</div>
-          </form>
+          </ValidatedForm>
 
           <p className="login-access-note">Para obtener una cuenta, comunícate con la administración o el equipo pastoral.</p>
           </>}

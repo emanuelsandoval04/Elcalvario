@@ -7,6 +7,7 @@ import type { AuthUser } from './auth'
 import { managementRequest as api } from './management-api'
 import './management.css'
 import './app-dashboard.css'
+import './community-tools.css'
 import AdminFrame, { AdminIcon } from './AdminFrame'
 import AdminNavigation, { allowedModules, currentModule } from './admin-navigation'
 import { welcomeEmailMessage } from './account-mail'
@@ -18,7 +19,12 @@ import type { Barrio } from './GroupNeighborhoodField'
 import Training, { TrainingBookPicker, canCreateTrainingBooks } from './Training'
 import type { TrainingBook } from './Training'
 import { downloadReport } from './report-download'
+import ValidatedForm, { reportFormErrors, requestFieldErrors } from './ValidatedForm'
 const CoverageMap = lazy(() => import('./CoverageMap'))
+const EventCalendar = lazy(() => import('./EventCalendar'))
+const Statistics = lazy(() => import('./Statistics'))
+const PastoralFollowup = lazy(() => import('./PastoralFollowup'))
+const MemberImport = lazy(() => import('./MemberImport'))
 
 type Row = Record<string, string | number | null>
 type Catalogs = { roles: Row[]; ministerios: Row[]; grupos: Row[]; registrationGroups?: Row[]; barrios?: Barrio[]; libros?: TrainingBook[] }
@@ -69,9 +75,13 @@ function DataForm({ fields, initial = {}, onSave, onCancel, label = 'Guardar', m
     }
     if (groupNeighborhoods) values.barrios_seleccion = String(data.get('barrios_seleccion') || '')
     setBusy(true); setMessage('')
-    try { await onSave(values) } catch (error) { setMessage(errorMessage(error)) } finally { setBusy(false) }
+    try { await onSave(values) } catch (error) {
+      const failed=Object.keys(requestFieldErrors(error)||{})
+      if(memberWizard&&failed.length){const step=steps.findIndex(group=>group.fields.some(field=>failed.includes(field.key)));if(step>=0)setPage(step)}
+      if(!reportFormErrors(form,error))setMessage(errorMessage(error))
+    } finally { setBusy(false) }
   }
-  return <form className={`manage-form${memberWizard ? ' member-wizard' : ''}`} onSubmit={submit} onChange={() => { if (message) setMessage('') }} aria-busy={busy} noValidate={memberWizard}>
+  return <ValidatedForm className={`manage-form${memberWizard ? ' member-wizard' : ''}`} onSubmit={submit} onChange={() => { if (message) setMessage('') }} aria-busy={busy}>
     {memberWizard && <div className="wizard-progress manage-wide"><span>Paso {page + 1} de {steps.length}</span><span>{['Lo esencial', 'Un poco más de ti', 'Último paso'][page]}</span><progress value={page + 1} max={steps.length} aria-label="Progreso del registro"/></div>}
     {steps.map((group, index) => <fieldset key={index} data-form-step={index} hidden={index !== page} className="manage-form-fields manage-wide">
     {memberWizard && <div className="wizard-step-heading manage-wide"><h3 ref={index === page ? heading : undefined} tabIndex={-1}>{group.title}</h3><p>{['Empecemos por conocer a la persona.', 'Completa los datos que tengas disponibles.', 'Ya casi está. Revisa y guarda su información.'][index]}</p></div>}
@@ -93,7 +103,7 @@ function DataForm({ fields, initial = {}, onSave, onCancel, label = 'Guardar', m
       <button disabled={busy || photoBusy || neighborhoodBusy || inlineBusy || submitDisabled}>{busy ? 'Guardando…' : memberWizard && page < 2 ? <>Continuar <span aria-hidden="true">→</span></> : label}</button>
     </div>
     {message && <p className="manage-wide manage-message" role="alert">{message}</p>}
-  </form>
+  </ValidatedForm>
 }
 
 function Records({ resource, user, catalogs, reloadCatalogs, notify }: { resource: 'members' | 'groups' | 'activities'; user: AuthUser; catalogs: Catalogs; reloadCatalogs: () => Promise<void>; notify: Message }) {
@@ -104,6 +114,8 @@ function Records({ resource, user, catalogs, reloadCatalogs, notify }: { resourc
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [filter, setFilter] = useState('todos')
+  const [activityView,setActivityView]=useState<'list'|'calendar'>('list')
+  const [importing,setImporting]=useState(false)
   const [exporting, setExporting] = useState(false)
   const titleRef = useRef<HTMLHeadingElement>(null)
   const listRequest = useRef(0)
@@ -239,12 +251,15 @@ function Records({ resource, user, catalogs, reloadCatalogs, notify }: { resourc
   }
   const canEdit = (row: Row) => has(user, resource === 'activities' ? row.tipo_actividad === 'reunion_grupo' ? 'grupos.editar' : 'eventos.editar' : write[resource])
   const createOnly = resource === 'members' && !has(user, 'miembros.ver')
+  if(importing)return <Suspense fallback={<p>Cargando importación…</p>}><MemberImport books={catalogs.libros||[]} onClose={()=>setImporting(false)} onImported={async count=>{await load();await reloadCatalogs();setImporting(false);notify(`${count} discípulos importados. No se modificaron las fichas existentes.`)}}/></Suspense>
   return <section className={`records-page records-${resource}`}>
     <div className="manage-section-heading"><div><h2 ref={titleRef} tabIndex={-1}>{edit ? edit[ids[resource]] ? 'Editar registro' : createLabels[resource] : detail ? 'Detalle' : titles[resource]}</h2>{!edit && !detail && <p className="section-caption">{resource === 'members' ? 'Cada persona, parte de nuestra familia.' : resource === 'groups' ? 'La fe se vive en comunidad.' : 'Nos encontramos para crecer juntos.'}</p>}</div>
-    {!edit && !detail && (resource !== 'groups' || canServices) && (has(user, resource === 'members' ? registrationPermission : write[resource]) || resource === 'activities' && has(user, 'grupos.editar')) && <button className="record-create" onClick={() => { setRegistrationType('discipulo'); setActivityType(has(user, 'eventos.editar') ? 'evento' : 'reunion_grupo'); setEdit(resource === 'groups' ? { estado_grupo: 'activo', id_discipulador: user.permissions['grupos.editar'] === 'grupo' ? user.memberId : null } : resource === 'activities' ? { estado_actividad: 'programada' } : {}) }}><AdminIcon name="plus"/>{createLabels[resource]}</button>}
+    {!edit && !detail && (resource !== 'groups' || canServices) && (has(user, resource === 'members' ? registrationPermission : write[resource]) || resource === 'activities' && has(user, 'grupos.editar')) && <div className="record-heading-actions">{resource==='members'&&<button type="button" className="secondary" onClick={()=>setImporting(true)}>Importar desde Excel</button>}<button className="record-create" onClick={() => { setRegistrationType('discipulo'); setActivityType(has(user, 'eventos.editar') ? 'evento' : 'reunion_grupo'); setEdit(resource === 'groups' ? { estado_grupo: 'activo', id_discipulador: user.permissions['grupos.editar'] === 'grupo' ? user.memberId : null } : resource === 'activities' ? { estado_actividad: 'programada' } : {}) }}><AdminIcon name="plus"/>{createLabels[resource]}</button></div>}
     {detail && <button className="secondary" onClick={() => setDetail(null)}><AdminIcon name="back"/>Volver</button>}
     </div>
-    {!edit && !detail && <>
+    {!edit&&!detail&&resource==='activities'&&<div className="tool-toggle activity-view-toggle" role="group" aria-label="Vista de eventos"><button type="button" aria-pressed={activityView==='list'} onClick={()=>setActivityView('list')}>Lista</button><button type="button" aria-pressed={activityView==='calendar'} onClick={()=>setActivityView('calendar')}>Calendario</button></div>}
+    {!edit&&!detail&&resource==='activities'&&activityView==='calendar'&&<Suspense fallback={<p>Cargando calendario…</p>}><EventCalendar onSelect={row=>setDetail(row)}/></Suspense>}
+    {!edit && !detail && (resource!=='activities'||activityView==='list') && <>
       {groupId && <p className="group-filter">Mostrando discípulos del grupo seleccionado. <a href="#gestion/members">Ver todos</a></p>}
       {!createOnly && <form className="record-search" onSubmit={event => { event.preventDefault() }}><AdminIcon name="search"/><label className="sr-only" htmlFor={`search-${resource}`}>Buscar {resource === 'members' ? 'por nombre o identificación' : titles[resource].toLowerCase()}</label><input id={`search-${resource}`} value={search} type="search" placeholder={resource === 'members' ? 'Buscar por nombre o identificación' : resource === 'groups' ? 'Buscar grupo' : 'Buscar evento o culto'} maxLength={100} onChange={event => setSearch(event.target.value)} /></form>}
       {resource === 'members' && !createOnly && <><div className="record-filters" role="group" aria-label="Filtrar discípulos">{[['todos', 'Todos'], ['activo', 'Activos'], ['inactivo', 'Inactivos'], ['retirado', 'Retirados'], ['sin_libro', 'Sin libro']].map(([value, label]) => <button key={value} type="button" aria-pressed={filter === value} onClick={() => setFilter(value)}>{label} <span>({value === 'todos' ? scopedItems.length : scopedItems.filter(item => value === 'sin_libro' ? !item.id_libro : item.estado_miembro === value).length})</span></button>)}</div>{has(user, 'reportes.discipulos') && <button type="button" className="secondary" disabled={exporting} onClick={() => {
@@ -269,7 +284,7 @@ function Records({ resource, user, catalogs, reloadCatalogs, notify }: { resourc
       {resource === 'activities' && edit.id_serie && <p className="event-repeat-note">Evento fijo. Los cambios de programación se aplican a las próximas fechas y conservan el historial de asistencia.</p>}
       <DataForm key={`${edit[ids[resource]] || 'new'}-${activityType}-${registrationType}`} fields={formFields} initial={edit} onSave={save} onCancel={() => { setEdit(null); if (resource === 'groups' && window.location.hash === '#gestion/groups/nuevo') window.location.hash = '#gestion/groups' }} memberWizard={resource === 'members'} groupNeighborhoods={resource === 'groups' && Boolean(canManageCoverage(user))} availableBarrios={catalogs.barrios} label={resource === 'members' ? registrationType === 'administrativo' && !edit.id_miembro ? 'Crear administrativo y cuenta' : 'Guardar discípulo' : resource === 'groups' ? 'Guardar grupo' : 'Guardar'} />
     </div>}
-    {!edit && !detail && (loading ? <div className="app-empty" role="status"><span className="auth-spinner"/>Cargando tu comunidad…</div> : !visibleItems.length ? <div className="app-empty"><span className="empty-icon"><AdminIcon name={resource}/></span><h3>{createOnly ? 'Registra un discípulo' : items.length ? 'No encontramos coincidencias' : resource === 'members' ? 'Aquí comienza tu comunidad' : resource === 'groups' ? 'Un lugar para compartir la fe' : 'Preparemos el próximo encuentro'}</h3><p>{createOnly ? 'Crea su ficha y selecciona el Grupo de Comunión Familiar al que pertenece.' : items.length ? 'Prueba otra búsqueda o cambia el filtro.' : 'Los registros que crees aparecerán aquí.'}</p></div> : <div className="manage-records app-record-list">{visibleItems.map(row => {
+    {!edit && !detail && (resource!=='activities'||activityView==='list') && (loading ? <div className="app-empty" role="status"><span className="auth-spinner"/>Cargando tu comunidad…</div> : !visibleItems.length ? <div className="app-empty"><span className="empty-icon"><AdminIcon name={resource}/></span><h3>{createOnly ? 'Registra un discípulo' : items.length ? 'No encontramos coincidencias' : resource === 'members' ? 'Aquí comienza tu comunidad' : resource === 'groups' ? 'Un lugar para compartir la fe' : 'Preparemos el próximo encuentro'}</h3><p>{createOnly ? 'Crea su ficha y selecciona el Grupo de Comunión Familiar al que pertenece.' : items.length ? 'Prueba otra búsqueda o cambia el filtro.' : 'Los registros que crees aparecerán aquí.'}</p></div> : <div className="manage-records app-record-list">{visibleItems.map(row => {
       const name = String(row.nombres ? `${row.nombres} ${row.apellidos || ''}` : row.nombre || row.titulo)
       return <article key={row[ids[resource]]}>
       <button className="record-open" aria-label={`Ver ficha de ${name}`} onClick={() => { setDetail(row); setEdit(null) }}>
@@ -477,13 +492,6 @@ function Dashboard({ user }: { user: AuthUser }) {
     </nav>
   </section>
 }
-function Alerts({ notify }: { notify: Message }) {
-  const [items, setItems] = useState<Row[]>([])
-  const [loading, setLoading] = useState(true)
-  useEffect(() => { api<{ items: Row[] }>('alerts').then(result => setItems(result.items)).catch(error => notify(errorMessage(error))).finally(() => setLoading(false)) }, [])
-  return <section className="alerts-page"><div className="manage-section-heading"><h2>Alertas pastorales</h2><span className="app-count">{items.length} vigentes</span></div><p className="section-caption">Una oportunidad para acercarnos y acompañar.</p>{loading ? <p role="status">Consultando alertas…</p> : items.length ? <div className="manage-records alert-records">{items.map(item => <article key={item.id_alerta}><span className="alert-symbol"><AdminIcon name="warning"/></span><div><strong>{item.nombre}</strong><p className="alert-reason">2 ausencias consecutivas</p><p>{item.titulo}</p></div></article>)}</div> : <div className="app-empty"><span className="empty-icon"><AdminIcon name="check"/></span><h3>Sin alertas vigentes</h3><p>Aquí verás a quienes tengan dos ausencias consecutivas registradas.</p></div>}</section>
-}
-
 function Falls({ user, notify }: { user: AuthUser; notify: Message }) {
   const canRegister = has(user, 'asistencia.registrar') || has(user, 'asistencia.ver')
   const canSeeAlerts = has(user, 'alertas.ver')
@@ -506,7 +514,7 @@ function Falls({ user, notify }: { user: AuthUser; notify: Message }) {
     </nav>
     <div className="falls-content" key={section}>
       {section === 'registro' && canRegister && <Attendance user={user} notify={notify}/>}
-      {section === 'alertas' && canSeeAlerts && <Alerts notify={notify}/>}
+      {section === 'alertas' && canSeeAlerts && <Suspense fallback={<p>Cargando seguimiento pastoral…</p>}><PastoralFollowup notify={notify}/></Suspense>}
     </div>
   </section>
 }
@@ -584,6 +592,7 @@ export default function Management() {
     </section> : !user || !has(user, 'gestion.acceder') ? <p>Necesitas una cuenta con un rol autorizado. <a href="#login">Ir a mi cuenta</a></p> : <>
       <div className="manage-session"><span className="manage-session-dot"/><span>{user.roles.join(', ')}</span><span>Al servicio de nuestra comunidad</span></div>
       {tab === 'dashboard' && <Dashboard key={accessKey} user={user} />}
+      {tab==='statistics'&&<Suspense fallback={<p>Cargando estadísticas…</p>}><Statistics key={accessKey}/></Suspense>}
       {tab === 'training' && <Training books={catalogs.libros || []} onReload={reloadCatalogs} notify={setMessage} canSeeMembers={has(user, 'miembros.ver')}/>}
       {tab === 'mapa' && <Suspense fallback={<p>Cargando mapa de zonas…</p>}><CoverageMap key={accessKey} user={user}/></Suspense>}
       {(['members', 'groups', 'activities'] as const).map(resource => tab === resource && <Records key={`${resource}-${accessKey}`} resource={resource} user={user} catalogs={catalogs} reloadCatalogs={reloadCatalogs} notify={setMessage} />)}

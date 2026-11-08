@@ -11,7 +11,7 @@ export function accountCapabilities(user) {
   }
   const descriptions = {
     'miembros.ver': 'Consultar fichas de discípulos',
-    'miembros.registrar': 'Registrar discípulos',
+    'miembros.registrar': 'Registrar discípulos de forma individual o desde Excel',
     'miembros.editar': 'Editar los datos autorizados de discípulos',
     'miembros.sensibles': 'Consultar y editar los datos de salud y contacto de emergencia autorizados',
     'miembros.estado': 'Actualizar el estado de los discípulos',
@@ -28,6 +28,7 @@ export function accountCapabilities(user) {
     'asistencia.eliminar': 'Archivar registros de asistencia',
     'estadisticas.ver': 'Consultar las estadísticas disponibles',
     'alertas.ver': 'Consultar alertas de acompañamiento pastoral',
+    'seguimiento.gestionar': 'Asignar responsables y registrar llamadas, visitas y notas de acompañamiento pastoral',
     'reportes.asistencia': 'Exportar reportes de asistencia',
     'reportes.cumpleanos': 'Exportar reportes de cumpleaños',
     'reportes.grupos': 'Exportar reportes de grupos',
@@ -36,6 +37,7 @@ export function accountCapabilities(user) {
     'permisos.gestionar': 'Consultar y configurar permisos de los roles autorizados',
   }
   for (const [code, description] of Object.entries(descriptions)) {
+    if(code==='seguimiento.gestionar' && !user.permissions['alertas.ver']) continue
     const scope = user.permissions[code]
     if (scope) result.push(`${description}${scope === 'grupo' ? ', solo dentro del alcance de los grupos a tu cargo' : ''}.`)
   }

@@ -10,6 +10,7 @@ import ProfilePhoto from './ProfilePhoto'
 import type { FormEvent } from 'react'
 import { welcomeEmailMessage } from './account-mail'
 import type { WelcomeEmailStatus } from './account-mail'
+import ValidatedForm from './ValidatedForm'
 
 type ManagedUser = AuthUser & { createdAt: string; lastAccess: string | null }
 type Role = { id: number; name: string }
@@ -145,7 +146,7 @@ export default function AdminUsers() {
         <div className="admin-users-heading"><div><h2>Administración de cuentas</h2><p>Crea accesos, asigna roles y vincula cada cuenta con su ficha de discípulo.</p></div>
           {!creating && <button className="admin-save" disabled={loading || saving !== null} onClick={() => { setCreateError(''); setPhoto(null); setCreating(true) }}><AdminIcon name="plus"/>Crear cuenta</button>}
         </div>
-        {creating && <form className="admin-create-account" aria-labelledby="create-account-title" onSubmit={createAccount}>
+        {creating && <ValidatedForm className="admin-create-account" aria-labelledby="create-account-title" onSubmit={createAccount}>
           <h2 id="create-account-title">Crear cuenta</h2>
           <p>Asigna los datos de acceso y un rol. La cuenta quedará activa y enviaremos un correo con sus credenciales, vinculación y funciones.</p>
           <fieldset disabled={createBusy}>
@@ -160,7 +161,7 @@ export default function AdminUsers() {
           {hasPermission(sessionUser, 'gestion.acceder') && hasPermission(sessionUser, 'miembros.editar') && <p>Completa los demás datos personales en <a href="#gestion/members">Discípulos</a> y vincula aquí su ficha.</p>}
           {createError && <p role="alert">{createError}</p>}
           <div className="admin-create-actions"><button type="button" className="admin-save admin-secondary" disabled={createBusy || photoBusy} onClick={() => { setCreating(false); setPhoto(null) }}>Cancelar</button><button type="submit" className="admin-save" disabled={createBusy || photoBusy}>{createBusy ? 'Creando cuenta…' : 'Guardar cuenta'}</button></div>
-        </form>}
+        </ValidatedForm>}
         <form className="admin-user-filters" onSubmit={event => { event.preventDefault(); setFilters(previous => ({ ...previous, q: search.trim(), page: 1 })) }}>
           <label className="admin-user-search">Buscar por correo<span className="admin-search-input"><AdminIcon name="search"/><input type="search" maxLength={120} placeholder="correo@ejemplo.com" value={search} disabled={saving !== null} onChange={event => setSearch(event.target.value)}/></span></label>
           <label>Estado de la cuenta<AppSelect value={filters.state} disabled={saving !== null} onChange={event => setFilters(previous => ({ ...previous, state: event.target.value, page: 1 }))}><option value="">Todos los estados</option><option value="pendiente">Pendientes de habilitación</option><option value="activo">Activas</option><option value="inactivo">Inactivas</option><option value="bloqueado">Bloqueadas</option></AppSelect></label>

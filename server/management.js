@@ -16,6 +16,10 @@ import { readNeighborhoodCatalog } from './neighborhood-catalog.js'
 import { welcomeContext, sendAccountWelcome } from './account-welcome.js'
 import { parseRecurrence, fixedStart } from './recurrence-dates.js'
 import { recurrenceColumns, recurrenceJoins, nearestPublicDate, seriesTemplate, createRecurringActivity, ensureRecurringActivities, reviseFixedActivity, retireFutureDates } from './recurring-activities.js'
+import { recordMemberState } from './member-state-history.js'
+import { pastoralCalendarRouter, publicCalendar } from './pastoral-calendar.js'
+import { statisticsRouter } from './statistics.js'
+import { memberImportRouter } from './member-import.js'
 
 export const managementRouter = Router()
 export const publicRouter = Router()
@@ -25,7 +29,7 @@ const memberId = req => req.authUser.memberId || -1
 const groupScopedPermissions=new Set(['gestion.acceder','miembros.ver','miembros.registrar','miembros.editar','miembros.estado','miembros.eliminar',
   'grupos.ver','grupos.editar','grupos.eliminar','eventos.eliminar','asistencia.registrar','asistencia.ver',
   'asistencia.corregir','asistencia.eliminar','alertas.ver','reportes.asistencia','reportes.cumpleanos','reportes.grupos',
-  'ministerios.gestionar','consentimientos.gestionar','reportes.discipulos'])
+  'ministerios.gestionar','consentimientos.gestionar','reportes.discipulos','estadisticas.ver','seguimiento.gestionar'])
 const groupFilter = (req,code,alias='g') => scoped(req,code) ? {sql:` AND ${alias}.id_discipulador=?`,params:[memberId(req)]} : {sql:'',params:[]}
 const memberFilter = (req,code,alias='m') => scoped(req,code) ? {sql:` AND (EXISTS(SELECT 1 FROM grupo_comunion sg WHERE sg.id_grupo=${alias}.id_grupo AND sg.id_discipulador=? AND sg.archivado=0) OR (${alias}.id_grupo IS NULL AND ${alias}.id_usuario_creacion=?))`,params:[memberId(req),req.authUser.id]} : {sql:'',params:[]}
 const activityFilter = (req,code,alias='ac') => scoped(req,code) ? {sql:` AND EXISTS(SELECT 1 FROM reunion_grupo sr JOIN grupo_comunion sg ON sg.id_grupo=sr.id_grupo WHERE sr.id_actividad=${alias}.id_actividad AND sg.id_discipulador=? AND sg.archivado=0)`,params:[memberId(req)]} : {sql:'',params:[]}
@@ -136,11 +140,15 @@ publicRouter.get('/ministries',async (_req,res) => {
   res.json({items:rows})
 })
 publicRouter.get('/transmission',async (_req,res) => res.json(await facebookTransmission()))
+publicCalendar(publicRouter)
 
 managementRouter.use(protectMutation,requireSession,requirePermission('gestion.acceder'))
 const exportLimit=databaseRateLimit({prefix:'exports',maximum:12,key:req=>String(req.authUser.id),message:'Has solicitado varios reportes. Espera unos minutos antes de descargar más.'})
 managementRouter.use((req,res,next)=>req.path.startsWith('/reports/') || /^\/members\/\d+\/excel$/.test(req.path) ? exportLimit(req,res,next) : next())
 managementRouter.use('/mapa',mapRouter)
+managementRouter.use(pastoralCalendarRouter({transaction,currentActor,memberFilter,activityFilter,getMember}))
+managementRouter.use(statisticsRouter({activityFilter,memberFilter,groupFilter,getGroup}))
+managementRouter.use(memberImportRouter({transaction,currentActor,registrationPermission,groupFilter}))
 managementRouter.get('/training/books', requireTraining, async (_req,res) => res.json({items:await trainingBooks()}))
 managementRouter.post('/training/books', requireTraining, async (req,res) => {
   const name=text(req.body?.nombre,150,true), description=text(req.body?.descripcion,2000)
@@ -253,6 +261,7 @@ managementRouter.post('/members',(req,res,next)=>can(req,'miembros.registrar') |
     }
     await memberRelations(req,values,connection,null,null,true)
     const id=await insert(connection,'miembro',{...values,codigo_qr:randomUUID(),id_usuario_creacion:actor.id,id_usuario_actualizacion:actor.id})
+    await recordMemberState(connection,id,'activo',actor.id)
     let accountId=null
     if(account) {
       accountId=await insert(connection,'usuario',{id_miembro:id,correo_login:account.email,password_hash:passwordHash,estado_usuario:'activo'})
@@ -324,13 +333,24 @@ managementRouter.post('/members/:id/relations',requirePermission('grupos.editar'
   res.json({ok:true})
 })
 managementRouter.post('/members/:id/state',requirePermission('miembros.estado'),async (req,res) => {
-  const row=await getMember(req,req.params.id,'miembros.estado')
-  await update(pool,'miembro','id_miembro',row.id_miembro,{estado_miembro:choice(req.body?.estado_miembro,['activo','inactivo','retirado']),id_usuario_actualizacion:req.authUser.id})
+  const state=choice(req.body?.estado_miembro,['activo','inactivo','retirado'])
+  await transaction(async connection=>{
+    const actor=await currentActor(req,connection)
+    if(!hasPermission(actor,'miembros.estado')) throw invalid('Ya no tienes permiso para cambiar el estado.',403)
+    const row=await getMember(req,req.params.id,'miembros.estado',connection,true)
+    await update(connection,'miembro','id_miembro',row.id_miembro,{estado_miembro:state,id_usuario_actualizacion:actor.id})
+    if(row.estado_miembro!==state) await recordMemberState(connection,row.id_miembro,state,actor.id)
+  })
   res.json({ok:true})
 })
 managementRouter.delete('/members/:id',requirePermission('miembros.eliminar'),async (req,res) => {
-  const row=await getMember(req,req.params.id,'miembros.eliminar')
-  await update(pool,'miembro','id_miembro',row.id_miembro,{archivado:1,id_usuario_actualizacion:req.authUser.id})
+  await transaction(async connection=>{
+    const actor=await currentActor(req,connection)
+    if(!hasPermission(actor,'miembros.eliminar')) throw invalid('Ya no tienes permiso para archivar discípulos.',403)
+    const row=await getMember(req,req.params.id,'miembros.eliminar',connection,true)
+    await update(connection,'miembro','id_miembro',row.id_miembro,{archivado:1,id_usuario_actualizacion:actor.id})
+    await recordMemberState(connection,row.id_miembro,'archivado',actor.id)
+  })
   res.json({ok:true})
 })
 managementRouter.get('/members/:id/history',requirePermission('miembros.ver'),async (req,res) => {
@@ -758,7 +778,7 @@ managementRouter.get('/reports/:type',async(req,res)=>{
 })
 export function managementError(error,_req,res,_next) {
   if(res.headersSent) return res.end()
-  if(error.status) return res.status(error.status).json({error:error.message})
+  if(error.status) return res.status(error.status).json({error:error.message,...(error.fieldErrors?{fieldErrors:error.fieldErrors}:{})})
   if(error.code==='ER_DUP_ENTRY') return res.status(409).json({error:'El registro ya existe. Para asistencia, utiliza la corrección autorizada.'})
   if(error.code?.startsWith('ER_NO_REFERENCED')) return res.status(400).json({error:'Una de las referencias seleccionadas no existe.'})
   console.error('Error de gestión:',error.code || 'MANAGEMENT_ERROR')

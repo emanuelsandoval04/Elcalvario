@@ -1,0 +1,10 @@
+.form-feedback-field { display:grid; align-content:start; min-width:0; gap:6px; }
+.form-feedback-field > label { min-width:0; }
+.field-feedback { display:block; color:#ae3547; font-size:12px; font-weight:500; line-height:1.6; overflow-wrap:anywhere; }
+.form-error-summary { min-width:0; padding:16px; margin-bottom:18px; border:1px solid #edc6cc; border-radius:12px; background:#fff6f7; color:#923143; font-size:13px; line-height:1.6; }
+.form-error-summary:focus { outline:2px solid #c3485c; outline-offset:3px; }
+.form-error-summary ul { margin:8px 0 0; padding-left:20px; }
+.form-error-summary a { color:inherit; text-decoration:underline; text-underline-offset:3px; }
+:is(.admin-workspace,.login-page) [aria-invalid=true]:not([role=alert]) { border-color:#cc5266; }
+.login-form .form-error-summary { margin-bottom:4px; }
+.form-feedback-field.manage-wide { grid-column:1/-1; }

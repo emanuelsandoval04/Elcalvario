@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import { authRequest } from './auth'
 import './login.css'
+import ValidatedForm from './ValidatedForm'
 
 export default function PasswordRecovery({ reset = false }: { reset?: boolean }) {
   const [token, setToken] = useState(() => new URLSearchParams(window.location.hash.split('?')[1] || '').get('token') || '')
@@ -73,13 +74,13 @@ export default function PasswordRecovery({ reset = false }: { reset?: boolean })
         <span className="login-eyebrow">CUIDAMOS TU ACCESO</span>
         <h1 id="recovery-title" ref={heading} tabIndex={-1}>{complete ? 'Contraseña actualizada.' : reset ? 'Elige tu nueva contraseña.' : sent ? 'Revisa tu correo.' : 'Recupera tu acceso.'}</h1>
         <p className="login-intro">{complete ? 'Ya puedes volver a tu comunidad.' : reset ? 'El enlace solo puede usarse una vez y vence 15 minutos después de solicitarlo.' : 'Escribe el correo de tu cuenta. Te enviaremos un enlace para cambiar tu contraseña, válido por 15 minutos.'}</p>
-        {checking && !complete ? <p role="status" className="recovery-checking"><span className="auth-spinner" aria-hidden="true"/>Verificando enlace…</p> : complete ? <a className="login-submit recovery-action" href="#login">Iniciar sesión</a> : reset && !valid ? <div className="recovery-options"><a className="login-submit recovery-action" href="#recuperar">Solicitar un nuevo enlace</a><button className="account-logout" type="button" onClick={() => setValidationVersion(version => version + 1)}>Volver a verificar</button></div> : sent ? <button className="account-logout" type="button" onClick={() => { setSent(false); setMessage('') }}>Usar otro correo o solicitar otro enlace</button> : <form className="login-form" onSubmit={submit}>
+        {checking && !complete ? <p role="status" className="recovery-checking"><span className="auth-spinner" aria-hidden="true"/>Verificando enlace…</p> : complete ? <a className="login-submit recovery-action" href="#login">Iniciar sesión</a> : reset && !valid ? <div className="recovery-options"><a className="login-submit recovery-action" href="#recuperar">Solicitar un nuevo enlace</a><button className="account-logout" type="button" onClick={() => setValidationVersion(version => version + 1)}>Volver a verificar</button></div> : sent ? <button className="account-logout" type="button" onClick={() => { setSent(false); setMessage('') }}>Usar otro correo o solicitar otro enlace</button> : <ValidatedForm className="login-form" onSubmit={submit}>
           {reset ? <>
             <div className="login-field"><label htmlFor="recovery-password">Nueva contraseña</label><div className="login-input-wrap"><input id="recovery-password" name="newPassword" type={visible ? 'text' : 'password'} required minLength={10} maxLength={128} autoComplete="new-password" placeholder="Entre 10 y 128 caracteres" disabled={busy} /><button type="button" className="login-eye" aria-label={visible ? 'Ocultar contraseñas' : 'Mostrar contraseñas'} aria-pressed={visible} onClick={() => setVisible(previous => !previous)}>{visible ? 'Ocultar' : 'Ver'}</button></div></div>
             <div className="login-field"><label htmlFor="recovery-confirmation">Confirmar nueva contraseña</label><div className="login-input-wrap"><input id="recovery-confirmation" name="confirmation" type={visible ? 'text' : 'password'} required minLength={10} maxLength={128} autoComplete="new-password" placeholder="Repite tu nueva contraseña" disabled={busy} /></div></div>
           </> : <div className="login-field"><label htmlFor="recovery-email">Correo electrónico</label><div className="login-input-wrap"><input id="recovery-email" name="email" type="email" required maxLength={120} autoComplete="email" placeholder="tu@correo.com" disabled={busy} /></div></div>}
           <button className="login-submit" type="submit" disabled={busy} aria-busy={busy}>{busy ? reset ? 'Guardando contraseña…' : 'Solicitando enlace…' : reset ? 'Guardar nueva contraseña' : 'Enviar enlace de recuperación'}{busy && <span className="auth-spinner" aria-hidden="true"/>}</button>
-        </form>}
+        </ValidatedForm>}
         {error && !complete && <p className="login-message recovery-feedback" role="alert">{error}</p>}
         {message && <p className="login-message recovery-feedback" role="status">{message}</p>}
         {!reset && <p className="login-access-note">Si no tienes una cuenta, comunícate con la administración o el equipo pastoral.</p>}

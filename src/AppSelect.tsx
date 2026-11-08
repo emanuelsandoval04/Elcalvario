@@ -135,7 +135,7 @@ export default function AppSelect({ children, value, defaultValue, onChange, onI
   return <span className={`app-select ${className || ''}`}>
     <button ref={trigger} id={controlId} type="button" role="combobox" className="app-select-trigger" disabled={disabled}
       aria-label={props['aria-label']} aria-labelledby={props['aria-labelledby']} aria-describedby={props['aria-describedby']}
-      aria-expanded={open} aria-controls={dialogId} aria-haspopup="dialog" aria-required={props.required || undefined} aria-invalid={invalid || undefined}
+      aria-expanded={open} aria-controls={dialogId} aria-haspopup="dialog" aria-required={props.required || undefined} aria-invalid={invalid || props['aria-invalid'] || undefined}
       data-state={(props as Props & { 'data-state'?: string })['data-state']}
       onClick={show} onKeyDown={event => { if (['ArrowDown', 'ArrowUp', 'Enter', ' '].includes(event.key)) { event.preventDefault(); show() } }}>
       <span className="app-select-value">{current?.label || 'Selecciona…'}</span>

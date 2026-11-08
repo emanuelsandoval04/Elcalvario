@@ -1,6 +1,7 @@
 import AppSelect from './AppSelect'
 import { useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
+import ValidatedForm from './ValidatedForm'
 
 const confirmedMinistries = ['Alabanza / Adoración', 'Multimedia', 'Servidores / Ujieres']
 
@@ -60,14 +61,14 @@ export default function Participation() {
         <h2 id="participation-title">Quiero participar</h2>
         {sent ? <div role="status" className="participation-success"><p>¡Gracias por querer servir! Tu solicitud quedó registrada.</p><button className="nav-login serve-button" onClick={() => dialog.current?.close()}>Listo</button></div> : <>
           <p className="participation-intro">Cuéntanos un poco de ti y del área en la que te gustaría servir.</p>
-          <form className="participation-form" onSubmit={submit}>
+          <ValidatedForm className="participation-form" onSubmit={submit}>
             <label htmlFor="participation-name">Nombre<input id="participation-name" name="name" autoComplete="name" required maxLength={120} disabled={busy} /></label>
             <label htmlFor="participation-phone">Teléfono<input id="participation-phone" name="phone" type="tel" autoComplete="tel" required minLength={7} maxLength={30} pattern="[+0-9 ()\-]{7,30}" title="Ingresa un teléfono de 7 a 30 caracteres, con números, espacios, paréntesis o +." disabled={busy} /></label>
             <label htmlFor="participation-ministry">Ministerio de interés<AppSelect id="participation-ministry" name="ministry" required defaultValue="" disabled={busy}><option value="" disabled>Selecciona un ministerio</option>{ministries.map(name => <option key={name}>{name}</option>)}</AppSelect></label>
             <label htmlFor="participation-message">Mensaje <span>(opcional)</span><textarea id="participation-message" name="message" rows={3} maxLength={2000} disabled={busy} /></label>
             {message && <p className="participation-error" role="alert">{message}</p>}
             <button className="nav-login serve-button" type="submit" disabled={busy} aria-busy={busy}>{busy ? 'Enviando…' : 'Enviar solicitud'}</button>
-          </form>
+          </ValidatedForm>
         </>}
       </dialog>
     </>

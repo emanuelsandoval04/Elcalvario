@@ -1,15 +1,17 @@
 import CommunityIcon from './CommunityIcon'
 import Participation from './Participation'
 import './events.css'
-import { useEffect, useState } from 'react'
+import { lazy, Suspense, useEffect, useState } from 'react'
 import { weeklySchedule } from './EventRecurrence'
 
 type PublicEvent = { id_actividad: number; tipo_actividad: 'culto' | 'evento'; titulo: string; fecha: string; hora: string; lugar: string; imagen: string | null; descripcion: string | null; estado_actividad: string; requiere_inscripcion: number | null; url_inscripcion: string | null; id_serie?: number | null; dia_semana?: number | null; repeticion_activa?: number; repeticion_fin?: string | null; repeticion_hora?: string; fecha_programada?: string }
 type Transmission = { videoUrl: string | null; pageUrl: string; automatic: boolean; live: boolean }
+const EventCalendar=lazy(()=>import('./EventCalendar'))
 
 export default function Events() {
   const [events, setEvents] = useState<PublicEvent[]>([])
   const [failed, setFailed] = useState(false)
+  const [calendar,setCalendar]=useState(false)
   const [transmission, setTransmission] = useState<Transmission>({ videoUrl: null, pageUrl: 'https://www.facebook.com/61556906195984', automatic: false, live: false })
   useEffect(() => {
     const controller = new AbortController()
@@ -32,6 +34,8 @@ export default function Events() {
           <h2 id="events-title">La fe también se vive <em>juntos.</em></h2>
           <p>Conoce nuestros próximos encuentros y acompáñanos desde donde estés.</p>
         </div>
+        <div className="public-agenda-toggle"><button type="button" aria-pressed={calendar} onClick={()=>setCalendar(value=>!value)}>{calendar?'Ocultar calendario':'Ver calendario de encuentros'}</button></div>
+        {calendar&&<Suspense fallback={<p>Cargando calendario…</p>}><EventCalendar publicView/></Suspense>}
         <div className="events-grid">
           <div className="events-column">
             <div className="events-column-heading"><span className="events-heading-icon"><CommunityIcon name="calendar" /></span><h3>Próximos eventos</h3></div>

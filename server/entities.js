@@ -80,7 +80,7 @@ export function fields(body, definition, create = false, allowEmpty = false) {
   if (!body || typeof body !== 'object' || Array.isArray(body)) throw invalid('Solicitud inválida.')
   const result = {}
   for (const [key, validate] of Object.entries(definition)) if (create || Object.hasOwn(body,key)) {
-    try { result[key] = validate(body[key]) } catch (error) { throw invalid(`${key}: ${error.message}`) }
+    try { result[key] = validate(body[key]) } catch (error) { throw Object.assign(invalid(`${key}: ${error.message}`),{fieldErrors:{[key]:error.message}}) }
   }
   if (!allowEmpty && !Object.keys(result).length) throw invalid('No hay cambios para guardar.')
   return result

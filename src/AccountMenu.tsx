@@ -9,6 +9,7 @@ import ProfilePhoto, { ProfileAvatar } from './ProfilePhoto'
 import { displaySizes } from './display-size'
 import type { DisplaySize } from './display-size'
 import AccountSecurity from './AccountSecurity'
+import ValidatedForm from './ValidatedForm'
 
 type Section = 'profile' | 'password' | 'photo' | 'display' | 'security'
 const describeError = (cause: unknown) => cause instanceof Error && cause.name !== 'TimeoutError' ? cause.message : 'No pudimos conectar con el servidor. Inténtalo nuevamente.'
@@ -81,7 +82,7 @@ function AccountSettings({ user, initialSection, onClose, onUpdate }: { user: Au
       <div className="account-dialog-heading"><div><span className="account-eyebrow">TU PERFIL</span><h2 id="account-title">Opciones de la cuenta</h2></div><button type="button" className="account-close" aria-label="Cerrar opciones de la cuenta" disabled={busy} onClick={onClose}>×</button></div>
       <nav className="account-tabs" aria-label="Secciones de la cuenta"><button type="button" aria-pressed={section === 'profile'} disabled={busy || photoBusy} onClick={() => select('profile')}>Nombre y correo</button><button type="button" aria-pressed={section === 'photo'} disabled={busy || photoBusy} onClick={() => select('photo')}>Foto de perfil</button><button type="button" aria-pressed={section === 'password'} disabled={busy || photoBusy} onClick={() => select('password')}>Contraseña</button><button type="button" aria-pressed={section === 'display'} disabled={busy || photoBusy} onClick={() => select('display')}>Tamaño de la interfaz</button></nav>
       <button type="button" className="account-show-password" disabled={busy} onClick={() => select('security')}>Seguridad y dispositivos</button>
-      {section === 'security' ? <AccountSecurity user={user} onBusy={setBusy}/> : <form className="account-form" onSubmit={save} aria-busy={busy}>
+      {section === 'security' ? <AccountSecurity user={user} onBusy={setBusy}/> : <ValidatedForm key={section} className="account-form" onSubmit={save} aria-busy={busy}>
         {section === 'display' && <><p className="account-help">Ajusta textos, botones e iconos para leer con más comodidad. La elección se guardará solo en tu cuenta.</p><fieldset className="display-size-options" disabled={busy}><legend>Tamaño de la interfaz</legend>{displaySizes.map(size => <label key={size.value} className="display-size-choice"><input type="radio" name="display-size" value={size.value} checked={displaySize === size.value} onChange={() => { setDisplaySize(size.value); setMessage('') }}/><span><strong>{size.label}</strong><small>{size.detail}</small></span><span className="display-size-example" data-size={size.value} aria-hidden="true">Aa</span></label>)}</fieldset></>}
         {section === 'photo' && <ProfilePhoto value={photo} onChange={setPhoto} onBusyChange={setPhotoBusy} disabled={busy}/>}
         {section === 'profile' && <>
@@ -99,7 +100,7 @@ function AccountSettings({ user, initialSection, onClose, onUpdate }: { user: Au
         {(section === 'password' || section === 'profile' && emailChanged) && <button className="account-show-password" type="button" aria-pressed={visible} disabled={busy} onClick={() => setVisible(!visible)}>{visible ? 'Ocultar contraseñas' : 'Mostrar contraseñas'}</button>}
         <div className={`account-feedback${failure ? ' is-error' : ''}`} role={failure ? 'alert' : 'status'} aria-live="polite">{message}</div>
         <button className="account-primary" type="submit" disabled={busy || photoBusy || section === 'photo' && photo === user.photoUrl || section === 'display' && displaySize === user.displaySize}>{busy ? 'Guardando…' : section === 'display' ? 'Guardar tamaño' : section === 'photo' ? 'Guardar foto' : section === 'profile' ? 'Guardar datos' : 'Actualizar contraseña'}</button>
-      </form>}
+      </ValidatedForm>}
     </div>
   </div>, document.body)
 }

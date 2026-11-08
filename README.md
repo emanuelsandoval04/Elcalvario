@@ -2,6 +2,8 @@
 
 Plataforma con React, TypeScript, Vite, Express y MySQL. Usa Node.js 24.x.
 
+La gestión incorpora [seguimiento pastoral, estadísticas por periodo, calendario mensual/semanal, importación de discípulos desde Excel y validación accesible de formularios](docs/herramientas-comunidad.md). La migración 020 conserva los datos existentes y añade el historial necesario para el acompañamiento y la evolución de estados. Verificación completa: `npm run test:community-tools:ui`.
+
 Producción: [elcalvario.vercel.app](https://elcalvario.vercel.app). La rama `main` de [GitHub](https://github.com/emanuelsandoval04/Elcalvario) despliega automáticamente en Vercel; la API se conecta a MySQL en Aiven por TLS.
 
 ## Despliegue
