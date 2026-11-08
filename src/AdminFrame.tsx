@@ -9,7 +9,6 @@ import { InstallApp, ConnectionStatus } from './pwa'
 import './admin-frame.css'
 
 const iconPaths: Record<string, ReactNode> = {
-  statistics: <><path d="M4 20h17M7 16V9M12 16V4M17 16v-5"/></>,
   training: <><path d="M12 5c-3-2-6-2-9-1v15c3-1 6-1 9 1 3-2 6-2 9-1V4c-3-1-6-1-9 1ZM12 5v15"/><path d="M6 8h3M15 8h3M6 12h3M15 12h3"/></>,
   mapa: <><path d="m3 6 6-3 6 3 6-3v15l-6 3-6-3-6 3ZM9 3v15M15 6v15"/></>,
   home: <><path d="m3 11 9-8 9 8v9a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1Z"/></>,
@@ -36,25 +35,42 @@ export function AdminIcon({ name }: { name: string }) {
   return <svg className="panel-nav-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{iconPaths[name] || iconPaths.dashboard}</svg>
 }
 
-export default function AdminFrame({ title, sectionName, navigation, children, viewKey, user, onUserChange, compactNavigation = false }: {
-  title: string; sectionName: string; navigation: ReactNode; children: ReactNode; viewKey: string; user?: AuthUser | null; onUserChange?: (user: AuthUser | null) => void; compactNavigation?: boolean;
+export default function AdminFrame({ title, sectionName, navigation, children, viewKey, user, onUserChange }: {
+  title: string; sectionName: string; navigation: ReactNode; children: ReactNode; viewKey: string; user?: AuthUser | null; onUserChange?: (user: AuthUser | null) => void;
 }) {
   const root = useRef<HTMLDivElement>(null)
   const sidebar = useRef<HTMLElement>(null)
   const view = useRef<HTMLDivElement>(null)
   const toggle = useRef<HTMLButtonElement>(null)
   const moreToggle = useRef<HTMLButtonElement>(null)
+  const header = useRef<HTMLElement>(null)
   const mobile = useMediaQuery('(max-width: 900px)')
-  const [open, setOpen] = useState(() => window.matchMedia('(min-width: 901px)').matches && !compactNavigation)
-  const compact = !mobile && compactNavigation && !open
-  const navigationVisible = open || compact
+  const [mobileOpen,setMobileOpen]=useState(false)
+  const [desktopCompact,setDesktopCompact]=useState(false)
+  const open=mobile?mobileOpen:!desktopCompact
+  const compact=!mobile&&desktopCompact
+  const navigationVisible=!mobile||mobileOpen
   const reduced = useAdminMotion(root)
   const initialized = useRef(false)
   function closeNavigation() {
-    setOpen(false)
+    setMobileOpen(false)
     requestAnimationFrame(() => (mobile ? moreToggle : toggle).current?.focus({ preventScroll: true }))
   }
-  useEffect(() => { setOpen(!mobile && !compactNavigation) }, [mobile, compactNavigation])
+  function toggleNavigation() {
+    if(mobile){setMobileOpen(value=>!value);return}
+    const next=!desktopCompact
+    setDesktopCompact(next)
+    if(user?.id)try{localStorage.setItem(`calvario-sidebar-${user.id}`,next?'compact':'expanded')}catch{ /* Navigation works when browser storage is unavailable. */ }
+  }
+  useEffect(()=>{setMobileOpen(false)},[mobile])
+  useEffect(()=>{try{setDesktopCompact(Boolean(user?.id&&localStorage.getItem(`calvario-sidebar-${user.id}`)==='compact'))}catch{setDesktopCompact(false)}},[user?.id])
+  useEffect(()=>{
+    const measure=()=>{if(header.current)root.current?.style.setProperty('--panel-header-height',`${header.current.getBoundingClientRect().height}px`)}
+    measure()
+    const observer=new ResizeObserver(measure)
+    if(header.current)observer.observe(header.current)
+    return()=>observer.disconnect()
+  },[])
 
   useGSAP(() => {
     const duration = reduced || !initialized.current ? 0 : .38
@@ -66,7 +82,7 @@ export default function AdminFrame({ title, sectionName, navigation, children, v
       gsap.to(sidebar.current, { xPercent: 0, yPercent: open ? 0 : 110, clearProps: 'visibility,opacity', duration, ease: 'power3.inOut', overwrite: true })
     } else {
       gsap.set(sidebar.current, { xPercent: 0, yPercent: 0, clearProps: 'visibility,opacity' })
-      gsap.to(root.current, { '--panel-nav-width': open ? '15.5rem' : compact ? '5rem' : '0rem', duration, ease: 'power3.inOut', overwrite: true })
+      gsap.to(root.current, { '--panel-nav-width': compact ? '5rem' : '15.5rem', duration, ease: 'power3.inOut', overwrite: true })
     }
   }, { scope: root, dependencies: [open, mobile, compact, reduced] })
 
@@ -78,7 +94,7 @@ export default function AdminFrame({ title, sectionName, navigation, children, v
   }, { scope: root, dependencies: [viewKey, reduced], revertOnUpdate: true })
 
   useEffect(() => {
-    if (!open) return
+    if (!mobile || !open) return
     const previousOverflow = document.body.style.overflow
     if (mobile) {
       document.body.style.overflow = 'hidden'
@@ -98,7 +114,7 @@ export default function AdminFrame({ title, sectionName, navigation, children, v
 
   function selectModule(event: React.MouseEvent) {
     if (!(event.target instanceof Element) || !event.target.closest('[data-panel-item]')) return
-    if (mobile) { setOpen(false); requestAnimationFrame(() => view.current?.focus({ preventScroll: true })) }
+    if (mobile) { setMobileOpen(false); requestAnimationFrame(() => view.current?.focus({ preventScroll: true })) }
   }
   const canUse = (codes: string[]) => hasPermission(user || null, 'gestion.acceder') && codes.some(code => hasPermission(user || null, code))
   const home = viewKey === 'dashboard' || viewKey === 'pending'
@@ -112,8 +128,8 @@ export default function AdminFrame({ title, sectionName, navigation, children, v
   ]
   const moreActive = !bottomItems.some(item => item.key === viewKey) || alertPage
   return <div className="admin-workspace" ref={root} data-navigation-open={open} data-navigation-compact={compact} data-view={viewKey}>
-    <header className="panel-topbar">
-      <button type="button" ref={toggle} className="panel-menu-toggle" aria-label={open ? 'Ocultar navegación del panel' : 'Mostrar navegación del panel'} aria-expanded={open} aria-controls="panel-navigation" onClick={() => setOpen(value => !value)}>
+    <header className="panel-topbar" ref={header}>
+      <button type="button" ref={toggle} className="panel-menu-toggle" aria-label={mobile ? open ? 'Ocultar navegación del panel' : 'Mostrar navegación del panel' : compact ? 'Expandir menú lateral' : 'Encoger menú lateral'} title={compact?'Expandir menú lateral':'Encoger menú lateral'} aria-expanded={open} aria-controls="panel-navigation" onClick={toggleNavigation}>
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/>{open && <path d="m8 9-3 3 3 3"/>}</svg>
       </button>
       {!home && <a href="#gestion" className="panel-mobile-back" aria-label="Volver al inicio"><AdminIcon name="back"/></a>}
@@ -139,7 +155,7 @@ export default function AdminFrame({ title, sectionName, navigation, children, v
     </div>
     <nav className="app-bottom-nav" aria-label="Navegación principal" inert={mobile && open}>
       {bottomItems.map(item => item.allowed ? <a key={item.key} href={item.href} aria-current={viewKey === item.key && !(item.key === 'falls' && alertPage) && !open ? 'page' : undefined}><AdminIcon name={item.icon}/><span>{item.label}</span></a> : <span key={item.key} className="app-nav-disabled" aria-disabled="true"><AdminIcon name={item.icon}/><span>{item.label}</span></span>)}
-      <button ref={moreToggle} type="button" aria-label="Más opciones" aria-expanded={open} aria-controls="panel-navigation" data-active={open || moreActive} onClick={() => setOpen(value => !value)}><AdminIcon name="more"/><span>Más</span></button>
+      <button ref={moreToggle} type="button" aria-label="Más opciones" aria-expanded={mobileOpen} aria-controls="panel-navigation" data-active={mobileOpen || moreActive} onClick={()=>setMobileOpen(value=>!value)}><AdminIcon name="more"/><span>Más</span></button>
     </nav>
   </div>
 }

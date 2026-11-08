@@ -18,7 +18,6 @@ import { parseRecurrence, fixedStart } from './recurrence-dates.js'
 import { recurrenceColumns, recurrenceJoins, nearestPublicDate, seriesTemplate, createRecurringActivity, ensureRecurringActivities, reviseFixedActivity, retireFutureDates } from './recurring-activities.js'
 import { recordMemberState } from './member-state-history.js'
 import { pastoralCalendarRouter, publicCalendar } from './pastoral-calendar.js'
-import { statisticsRouter } from './statistics.js'
 import { memberImportRouter } from './member-import.js'
 
 export const managementRouter = Router()
@@ -29,7 +28,7 @@ const memberId = req => req.authUser.memberId || -1
 const groupScopedPermissions=new Set(['gestion.acceder','miembros.ver','miembros.registrar','miembros.editar','miembros.estado','miembros.eliminar',
   'grupos.ver','grupos.editar','grupos.eliminar','eventos.eliminar','asistencia.registrar','asistencia.ver',
   'asistencia.corregir','asistencia.eliminar','alertas.ver','reportes.asistencia','reportes.cumpleanos','reportes.grupos',
-  'ministerios.gestionar','consentimientos.gestionar','reportes.discipulos','estadisticas.ver','seguimiento.gestionar'])
+  'ministerios.gestionar','consentimientos.gestionar','reportes.discipulos','seguimiento.gestionar'])
 const groupFilter = (req,code,alias='g') => scoped(req,code) ? {sql:` AND ${alias}.id_discipulador=?`,params:[memberId(req)]} : {sql:'',params:[]}
 const memberFilter = (req,code,alias='m') => scoped(req,code) ? {sql:` AND (EXISTS(SELECT 1 FROM grupo_comunion sg WHERE sg.id_grupo=${alias}.id_grupo AND sg.id_discipulador=? AND sg.archivado=0) OR (${alias}.id_grupo IS NULL AND ${alias}.id_usuario_creacion=?))`,params:[memberId(req),req.authUser.id]} : {sql:'',params:[]}
 const activityFilter = (req,code,alias='ac') => scoped(req,code) ? {sql:` AND EXISTS(SELECT 1 FROM reunion_grupo sr JOIN grupo_comunion sg ON sg.id_grupo=sr.id_grupo WHERE sr.id_actividad=${alias}.id_actividad AND sg.id_discipulador=? AND sg.archivado=0)`,params:[memberId(req)]} : {sql:'',params:[]}
@@ -147,7 +146,6 @@ const exportLimit=databaseRateLimit({prefix:'exports',maximum:12,key:req=>String
 managementRouter.use((req,res,next)=>req.path.startsWith('/reports/') || /^\/members\/\d+\/excel$/.test(req.path) ? exportLimit(req,res,next) : next())
 managementRouter.use('/mapa',mapRouter)
 managementRouter.use(pastoralCalendarRouter({transaction,currentActor,memberFilter,activityFilter,getMember}))
-managementRouter.use(statisticsRouter({activityFilter,memberFilter,groupFilter,getGroup}))
 managementRouter.use(memberImportRouter({transaction,currentActor,registrationPermission,groupFilter}))
 managementRouter.get('/training/books', requireTraining, async (_req,res) => res.json({items:await trainingBooks()}))
 managementRouter.post('/training/books', requireTraining, async (req,res) => {
@@ -654,10 +652,6 @@ managementRouter.get('/dashboard',async(req,res)=>{
     const [counts]=await pool.execute(`SELECT COUNT(*) AS total FROM grupo_comunion g WHERE g.archivado=0 ${filter.sql}`,filter.params)
     widgets.push({key:'grupos',label:'Grupos registrados',value:counts[0].total})
   }
-  if(can(req,'estadisticas.ver')) {
-    const [counts]=await pool.execute('SELECT estado_asistencia,COUNT(*) AS total FROM asistencia WHERE archivado=0 GROUP BY estado_asistencia')
-    for(const row of counts) widgets.push({key:row.estado_asistencia,label:`Asistencia: ${row.estado_asistencia}`,value:row.total})
-  }
   if(can(req,'alertas.ver')) {
     const filter=memberFilter(req,'alertas.ver')
     const [counts]=await pool.execute(`SELECT COUNT(*) AS total FROM alerta_ausencia al JOIN miembro m ON m.id_miembro=al.id_miembro WHERE al.vigente=1 AND m.archivado=0 ${filter.sql}`,filter.params)
@@ -724,8 +718,8 @@ managementRouter.post('/users/:id/member',requirePermission('usuarios.gestionar'
 })
 managementRouter.get('/permissions',requirePermission('permisos.gestionar'),async(_req,res)=>{
   const [roles]=await pool.execute('SELECT id_rol,nombre FROM rol_sistema WHERE estado=1 ORDER BY nombre')
-  const [permissions]=await pool.execute("SELECT * FROM permiso WHERE codigo<>'sedes.gestionar' ORDER BY codigo")
-  const [grants]=await pool.execute("SELECT * FROM rol_permiso WHERE codigo_permiso<>'sedes.gestionar'")
+  const [permissions]=await pool.execute("SELECT * FROM permiso WHERE codigo NOT IN ('sedes.gestionar','estadisticas.ver') ORDER BY codigo")
+  const [grants]=await pool.execute("SELECT * FROM rol_permiso WHERE codigo_permiso NOT IN ('sedes.gestionar','estadisticas.ver')")
   res.json({roles,permissions:permissions.map(permission=>({...permission,descripcion:permission.descripcion.replace(/\bmiembro(s)?\b/gi,(word,plural)=>`${word[0]==='M'?'Discípulo':'discípulo'}${plural || ''}`),admite_grupo:groupScopedPermissions.has(permission.codigo)})),grants})
 })
 managementRouter.put('/permissions/:roleId',requirePermission('permisos.gestionar'),async(req,res)=>{
@@ -740,6 +734,7 @@ managementRouter.put('/permissions/:roleId',requirePermission('permisos.gestiona
     for(const grant of grants) {
       const code=text(grant.codigo,80,true),scope=choice(grant.alcance,['todos','grupo'])
       if(code==='sedes.gestionar') throw invalid('La plataforma utiliza una sola sede y una sola zona.')
+      if(code==='estadisticas.ver') throw invalid('El módulo de estadísticas fue retirado.')
       if(scope==='grupo' && !groupScopedPermissions.has(code)) throw invalid(`El permiso ${code} requiere alcance general.`)
       if(roles[0].nombre==='Discipulador' && !(code==='adiestramiento.gestionar' && scope==='todos') && (scope!=='grupo' || !groupScopedPermissions.has(code))) throw invalid('El Discipulador debe conservar el alcance de sus grupos.')
       await insert(connection,'rol_permiso',{id_rol:roleId,codigo_permiso:code,alcance:scope})

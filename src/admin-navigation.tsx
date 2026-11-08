@@ -5,7 +5,6 @@ import { canCreateTrainingBooks } from './Training'
 
 const modules = [
   { key: 'dashboard', label: 'Inicio', permissions: ['gestion.acceder'] },
-  { key: 'statistics', label: 'Estadísticas', permissions: ['estadisticas.ver'] },
   { key: 'members', label: 'Discípulos', permissions: ['miembros.ver', 'miembros.editar', 'miembros.registrar'] },
   { key: 'groups', label: 'Grupos de Comunión', permissions: ['grupos.ver'] },
   { key: 'mapa', label: 'Mapa', permissions: ['grupos.ver'] },

@@ -1,4 +1,4 @@
-# Seguimiento, estadísticas, calendario, Excel y formularios
+# Seguimiento, calendario, Excel y formularios
 
 ## Seguimiento pastoral
 
@@ -8,13 +8,11 @@ En **Asistencia y alertas → Alertas** aparecen las alertas por dos ausencias c
 
 Cada cambio comprueba una revisión para evitar sobrescribir cambios de otra persona. Para cerrar un caso debe existir una nota de atención. Las notas no se editan ni se eliminan desde la web; corregir una observación requiere añadir otra nota. Que la alerta de ausencias deje de estar vigente no borra el acompañamiento registrado. La fecha del contacto se introduce en hora de Colombia; una fecha futura se planifica como próximo contacto.
 
-## Estadísticas
+## Navegación de PC
 
-El módulo **Estadísticas** requiere `estadisticas.ver`. Admite un intervalo de hasta 366 días, agrupación semanal o mensual y filtros de grupo y tipo de actividad. Incluye gráficas, comparación con el periodo anterior de igual duración, tabla de valores exactos y comparación entre grupos.
+El menú lateral izquierdo se mantiene fijo debajo del encabezado, con desplazamiento propio si la pantalla es baja. Se abre expandido por defecto en todos los módulos. El botón **Encoger menú lateral** lo reduce a iconos; **Expandir menú lateral** recupera sus etiquetas. La preferencia se conserva por cuenta en el almacenamiento del navegador. El menú móvil mantiene su presentación de Más opciones.
 
-El porcentaje se calcula como **presentes / (presentes + ausentes)**. Justificaciones y visitantes se muestran por separado. Se cuentan exclusivamente registros no archivados de actividades realizadas, no archivadas y no canceladas. No se inventan faltas cuando no se registró asistencia. Los grupos corresponden a la vinculación actual del discípulo y el alcance de consulta se aplica también a las agregaciones.
-
-Con `miembros.ver` se añade la evolución de nuevos discípulos y de estados activos. El historial de estados comienza al aplicar la migración 020; los valores anteriores se muestran sin historial, en lugar de reconstruir estados que no se conocen. Nuevos registros, cambios de estado y archivos guardan su estado dentro de la misma transacción. Los registros anteriores a la actualización conservan sus datos; la migración solo añade una referencia de su estado actual.
+El módulo de estadísticas, sus gráficas y su API fueron retirados. Los datos e historiales existentes se conservan; esta retirada no requiere borrar ni migrar tablas.
 
 ## Calendario
 
@@ -46,7 +44,6 @@ La mejora no introduce avances, lecciones, evaluaciones ni cambios al módulo de
 
 | Ruta | Operación |
 | --- | --- |
-| `GET /api/management/statistics` | `from`, `to`, `interval=week\|month`, `groupId`, `type`. |
 | `GET /api/management/pastoral/cases` | `state`, `q`, `page`; casos dentro del alcance. |
 | `GET /api/management/pastoral/cases/:id` | Ficha, permisos efectivos y notas; `before` pagina contactos. |
 | `PATCH /api/management/pastoral/cases/:id` | `revision`, `estado`, `id_responsable`, `proximo_contacto`, `note?: {tipo,detalle,fecha}`. |
@@ -58,4 +55,4 @@ La mejora no introduce avances, lecciones, evaluaciones ni cambios al módulo de
 
 Respaldar Aiven antes de aplicar `020-pastoral-followup.sql` con la cuenta administrativa. Añade `seguimiento_pastoral`, `nota_seguimiento`, `historial_estado_miembro` y un permiso. No elimina datos. Para la cuenta limitada de Vercel se necesitan `SELECT,INSERT,UPDATE` en seguimiento y `SELECT,INSERT` en notas e historial. Las conexiones de la aplicación fijan su sesión MySQL a UTC; la interfaz muestra horarios de Colombia.
 
-Verificación: `npm run test:community-tools:ui`. Usa MySQL local temporal, APIs reales y navegador, sin correos reales. Incluye límites, duplicados, permisos de grupo y de solo lectura, concurrencia, rollback, historial, calendario público/privado, gráficas, corrección de Excel y pantallas de 320 a 1440 píxeles.
+Verificación: `npm run test:community-tools:ui`. Usa MySQL local temporal, APIs reales y navegador, sin correos reales. Incluye navegación fija/compacta, límites, duplicados, permisos de grupo y de solo lectura, concurrencia, rollback, historial, calendario público/privado, corrección de Excel y pantallas de 320 a 1440 píxeles.

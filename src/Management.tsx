@@ -22,7 +22,6 @@ import { downloadReport } from './report-download'
 import ValidatedForm, { reportFormErrors, requestFieldErrors } from './ValidatedForm'
 const CoverageMap = lazy(() => import('./CoverageMap'))
 const EventCalendar = lazy(() => import('./EventCalendar'))
-const Statistics = lazy(() => import('./Statistics'))
 const PastoralFollowup = lazy(() => import('./PastoralFollowup'))
 const MemberImport = lazy(() => import('./MemberImport'))
 
@@ -579,7 +578,7 @@ export default function Management() {
   const tabs = allowedModules(user).filter(module => module.key !== 'users')
   const tab = tabs.some(module => module.key === requestedTab) ? requestedTab : tabs[0]?.key || ''
   const navigation = <AdminNavigation user={user} active={tab} onSelect={key => { setRequestedTab(key); setMessage(''); window.location.hash = `#gestion/${key}` }}/>
-  return <AdminFrame title={tab === 'dashboard' ? 'Mi comunidad' : tabs.find(module => module.key === tab)?.label || 'Gestión de la comunidad'} sectionName={user?.state === 'pendiente' ? 'Activación de la cuenta' : tabs.find(module => module.key === tab)?.label || 'Comunidad'} navigation={navigation} viewKey={user?.state === 'pendiente' ? 'pending' : tab} user={user} onUserChange={setUser} compactNavigation={checking || tab === 'dashboard'}>
+  return <AdminFrame title={tab === 'dashboard' ? 'Mi comunidad' : tabs.find(module => module.key === tab)?.label || 'Gestión de la comunidad'} sectionName={user?.state === 'pendiente' ? 'Activación de la cuenta' : tabs.find(module => module.key === tab)?.label || 'Comunidad'} navigation={navigation} viewKey={user?.state === 'pendiente' ? 'pending' : tab} user={user} onUserChange={setUser}>
     <div className="management-shell">
     <div className="manage-message" role="status" aria-live="polite">{message || error}</div>
     {checking ? <p>Verificando acceso…</p> : user?.state === 'pendiente' ? <section className="manage-editor manage-activation" aria-labelledby="activation-title">
@@ -592,7 +591,6 @@ export default function Management() {
     </section> : !user || !has(user, 'gestion.acceder') ? <p>Necesitas una cuenta con un rol autorizado. <a href="#login">Ir a mi cuenta</a></p> : <>
       <div className="manage-session"><span className="manage-session-dot"/><span>{user.roles.join(', ')}</span><span>Al servicio de nuestra comunidad</span></div>
       {tab === 'dashboard' && <Dashboard key={accessKey} user={user} />}
-      {tab==='statistics'&&<Suspense fallback={<p>Cargando estadísticas…</p>}><Statistics key={accessKey}/></Suspense>}
       {tab === 'training' && <Training books={catalogs.libros || []} onReload={reloadCatalogs} notify={setMessage} canSeeMembers={has(user, 'miembros.ver')}/>}
       {tab === 'mapa' && <Suspense fallback={<p>Cargando mapa de zonas…</p>}><CoverageMap key={accessKey} user={user}/></Suspense>}
       {(['members', 'groups', 'activities'] as const).map(resource => tab === resource && <Records key={`${resource}-${accessKey}`} resource={resource} user={user} catalogs={catalogs} reloadCatalogs={reloadCatalogs} notify={setMessage} />)}

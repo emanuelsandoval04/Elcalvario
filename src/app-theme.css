@@ -195,7 +195,10 @@
 .group-detail-actions > :nth-child(3) .dashboard-card-icon { background:#9347ff; }
 .group-detail-actions > :is(button,a) > svg:last-child { width:14px; height:14px; margin-left:auto; color:#a3abb7; }
 @media(min-width:901px) {
-  .admin-workspace[data-navigation-compact=true] .panel-sidebar-inner { width:80px; padding:25px 12px; }
+  .admin-workspace .panel-main { grid-column:2; }
+  .admin-workspace .panel-sidebar { position:fixed; top:var(--panel-header-height,76px); bottom:0; left:0; z-index:40; width:var(--panel-nav-width); overflow-x:hidden; overflow-y:auto; overscroll-behavior:contain; scrollbar-width:thin; }
+  .admin-workspace .panel-sidebar-inner { position:static; width:100%; min-height:calc(100dvh - var(--panel-header-height,76px)); }
+  .admin-workspace[data-navigation-compact=true] .panel-sidebar-inner { width:100%; padding:25px 12px; }
   .admin-workspace[data-navigation-compact=true] :is(.panel-sidebar-heading,.panel-sidebar-signature,.app-install) { display:none; }
   .admin-workspace[data-navigation-compact=true] .panel-nav :is(button,a) { padding:14px; justify-content:center; gap:0; }
   .admin-workspace[data-navigation-compact=true] .panel-nav :is(button,a) > span:not(.panel-click-wave) { position:absolute; width:1px; height:1px; clip-path:inset(50%); overflow:hidden; white-space:nowrap; }

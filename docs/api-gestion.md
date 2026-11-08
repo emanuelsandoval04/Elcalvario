@@ -1,6 +1,6 @@
 # API de gestión
 
-Las rutas de seguimiento pastoral, estadísticas, calendario e importación Excel, sus permisos y la migración 020 se documentan en [Herramientas de la comunidad](herramientas-comunidad.md).
+Las rutas de seguimiento pastoral, calendario e importación Excel, sus permisos y la migración 020 se documentan en [Herramientas de la comunidad](herramientas-comunidad.md). El módulo de estadísticas fue retirado y su ruta ya no está disponible.
 
 Los cultos y eventos admiten `recurrence: {dayOfWeek:0..6,until:null|"YYYY-MM-DD"}` al crearse o al convertir una actividad individual sin asistencia. Cada fecha se guarda por separado; la agenda y los avisos muestran el próximo encuentro. La edición admite `edit_scope:'single'|'following'` y `POST /api/management/activities/:id/recurrence/stop` detiene futuras fechas sin borrar historial. Ver [permisos, migración 019 y pruebas](eventos-recurrentes.md).
 

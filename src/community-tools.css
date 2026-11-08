@@ -68,21 +68,6 @@ html body .event-calendar .calendar-agenda-event { display:flex; align-items:cen
 .event-calendar .calendar-detail { padding:20px; margin-top:18px; border:1px solid #f3dcc8; border-radius:12px; background:#fffbf7; }
 .public-agenda-toggle { display:flex; justify-content:center; margin-bottom:24px; }
 .public-agenda-toggle button { min-height:44px; padding:12px 20px; border:1px solid #efd5c1; border-radius:12px; background:#fff8f2; color:#a85d2e; font:inherit; font-size:13px; cursor:pointer; }
-.statistics-summary { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:14px; }
-.statistics-summary article { min-width:0; padding:20px; border:1px solid #e3e9f1; border-radius:16px; background:#fff; }
-.statistics-summary article :is(small,strong,span) { display:block; }
-.statistics-summary small { color:#7a8799; font-size:11px; line-height:1.6; }
-.statistics-summary strong { margin:10px 0; color:#29384e; font-size:28px; letter-spacing:-.04em; }
-.statistics-summary span { color:#909bac; font-size:11px; line-height:1.7; }
-.statistics-chart { min-width:0; margin-top:24px; padding:20px; border:1px solid #e3e9f1; border-radius:16px; background:#fff; }
-.statistics-chart svg { display:block; width:100%; height:auto; margin-top:16px; }
-.statistics-chart svg text { fill:#8994a5; font-size:11px; font-family:inherit; }
-.chart-legend { display:flex; flex-wrap:wrap; gap:16px; }
-.chart-legend > span { display:flex; align-items:center; gap:6px; color:#7b889a; font-size:11px; }
-.chart-legend i { display:block; width:8px; height:8px; border-radius:50%; }
-.statistics-data { margin:24px 0; }
-.statistics-data summary { padding:14px 0; color:#627490; font-size:13px; cursor:pointer; }
-.statistics-groups { margin-top:28px; }
 .pastoral-layout { display:grid; grid-template-columns:minmax(220px,.7fr) minmax(0,1.3fr); align-items:start; gap:22px; }
 .pastoral-case-list { display:grid; gap:12px; min-width:0; }
 html body .pastoral-page .pastoral-case { display:grid; grid-template-columns:minmax(0,1fr); align-items:start; justify-content:stretch; justify-items:start; gap:8px; width:100%; padding:18px; border:1px solid #e2e8f1; border-radius:15px; background:#fff; color:#53637a; text-align:left; box-shadow:none; }
@@ -116,7 +101,6 @@ html body .pastoral-page .pastoral-case.is-selected { border-color:#f1b58b; back
 .member-import .import-row-errors { margin:0 0 8px; padding-left:16px; color:#b15263; font-size:11px; }
 .member-import .import-confirm p { margin:16px 0; font-size:12px; }
 @media(max-width:1100px) {
-  .statistics-summary { grid-template-columns:repeat(2,minmax(0,1fr)); }
   .pastoral-layout { grid-template-columns:minmax(0,1fr); }
   .pastoral-case-list { grid-template-columns:repeat(2,minmax(0,1fr)); }
   .pastoral-case-list > p { grid-column:1/-1; }
@@ -139,10 +123,6 @@ html body .pastoral-page .pastoral-case.is-selected { border-color:#f1b58b; back
   .event-calendar .is-week .calendar-date { display:flex; justify-content:flex-start; gap:10px; }
   .event-calendar .is-week .calendar-date > span { display:inline; }
   .event-calendar .is-week .calendar-day-events { display:grid; }
-  .statistics-summary { gap:10px; }
-  .statistics-summary article { padding:16px 12px; }
-  .statistics-summary strong { font-size:24px; }
-  .statistics-chart { padding:16px 10px; }
   .pastoral-case-list { grid-template-columns:minmax(0,1fr); }
   .pastoral-editor,.member-import :is(.import-source,.import-editor,.import-confirm) { padding:20px 16px; }
   .community-tool .tool-actions > button { flex:1 1 100%; }

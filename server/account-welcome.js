@@ -26,7 +26,6 @@ export function accountCapabilities(user) {
     'asistencia.ver': 'Consultar asistencia',
     'asistencia.corregir': 'Corregir registros de asistencia',
     'asistencia.eliminar': 'Archivar registros de asistencia',
-    'estadisticas.ver': 'Consultar las estadísticas disponibles',
     'alertas.ver': 'Consultar alertas de acompañamiento pastoral',
     'seguimiento.gestionar': 'Asignar responsables y registrar llamadas, visitas y notas de acompañamiento pastoral',
     'reportes.asistencia': 'Exportar reportes de asistencia',

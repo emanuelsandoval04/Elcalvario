@@ -52,26 +52,15 @@ try {
   async function attend(activityId,memberId,state='ausente'){await db.execute('INSERT INTO asistencia(id_actividad,id_miembro,id_usuario_registro,estado_asistencia) VALUES (?,?,?,?)',[activityId,memberId,ownerId,state])}
   const a1=await activity('Reunión A anterior',-8,gA.insertId),a2=await activity('Reunión A reciente',-1,gA.insertId),b1=await activity('Reunión B anterior',-8,gB.insertId),b2=await activity('Reunión B reciente',-1,gB.insertId),older=await activity('Periodo anterior',-18,gA.insertId)
   await attend(a1,personA);await attend(a2,personA);await attend(b1,personB);await attend(b2,personB);await attend(a1,otherA,'presente');await attend(a1,null,'visitante');await attend(older,personA,'presente')
-  const q=new URLSearchParams({from:addDays(today,-10),to:today,interval:'week'})
-  await request(`management/statistics?${q}`,{status:401})
-  await request(`management/statistics?${q}`,{cookie:basic.cookie,status:403})
-  await request(`management/statistics?${q}`,{cookie:discipleA.cookie,status:403})
-  let stats=(await request(`management/statistics?${q}`,{cookie:owner.cookie})).data
-  assert.equal(stats.summary.presente,1);assert.equal(stats.summary.ausente,4);assert.equal(stats.summary.visitante,1);assert.equal(stats.summary.percentage,20);assert.equal(stats.previous.percentage,100)
-  assert.equal(stats.series.reduce((sum,p)=>sum+p.total,0),6);assert.equal(stats.groups.length,3)
-  assert.ok(stats.series.filter(row=>row.to<stats.baseline).every(row=>row.active===null),'Unknown historical states must not be invented.')
-  await db.execute("INSERT INTO rol_permiso(id_rol,codigo_permiso,alcance) SELECT id_rol,'estadisticas.ver','grupo' FROM rol_sistema WHERE nombre='Discipulador'")
+  await request('management/statistics',{cookie:owner.cookie,status:404})
+  const permissionCatalog=(await request('management/permissions',{cookie:owner.cookie})).data
+  assert.ok(!permissionCatalog.permissions.some(permission=>permission.codigo==='estadisticas.ver'))
   await db.execute("INSERT INTO rol_permiso(id_rol,codigo_permiso,alcance) SELECT id_rol,'alertas.ver','grupo' FROM rol_sistema WHERE nombre='Discipulador'")
   await db.execute("INSERT INTO rol_permiso(id_rol,codigo_permiso,alcance) SELECT id_rol,'seguimiento.gestionar','grupo' FROM rol_sistema WHERE nombre='Discipulador'")
-  stats=(await request(`management/statistics?${q}`,{cookie:discipleA.cookie})).data
-  assert.equal(stats.summary.ausente,2);assert.equal(stats.summary.presente,1);assert.ok(!stats.groupOptions.some(group=>group.id_grupo===gB.insertId))
-  await request(`management/statistics?${q}&groupId=${gB.insertId}`,{cookie:discipleA.cookie,status:404})
-  await request(`management/statistics?from=${addDays(today,-500)}&to=${today}`,{cookie:owner.cookie,status:400})
-  await request(`management/statistics?from=${today}&to=${addDays(today,1)}`,{cookie:owner.cookie,status:400})
   await request(`management/members/${personA}/state`,{cookie:owner.cookie,body:{estado_miembro:'inactivo'}})
   await request(`management/members/${personA}/state`,{cookie:owner.cookie,body:{estado_miembro:'activo'}})
   assert.equal((await db.execute('SELECT COUNT(*) AS total FROM historial_estado_miembro WHERE id_miembro=?',[personA]))[0][0].total,3)
-  console.log('PASS statistics: real/previous totals, registered-attendance percentages, empty buckets, scope intersection, group filters and honest state history.')
+  console.log('PASS removed statistics: route unavailable, permission hidden and member state history retained.')
 
   let cases=(await request('management/pastoral/cases',{cookie:owner.cookie})).data.items
   const caseA=cases.find(row=>row.id_miembro===personA),caseB=cases.find(row=>row.id_miembro===personB)
@@ -158,7 +147,17 @@ try {
     await context.route('**/api/**',async route=>{const url=new URL(route.request().url());const response=await route.fetch({url:origin+url.pathname+url.search});await route.fulfill({response})})
     const page=await context.newPage(),errors=[];page.on('pageerror',error=>errors.push(error.message))
     await page.goto(ui+'/#login');await page.getByLabel('Correo electrónico',{exact:true}).fill('owner@example.invalid');await page.getByLabel('Contraseña',{exact:true}).fill(password);await page.getByRole('button',{name:'Iniciar sesión',exact:true}).click();await page.locator('#dashboard-title').waitFor()
-    await page.goto(ui+'/#gestion/statistics');await page.getByRole('heading',{name:'Asistencia por periodo',exact:true}).waitFor();assert.equal(await page.locator('.statistics-chart svg').count(),2)
+    assert.equal(await page.locator('.panel-nav').getByText('Estadísticas',{exact:true}).count(),0)
+    await page.waitForFunction(()=>document.querySelector('.admin-workspace')?.getAttribute('data-navigation-open')==='true')
+    assert.equal(await page.locator('.panel-sidebar').evaluate(node=>getComputedStyle(node).position),'fixed')
+    const initialSidebar=await page.locator('.panel-sidebar').boundingBox()
+    await page.evaluate(()=>window.scrollTo(0,document.body.scrollHeight));assert.equal((await page.locator('.panel-sidebar').boundingBox()).y,initialSidebar.y)
+    await page.getByRole('button',{name:'Encoger menú lateral',exact:true}).click()
+    await page.waitForFunction(()=>document.querySelector('.admin-workspace')?.getAttribute('data-navigation-compact')==='true')
+    assert.ok((await page.locator('.panel-sidebar').boundingBox()).width<initialSidebar.width)
+    await page.goto(ui+'/#usuarios');await page.getByRole('heading',{name:'Administración de cuentas',exact:true}).waitFor();await page.waitForFunction(()=>document.querySelector('.admin-workspace')?.getAttribute('data-navigation-compact')==='true')
+    await page.reload();await page.getByRole('heading',{name:'Administración de cuentas',exact:true}).waitFor();await page.waitForFunction(()=>document.querySelector('.admin-workspace')?.getAttribute('data-navigation-compact')==='true')
+    await page.getByRole('button',{name:'Expandir menú lateral',exact:true}).click();await page.goto(ui+'/#gestion');await page.locator('#dashboard-title').waitFor();await page.waitForFunction(()=>document.querySelector('.admin-workspace')?.getAttribute('data-navigation-open')==='true')
     await page.goto(ui+'/#gestion/falls/alertas');await page.getByRole('button').filter({hasText:'Persona B'}).click();await page.getByLabel('Registrar una llamada, visita o nota').check();await page.getByLabel('Resultado y observaciones').fill('Visita registrada desde el navegador.');await page.getByRole('button',{name:'Guardar seguimiento',exact:true}).click();await page.getByRole('status').filter({hasText:'Seguimiento guardado.'}).waitFor();await page.getByText('Visita registrada desde el navegador.',{exact:true}).waitFor()
     await page.goto(ui+'/#gestion/activities');await page.getByRole('button',{name:'Calendario',exact:true}).click();await page.locator('.calendar-event').filter({hasText:'Encuentro visual'}).click();await page.getByRole('heading',{name:'Encuentro visual',exact:true}).waitFor()
     await page.goto(ui+'/#gestion/members');await page.getByRole('button',{name:'Registrar discípulo',exact:true}).click();await page.getByRole('button',{name:/Continuar/}).click();await page.locator('.form-error-summary').waitFor();assert.equal(await page.locator('.form-error-summary').evaluate(node=>node===document.activeElement),true)
@@ -171,7 +170,7 @@ try {
     await page.getByRole('button',{name:'Revisar archivo',exact:true}).click();await page.getByRole('button',{name:'Corregir fila 3',exact:true}).click();await page.locator('.import-editor').getByLabel('Celular *',{exact:true}).fill('3001112233');await page.getByRole('button',{name:'Guardar corrección y validar',exact:true}).click();await page.getByText('2 filas · 2 válidas · 0 con errores.',{exact:false}).waitFor()
     for(const width of [1440,390,320]){await page.setViewportSize({width,height:1000});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);await page.screenshot({path:`checks/tools-import-${width}.png`,fullPage:true})}
     await page.getByLabel('Revisé las filas seleccionadas y confirmo la creación de sus fichas.').check();await page.getByRole('button',{name:'Importar 2 discípulos',exact:true}).click();await page.getByRole('status').filter({hasText:'2 discípulos importados.'}).waitFor()
-    for(const [path,ready,name] of [['#gestion/statistics','.statistics-chart','statistics'],['#gestion/falls/alertas','.pastoral-case','pastoral'],['#gestion/members','.record-create','members']]) {
+    for(const [path,ready,name] of [['#gestion','.dashboard-home','dashboard'],['#gestion/falls/alertas','.pastoral-case','pastoral'],['#gestion/members','.record-create','members']]) {
       await page.goto(ui+'/'+path);await page.locator(ready).first().waitFor()
       if(name==='pastoral'){await page.getByRole('button').filter({hasText:'Persona B'}).click();await page.getByRole('button',{name:'Guardar seguimiento',exact:true}).waitFor()}
       for(const width of [1440,1024,768,390,320]){await page.setViewportSize({width,height:1000});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false,`${name} at ${width}`);if([1440,390,320].includes(width))await page.screenshot({path:`checks/tools-${name}-${width}.png`,fullPage:true})}
@@ -181,7 +180,7 @@ try {
     await page.getByRole('button',{name:'Semana',exact:true}).click();assert.equal(await page.locator('.calendar-day').count(),7)
     await page.goto(ui+'/#eventos');await page.getByRole('button',{name:'Ver calendario de encuentros',exact:true}).click();await page.locator('.public-calendar').waitFor();assert.equal(await page.locator('.public-calendar').getByText('Evento privado invisible',{exact:true}).count(),0)
     assert.deepEqual(errors,[])
-    console.log('PASS UI: live local APIs, graphs, contacts, calendar/detail, accessible field validation, real XLSX correction/confirmation and responsive layouts at 320-1440px.')
+    console.log('PASS UI: fixed expanded desktop sidebar, optional compact mode/persistence, statistics removed, contacts, calendar, field validation, Excel and 320-1440px layouts.')
   }
   await request(`auth/admin/users/${discipleA.data.user.id}`,{cookie:owner.cookie,method:'DELETE',body:{action:'delete',expectedEmail:discipleA.data.user.email,expectedState:'activo'}})
   const retained=(await request(`management/pastoral/cases/${caseA.id_alerta}`,{cookie:owner.cookie})).data
