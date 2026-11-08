@@ -1,5 +1,6 @@
 import AppSelect from './AppSelect'
 import ProfilePhoto from './ProfilePhoto'
+import DiscipleConsent from './DiscipleConsent'
 import { lazy, Suspense, useEffect, useId, useRef, useState } from 'react'
 import type { FormEvent, ReactNode } from 'react'
 import { authRequest, hasPermission, useAuthSession } from './auth'
@@ -302,7 +303,6 @@ function Records({ resource, user, catalogs, reloadCatalogs, notify }: { resourc
 function MemberDetail({ row, user, catalogs, reloadCatalogs, notify, onSaved, onClose }: { row: Row; user: AuthUser; catalogs: Catalogs; reloadCatalogs: () => Promise<void>; notify: Message; onSaved: () => Promise<void>; onClose: () => void }) {
   const [ministries, setMinistries] = useState<number[]>([])
   const [history, setHistory] = useState<Row[]>([])
-  const [consents, setConsents] = useState<Row[]>([])
   const [coverageOptions, setCoverageOptions] = useState<Option[]>([])
   const [state, setState] = useState(String(row.estado_miembro))
   const [exporting, setExporting] = useState(false)
@@ -310,7 +310,6 @@ function MemberDetail({ row, user, catalogs, reloadCatalogs, notify, onSaved, on
     try {
       const [membership, changes] = await Promise.all([api<{ items: Row[] }>(`members/${row.id_miembro}/ministries`), api<{ items: Row[] }>(`members/${row.id_miembro}/history`)])
       setMinistries(membership.items.map(item => Number(item.id_ministerio))); setHistory(changes.items)
-      if (has(user, 'consentimientos.gestionar')) setConsents((await api<{ items: Row[] }>(`members/${row.id_miembro}/consents`)).items)
       if (has(user, 'grupos.editar') && user.permissions['grupos.editar'] === 'todos') {
         const people = (await api<{ items: Row[] }>('members')).items
         setCoverageOptions(people.filter(person => person.id_miembro !== row.id_miembro).map(person => ({ value: Number(person.id_miembro), label: `${person.nombres} ${person.apellidos || ''}`.trim() })))
@@ -334,16 +333,7 @@ function MemberDetail({ row, user, catalogs, reloadCatalogs, notify, onSaved, on
     {has(user, 'ministerios.gestionar') && user.registration?.canAssignServices && <button onClick={() => void api(`members/${row.id_miembro}/ministries`, { ids: ministries }, 'PUT').then(() => notify('Ministerios guardados.')).catch(error => notify(errorMessage(error)))}>Guardar ministerios</button>}
     <h4>Historial de grupo y cobertura</h4>{history.length ? history.map(item => <p key={item.id_historial}>{item.concepto}: {item.id_anterior || 'Sin asignar'} → {item.id_nuevo || 'Sin asignar'} · {item.fecha_cambio}</p>) : <p>Sin cambios registrados.</p>}
     {canManageCoverage(user) && catalogs.roles.some(role => role.id_rol_eclesiastico === row.id_rol_eclesiastico && Number(role.nivel_jerarquico) === 6) && <CoverageAssignments id={Number(row.id_miembro)} name={`${row.nombres} ${row.apellidos || ''}`} user={user}/>}
-    {has(user, 'consentimientos.gestionar') && <><h4>Consentimiento de datos</h4><p>Registra la evidencia de la autorización en papel o digital.</p>
-      {consents.map(item => <p key={item.id_consentimiento}>Versión {item.version_politica} · {item.medio} · {item.estado_consentimiento}</p>)}
-      <DataForm fields={[
-        { key: 'version_politica', label: 'Versión de la política', required: true, max: 50 },
-        { key: 'medio', label: 'Medio', required: true, options: options(['papel', 'digital']) },
-        { key: 'estado_consentimiento', label: 'Estado del consentimiento', required: true, options: options(['aceptado', 'revocado', 'pendiente']) },
-        { key: 'acepta_politica_privacidad', label: 'Acepta política de privacidad', type: 'checkbox' }, { key: 'acepta_datos_religiosos', label: 'Autoriza datos religiosos', type: 'checkbox' },
-        { key: 'fecha_aceptacion', label: 'Fecha de aceptación (Colombia)', type: 'datetime-local' }, { key: 'fecha_revocacion', label: 'Fecha de revocación (Colombia)', type: 'datetime-local' },
-      ]} onSave={async values => { const timestamp = (value: string | number | null) => value ? new Date(`${value}:00-05:00`).toISOString() : null; await api(`members/${row.id_miembro}/consents`, { ...values, fecha_aceptacion: timestamp(values.fecha_aceptacion), fecha_revocacion: timestamp(values.fecha_revocacion) }); notify('Consentimiento registrado.'); await loadDetails() }} label="Registrar consentimiento" />
-    </>}
+    <DiscipleConsent memberId={Number(row.id_miembro)} sensitive={has(user, 'miembros.sensibles')} notify={notify}/>
   </aside>
 }
 

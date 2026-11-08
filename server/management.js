@@ -19,6 +19,7 @@ import { recurrenceColumns, recurrenceJoins, nearestPublicDate, seriesTemplate, 
 import { recordMemberState } from './member-state-history.js'
 import { pastoralCalendarRouter, publicCalendar } from './pastoral-calendar.js'
 import { memberImportRouter } from './member-import.js'
+import { discipleConsentRouter } from './disciple-consent.js'
 
 export const managementRouter = Router()
 export const publicRouter = Router()
@@ -143,10 +144,11 @@ publicCalendar(publicRouter)
 
 managementRouter.use(protectMutation,requireSession,requirePermission('gestion.acceder'))
 const exportLimit=databaseRateLimit({prefix:'exports',maximum:12,key:req=>String(req.authUser.id),message:'Has solicitado varios reportes. Espera unos minutos antes de descargar más.'})
-managementRouter.use((req,res,next)=>req.path.startsWith('/reports/') || /^\/members\/\d+\/excel$/.test(req.path) ? exportLimit(req,res,next) : next())
+managementRouter.use((req,res,next)=>req.path.startsWith('/reports/') || /^\/members\/\d+\/(excel|consent\.pdf)$/.test(req.path) ? exportLimit(req,res,next) : next())
 managementRouter.use('/mapa',mapRouter)
 managementRouter.use(pastoralCalendarRouter({transaction,currentActor,memberFilter,activityFilter,getMember}))
 managementRouter.use(memberImportRouter({transaction,currentActor,registrationPermission,groupFilter}))
+managementRouter.use(discipleConsentRouter({transaction,currentActor,getMember,cleanMember}))
 managementRouter.get('/training/books', requireTraining, async (_req,res) => res.json({items:await trainingBooks()}))
 managementRouter.post('/training/books', requireTraining, async (req,res) => {
   const name=text(req.body?.nombre,150,true), description=text(req.body?.descripcion,2000)
@@ -672,30 +674,6 @@ managementRouter.get('/dashboard',async(req,res)=>{
     widgets.push({key:'eventos',label:'próximos encuentros',value:counts[0].total})
   }
   res.json({provisional:true,widgets})
-})
-managementRouter.get('/members/:id/consents',requirePermission('consentimientos.gestionar'),async(req,res)=>{
-  const member=await getMember(req,req.params.id,'consentimientos.gestionar')
-  const [items]=await pool.execute('SELECT * FROM consentimiento_datos WHERE id_miembro=? ORDER BY fecha_registro DESC',[member.id_miembro])
-  res.json({items})
-})
-managementRouter.post('/members/:id/consents',requirePermission('consentimientos.gestionar'),async(req,res)=>{
-  const member=await getMember(req,req.params.id,'consentimientos.gestionar')
-  const body=req.body
-  const state=choice(body.estado_consentimiento,['aceptado','revocado','pendiente'])
-  const timestamp=value=>{
-    if(!value)return null
-    if(typeof value!=='string' || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{3})?Z$/.test(value) || !Number.isFinite(Date.parse(value))) throw invalid('Fecha de consentimiento inválida.')
-    date(value.slice(0,10))
-    return new Date(value)
-  }
-  const values={id_miembro:member.id_miembro,version_politica:text(body.version_politica,50,true),
-    acepta_politica_privacidad:boolean(body.acepta_politica_privacidad),acepta_datos_religiosos:boolean(body.acepta_datos_religiosos),
-    medio:choice(body.medio,['papel','digital']),estado_consentimiento:state,
-    fecha_aceptacion:timestamp(body.fecha_aceptacion),fecha_revocacion:timestamp(body.fecha_revocacion)}
-  if(state==='aceptado' && !values.fecha_aceptacion) throw invalid('Indica la fecha de aceptación.')
-  if(state==='revocado' && !values.fecha_revocacion) throw invalid('Indica la fecha de revocación.')
-  if(values.fecha_revocacion && values.fecha_aceptacion && values.fecha_revocacion<values.fecha_aceptacion) throw invalid('La revocación no puede preceder a la aceptación.')
-  res.status(201).json({id:await insert(pool,'consentimiento_datos',values)})
 })
 managementRouter.post('/users/:id/member',requirePermission('usuarios.gestionar'),async(req,res)=>{
   const id=identifier(req.params.id), linkedId=identifier(req.body?.memberId,true)

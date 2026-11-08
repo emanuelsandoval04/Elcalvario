@@ -1,0 +1,32 @@
+.disciple-consent { margin-top:28px; padding:24px; border:1px solid #dfe5ed; border-radius:16px; background:#fff; min-width:0; color:#263145; }
+.disciple-consent .consent-heading { display:flex; align-items:flex-start; justify-content:space-between; flex-wrap:wrap; gap:16px; }
+.disciple-consent h4 { margin:0 0 8px; }
+.disciple-consent p { font-size:13px; line-height:1.7; color:#627186; overflow-wrap:anywhere; }
+.disciple-consent .consent-badge { display:inline-flex; align-items:center; gap:7px; padding:8px 12px; border:1px solid; border-radius:20px; font-size:12px; font-weight:700; line-height:1.5; }
+.disciple-consent .is-signed { color:#16603d; background:#eaf7ef; border-color:#a7d6b9; }
+.disciple-consent .is-missing { color:#a02638; background:#fff0f2; border-color:#edbdc4; }
+.disciple-consent .consent-date { padding:14px 0; border-block:1px solid #edf0f4; }
+.disciple-consent .consent-download { padding-block:8px 16px; }
+.disciple-consent .consent-upload { padding:20px; border-radius:12px; background:#f6f8fb; }
+.disciple-consent fieldset { display:flex; flex-direction:column; align-items:stretch; gap:14px; border:0; padding:0; margin:0; min-width:0; }
+.disciple-consent legend { margin-bottom:14px; padding:0; font-size:15px; font-weight:700; }
+.disciple-consent label { font-size:13px; line-height:1.7; }
+.disciple-consent input[type=file] { width:100%; max-width:100%; padding:12px; border:1px dashed #c5cfdd; border-radius:10px; background:white; box-sizing:border-box; font:inherit; font-size:12px; }
+.disciple-consent input::file-selector-button { padding:8px; margin-right:10px; border:0; border-radius:6px; background:#e9eef5; color:#263145; }
+.disciple-consent .consent-decisions { display:grid; gap:12px; padding-block:10px; border-block:1px solid #e1e7ef; }
+.disciple-consent .consent-decisions p { margin:0; }
+.disciple-consent :is(.consent-decisions label,.consent-confirm) { display:flex; align-items:flex-start; gap:10px; }
+html body .disciple-consent input[type=checkbox] { flex:0 0 18px; width:18px; height:18px; min-height:18px; margin:3px 0 0; accent-color:#ec661c; }
+.disciple-consent .consent-files { display:flex; flex-wrap:wrap; gap:14px; list-style:none; padding:0; margin:0; }
+.disciple-consent .consent-files li { display:flex; flex-direction:column; gap:8px; min-width:0; max-width:160px; font-size:12px; overflow-wrap:anywhere; }
+.disciple-consent .consent-files img { width:100%; height:160px; object-fit:contain; border:1px solid #dfe5ed; background:white; }
+.disciple-consent .consent-history { margin-top:22px; font-size:13px; }
+.disciple-consent summary { cursor:pointer; padding:12px 0; font-weight:650; }
+.disciple-consent .consent-history ul { list-style:none; padding:0; margin:0; }
+.disciple-consent .consent-history li { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; padding:16px 0; border-top:1px solid #edf0f4; }
+.disciple-consent .consent-history p { margin:5px 0 0; }
+.disciple-consent .consent-revoke { display:flex; flex-wrap:wrap; gap:10px; margin-top:16px; }
+.disciple-consent .consent-revoke p { flex-basis:100%; }
+html body .disciple-consent button { min-height:44px; max-width:100%; white-space:normal; overflow-wrap:anywhere; line-height:1.6; }
+.disciple-consent .consent-error { padding:14px; border-radius:10px; background:#fff0f2; color:#a02638; }
+@media(max-width:600px) { .disciple-consent { padding:16px; } .disciple-consent .consent-upload { padding:14px; } .disciple-consent .consent-download button,.disciple-consent fieldset>button { width:100%; } }
