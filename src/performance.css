@@ -1,0 +1,24 @@
+/* Mobile navigation and overlays use opaque surfaces to avoid full-screen blur work. */
+@media (max-width: 900px), (pointer: coarse) {
+  .nav-capsule, .mobile-navigation,
+  .admin-workspace .panel-topbar, .admin-workspace .panel-sidebar,
+  .admin-workspace .panel-backdrop, .admin-workspace .app-bottom-nav,
+  .account-overlay, .participation-dialog::backdrop, .event-image-label, .slideshow-pause {
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
+  .nav-capsule, .mobile-navigation, .admin-workspace .panel-topbar,
+  .admin-workspace .panel-sidebar, .admin-workspace .app-bottom-nav { background-color: #fff; }
+  .login-page .login-input-wrap input { font-size: 16px; }
+}
+
+.screen-feedback { display: grid; justify-items: center; align-content: center; gap: 16px; min-height: 70svh; padding: 120px 24px 48px; text-align: center; }
+.screen-feedback h1 { font-size: clamp(24px, 5vw, 36px); }
+.screen-feedback p { margin: 0; }
+.screen-feedback button { border: 0; border-radius: 12px; padding: 14px 20px; background: #ef5726; color: #171717; font: inherit; font-weight: 700; cursor: pointer; }
+.screen-feedback a { color: #a53715; }
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .hero-slide { transition: none; }
+}

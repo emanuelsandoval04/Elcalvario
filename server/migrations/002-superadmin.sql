@@ -1,6 +1,6 @@
 INSERT INTO rol_sistema (nombre, descripcion)
-SELECT 'Superadmin', 'Administra usuarios y asigna los roles del sistema'
-WHERE NOT EXISTS (SELECT 1 FROM rol_sistema WHERE nombre = 'Superadmin');
+SELECT 'Administrador', 'Administración general: todos los permisos, usuarios y roles'
+WHERE NOT EXISTS (SELECT 1 FROM rol_sistema WHERE nombre = 'Administrador');
 
 CREATE TABLE IF NOT EXISTS configuracion_sistema (
   id TINYINT NOT NULL PRIMARY KEY,
@@ -16,7 +16,7 @@ SELECT 1 WHERE NOT EXISTS (SELECT 1 FROM configuracion_sistema WHERE id = 1);
 
 INSERT INTO usuario_rol (id_usuario, id_rol)
 SELECT u.id_usuario, r.id_rol
-FROM usuario u JOIN rol_sistema r ON r.nombre = 'Superadmin'
+FROM usuario u JOIN rol_sistema r ON r.nombre = 'Administrador'
 JOIN configuracion_sistema c ON c.id = 1 AND c.bootstrap_completado = 0
 WHERE u.id_usuario = (SELECT MIN(id_usuario) FROM usuario)
 AND NOT EXISTS (SELECT 1 FROM usuario_rol ur WHERE ur.id_usuario = u.id_usuario AND ur.id_rol = r.id_rol);

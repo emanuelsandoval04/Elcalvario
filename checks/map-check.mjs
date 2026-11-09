@@ -31,15 +31,15 @@ try {
     return {data,cookie:response.headers.get('set-cookie')?.split(';')[0]}
   }
   const password=`Check-${randomUUID()}`,accounts={}
-  for(const role of ['Superadmin','Discipulador','Multimedia','Asistencia Pastoral','Usuario']) {
+  for(const role of ['Administrador','Discipulador','Multimedia','Asistencia Pastoral','Usuario']) {
     const result=await request('auth/register',{email:`${role.replaceAll(' ','-')}@example.invalid`,password},'','POST',201)
     accounts[role]={id:result.data.user.id,cookie:result.cookie}
-    if(!['Superadmin','Usuario'].includes(role)) {
+    if(!['Administrador','Usuario'].includes(role)) {
       const [roles]=await pool.execute('SELECT id_rol FROM rol_sistema WHERE nombre=?',[role])
-      await request(`auth/admin/users/${result.data.user.id}/role`,{roleId:roles[0].id_rol},accounts.Superadmin.cookie)
+      await request(`auth/admin/users/${result.data.user.id}/role`,{roleId:roles[0].id_rol},accounts.Administrador.cookie)
     }
   }
-  const admin=accounts.Superadmin.cookie,disciple=accounts.Discipulador.cookie,media=accounts.Multimedia.cookie,assistant=accounts['Asistencia Pastoral'].cookie
+  const admin=accounts.Administrador.cookie,disciple=accounts.Discipulador.cookie,media=accounts.Multimedia.cookie,assistant=accounts['Asistencia Pastoral'].cookie
   const endpoint='management/mapa/'
   await request(endpoint+'coberturas',undefined,'',undefined,401)
   await request(endpoint+'coberturas',undefined,accounts.Usuario.cookie,undefined,403)
@@ -93,7 +93,7 @@ try {
   await request(path(leader),{ids:[1,9999],expectedIds:[1]},admin,'PUT',409)
   await request(path(leader),{ids:[1,2],expectedIds:[1]},admin,'PUT')
   const [history]=await pool.execute('SELECT * FROM discipulador_barrio WHERE id_discipulador=? AND id_barrio=2 ORDER BY id_asignacion',[leader])
-  assert.equal(history.length,2);assert.equal(history[0].estado,0);assert.equal(history[0].id_usuario_finaliza,accounts.Superadmin.id);assert.ok(history[0].fecha_finalizacion);assert.equal(history[1].estado,1)
+  assert.equal(history.length,2);assert.equal(history[0].estado,0);assert.equal(history[0].id_usuario_finaliza,accounts.Administrador.id);assert.ok(history[0].fecha_finalizacion);assert.equal(history[1].estado,1)
   await pool.execute("UPDATE miembro SET estado_miembro='inactivo' WHERE id_miembro=?",[leader])
   assert.equal((await request(endpoint+'coberturas',undefined,disciple)).data.items.length,0)
   await request(endpoint+`discipuladores/${leader}/foto`,undefined,admin,undefined,404)
@@ -179,7 +179,7 @@ try {
     await page.goto(`${ui}/#login`)
     const markerPhoto=await page.evaluate(()=>{const canvas=document.createElement('canvas');canvas.width=canvas.height=128;const ctx=canvas.getContext('2d');ctx.fillStyle='#dbe9fa';ctx.fillRect(0,0,128,128);ctx.fillStyle='#486da0';ctx.beginPath();ctx.arc(64,43,23,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(64,112,44,Math.PI,Math.PI*2);ctx.fill();return canvas.toDataURL('image/jpeg')})
     await request('auth/account/photo',{photo:markerPhoto},disciple)
-    await page.getByLabel('Correo electrónico',{exact:true}).fill('Superadmin@example.invalid');await page.getByLabel('Contraseña',{exact:true}).fill(password)
+    await page.getByLabel('Correo electrónico',{exact:true}).fill('Administrador@example.invalid');await page.getByLabel('Contraseña',{exact:true}).fill(password)
     await page.getByRole('button',{name:'Iniciar sesión',exact:true}).click();await page.waitForURL(`${ui}/#gestion`)
     assert.equal(await page.locator('script[src*="maps.googleapis.com"]').count(),0,'Carga diferida')
     await page.locator('.app-bottom-nav a').filter({hasText:'Mapa'}).click()

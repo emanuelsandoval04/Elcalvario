@@ -2,8 +2,8 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import App from './App'
 import './styles.css'
-import './app-theme.css'
 import './display-size.css'
+import './performance.css'
 import { registerPwa } from './pwa'
 
 registerPwa()

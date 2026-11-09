@@ -1,32 +1,41 @@
-import { useEffect, useState } from 'react'
+import { lazy, Suspense, useEffect, useState } from 'react'
 import Navbar from './Navbar'
 import HeroSlideshow from './HeroSlideshow'
 import CommunityIcon from './CommunityIcon'
-import Login from './Login'
-import PasswordRecovery from './PasswordRecovery'
 import Events from './Events'
-import AdminUsers from './AdminUsers'
 import Ministries from './Ministries'
-import Management from './Management'
 import Institution from './Institution'
 import { authRequest } from './auth'
+import ScreenBoundary, { ScreenLoading } from './ScreenBoundary'
+
+const Login = lazy(() => import('./Login'))
+const PasswordRecovery = lazy(() => import('./PasswordRecovery'))
+const AdminUsers = lazy(() => import('./AdminUsers'))
+const Management = lazy(() => import('./Management'))
+const isAccessRoute = () => window.location.hash === '#usuarios' || window.location.hash.startsWith('#usuarios/') || /^#gestion\/(permissions|users)(\/|$)/.test(window.location.hash)
 
 const churchMapsUrl = 'https://www.google.com/maps/search/?api=1&query=Carrera%2016%20%2322-28%2C%20Barrio%20Ol%C3%ADmpico%2C%20Villavicencio%2C%20Meta'
 
 export default function App() {
-  useEffect(() => { void authRequest('me').catch(() => {}) }, [])
+  useEffect(() => {
+    // Private screens and login already check their session when they mount.
+    const route = window.location.hash
+    if (!isAccessRoute() && route !== '#gestion' && !route.startsWith('#gestion/') && !['#login', '#registro'].includes(route)) void authRequest('me').catch(() => {})
+  }, [])
   const [selected, setSelected] = useState('Inicio')
   const [recoveryRoute, setRecoveryRoute] = useState(() => window.location.hash)
   const [loginOpen, setLoginOpen] = useState(() => ['#login', '#registro'].includes(window.location.hash))
-  const [adminOpen, setAdminOpen] = useState(() => window.location.hash === '#usuarios')
-  const [managementOpen, setManagementOpen] = useState(() => window.location.hash === '#gestion' || window.location.hash.startsWith('#gestion/'))
+  const [adminOpen, setAdminOpen] = useState(isAccessRoute)
+  const [managementOpen, setManagementOpen] = useState(() => !isAccessRoute() && (window.location.hash === '#gestion' || window.location.hash.startsWith('#gestion/')))
   useEffect(() => {
     const updatePage = () => {
+      if (/^#gestion\/permissions(\/|$)/.test(window.location.hash)) { window.location.replace('#usuarios/perfiles'); return }
+      if (/^#gestion\/users(\/|$)/.test(window.location.hash)) { window.location.replace('#usuarios'); return }
       setRecoveryRoute(window.location.hash)
       setLoginOpen(['#login', '#registro'].includes(window.location.hash))
       if (window.location.hash === '#registro') window.location.replace('#login')
-      setAdminOpen(window.location.hash === '#usuarios')
-      setManagementOpen(window.location.hash === '#gestion' || window.location.hash.startsWith('#gestion/'))
+      setAdminOpen(isAccessRoute())
+      setManagementOpen(!isAccessRoute() && (window.location.hash === '#gestion' || window.location.hash.startsWith('#gestion/')))
       if (window.location.hash === '#inicio') setSelected('Inicio')
       window.requestAnimationFrame(() => {
         if (['#eventos', '#ministerios', '#nosotros', '#grupos-de-comunion', '#contacto'].includes(window.location.hash)) {
@@ -43,6 +52,8 @@ export default function App() {
   return (
     <>
     {!managementOpen && !adminOpen && <Navbar onNavigate={setSelected} />}
+    <ScreenBoundary key={managementOpen ? 'management' : adminOpen ? 'users' : loginOpen ? 'login' : ['#recuperar', '#restablecer'].includes(recoveryRoute.split('?')[0]) ? recoveryRoute : 'public'}>
+    <Suspense fallback={<ScreenLoading />}>
     {managementOpen ? <Management /> : adminOpen ? <AdminUsers /> : ['#recuperar', '#restablecer'].includes(recoveryRoute.split('?')[0]) ? <PasswordRecovery key={recoveryRoute} reset={recoveryRoute.split('?')[0] === '#restablecer'} /> : loginOpen ? <Login /> : (
     <main>
     <section className="welcome" id="inicio" aria-label="Bienvenidos a El Calvario">
@@ -78,6 +89,8 @@ export default function App() {
     <footer className="institution-footer">Misión Cristiana El Calvario Villavicencio · Desarrollada por Nexus Corp</footer>
     </main>
     )}
+    </Suspense>
+    </ScreenBoundary>
     </>
   )
 }

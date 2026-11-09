@@ -39,7 +39,7 @@ try {
   await api('account/preferences', { displaySize: 'large' }, '', 401)
   await api('account/preferences', { displaySize: 'large' }, owner.cookie, 403, { Origin: 'https://untrusted.invalid' })
   for (const displaySize of ['huge', 130, null]) await api('account/preferences', { displaySize }, owner.cookie, 400)
-  const changed = await api('account/preferences', { displaySize: 'extra-large', id: owner.data.user.id, roles: ['Superadmin'], state: 'activo' }, pending.cookie)
+  const changed = await api('account/preferences', { displaySize: 'extra-large', id: owner.data.user.id, roles: ['Administrador'], state: 'activo' }, pending.cookie)
   assert.equal(changed.data.user.displaySize, 'extra-large'); assert.equal(changed.data.user.state, 'pendiente')
   assert.deepEqual(changed.data.user.permissions, {}); assert.deepEqual(changed.data.user.roles, [])
   assert.equal((await api('me', undefined, owner.cookie)).data.user.displaySize, 'normal')

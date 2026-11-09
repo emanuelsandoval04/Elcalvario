@@ -1,3 +1,4 @@
+import { reportTable } from './report-table.mjs'
 import assert from 'node:assert/strict'
 import { randomUUID } from 'node:crypto'
 import { once } from 'node:events'
@@ -36,14 +37,19 @@ try {
     assert.equal(response.status, expected, `${path}: ${JSON.stringify(data)}`)
     return { data, cookie: response.headers.get('set-cookie')?.split(';')[0] }
   }
+  const { bootstrapAdmin } = await import('../server/bootstrap-admin.js')
+  const { hashPassword } = await import('../server/auth.js')
+  await bootstrapAdmin({ name: 'Propietario de prueba', email: 'owner@example.invalid', password })
+  const passwordHash = await hashPassword(password)
   const accounts = {}
-  for (const [name, role] of [['owner', 'Superadmin'], ['leader', 'Discipulador'], ['media', 'Multimedia'], ['assistant', 'Asistencia Pastoral'], ['basic', 'Usuario'], ['pending', null]]) {
-    const result = await request('auth/register', { email: `${name}@example.invalid`, password }, '', 'POST', 201)
-    accounts[name] = { id: result.data.user.id, cookie: result.cookie }
-    if (name !== 'owner' && role) {
-      const [roles] = await pool.execute('SELECT id_rol FROM rol_sistema WHERE nombre=?', [role])
-      await request(`auth/admin/users/${result.data.user.id}/role`, { roleId: roles[0].id_rol }, accounts.owner.cookie)
+  for (const [name, role] of [['owner', 'Administrador'], ['leader', 'Discipulador'], ['media', 'Multimedia'], ['assistant', 'Asistencia Pastoral'], ['basic', 'Usuario'], ['pending', null]]) {
+    const email = `${name}@example.invalid`
+    if (name !== 'owner') {
+      const [created] = await pool.execute('INSERT INTO usuario(correo_login,password_hash,estado_usuario) VALUES (?,?,?)', [email,passwordHash,role ? 'activo' : 'pendiente'])
+      await pool.execute('INSERT INTO usuario_rol(id_usuario,id_rol) SELECT ?,id_rol FROM rol_sistema WHERE nombre=?', [created.insertId,role || 'Usuario'])
     }
+    const result = await request('auth/login', { email, password })
+    accounts[name] = { id: result.data.user.id, cookie: result.cookie }
   }
   const owner = accounts.owner.cookie, leaderCookie = accounts.leader.cookie, media = accounts.media.cookie, assistant = accounts.assistant.cookie, basic = accounts.basic.cookie
   const values = { nombres: 'Legado', apellidos: 'Prueba', tipo_identificacion: 'CC', numero_identificacion: 'L1', celular: '3001234567', fecha_nacimiento: '1990-03-05', grupo_sanguineo_rh: 'O+', eps: 'EPS prueba', contacto_emergencia_nombre: 'Contacto prueba', contacto_emergencia_celular: '3001112233' }
@@ -91,22 +97,28 @@ try {
     assert.equal(response.status, expected)
     if (expected !== 200) return null
     const result = new ExcelJS.Workbook(); await result.xlsx.load(Buffer.from(await response.arrayBuffer()))
+    if (/^members\/\d+\/excel$/.test(path)) {
+      const profile = result.getWorksheet('Ficha del discípulo')
+      assert.ok(profile && profile.getImages().length === 1)
+      assert.equal(result.views[0].activeTab, result.worksheets.indexOf(profile))
+      if (!reportTable(result.worksheets[0]).header.includes('EPS')) assert.equal(JSON.stringify(result.worksheets.map(sheet=>sheet.getSheetValues())).includes('EPS prueba'), false)
+    }
     return result.worksheets[0]
   }
   const full = await workbook(`members/${memberA}/excel`, owner)
-  const headers = full.getRow(1).values
+  const headers = reportTable(full).header
   assert.ok(headers.includes('EPS') && headers.includes('Libro de adiestramiento') && headers.includes('Código QR'))
-  assert.equal(full.getRow(2).getCell(headers.indexOf('Libro de adiestramiento')).value, 'Fundamentos')
-  assert.equal(full.getRow(2).getCell(headers.indexOf('EPS')).value, 'EPS prueba')
+  assert.equal(reportTable(full).rows[0].getCell(headers.indexOf('Libro de adiestramiento')).value, 'Fundamentos')
+  assert.equal(reportTable(full).rows[0].getCell(headers.indexOf('EPS')).value, 'EPS prueba')
   const limited = await workbook('reports/discipulos?format=xlsx', leaderCookie)
-  assert.equal(limited.rowCount, 2)
-  assert.equal(limited.getRow(1).values.includes('EPS'), false)
+  assert.equal(reportTable(limited).count, 1)
+  assert.equal(reportTable(limited).header.includes('EPS'), false)
   await workbook(`members/${memberB}/excel`, leaderCookie, 404)
   await workbook('reports/discipulos?format=xlsx', media, 403)
   const assisting = await workbook(`members/${memberA}/excel`, assistant)
-  assert.equal(assisting.getRow(1).values.includes('Celular de emergencia'), false)
+  assert.equal(reportTable(assisting).header.includes('Celular de emergencia'), false)
   const noBook = await workbook('reports/discipulos?format=xlsx&sin_libro=1', owner)
-  assert.equal(noBook.rowCount, 3)
+  assert.equal(reportTable(noBook).count, 2)
   await request(`management/members/${memberA}/book`, { id_libro: second, expectedId: first }, owner, 'PUT')
   assert.equal((await request('auth/me', undefined, basic)).data.user.trainingBook.name, 'Crecimiento')
   const [mediaRole] = await pool.execute("SELECT id_rol FROM rol_sistema WHERE nombre='Multimedia'")
@@ -122,7 +134,7 @@ try {
   assert.equal((await findMember(newMember)).id_libro,first)
   assert.equal((await findMember(newMember)).libro_actual,'Fundamentos actualizado')
   const renamed=await workbook(`members/${newMember}/excel`,owner)
-  assert.ok(renamed.getRow(2).values.includes('Fundamentos actualizado'))
+  assert.ok(reportTable(renamed).rows[0].values.includes('Fundamentos actualizado'))
   await request(`management/training/books/${first}`,{nombre:'Cambio desactualizado',expectedName:usedBook.nombre,expectedDescription:usedBook.descripcion},owner,'PATCH',409)
   await request(`management/training/books/${first}`,{},assistant,'DELETE',409)
   assert.equal((await findMember(newMember)).id_libro,first)
@@ -187,7 +199,7 @@ try {
     await page.getByRole('button', { name: 'Descargar ficha en Excel', exact: true }).click()
     const download = await downloadEvent
     const downloaded = new ExcelJS.Workbook(); await downloaded.xlsx.load(await readFile(await download.path()))
-    assert.ok(downloaded.worksheets[0].getRow(2).values.includes('Fundamentos'))
+    assert.ok(reportTable(downloaded.worksheets[0]).rows[0].values.includes('Fundamentos'))
     await page.goto(ui + '/#gestion/training')
     await page.getByRole('heading', { name: 'Adiestramiento', exact: true }).last().waitFor()
     await page.getByRole('button',{name:'Editar Fundamentos',exact:true}).click()

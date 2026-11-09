@@ -1,8 +1,8 @@
 import { Router } from 'express'
 import { randomUUID } from 'node:crypto'
 import { pool } from './db.js'
-import { requireSession, requirePermission, hasPermission, protectMutation, readUser, hashPassword, credentials } from './auth.js'
-import { hasPastoralAuthority, pastoralRoles, canAdministerAccounts } from './pastoral-policy.js'
+import { requireSession, requirePermission, hasPermission, protectMutation, readUser, hashPassword, credentials, targetLevel, memberLevel } from './auth.js'
+import { hasPastoralAuthority, pastoralRoles, canAdministerAccounts, rolePermissionPolicy, outranks } from './pastoral-policy.js'
 import { invalid, identifier, text, choice, boolean, date, url, fields, memberFields, sensitiveMemberFields, groupFields, activityFields, bogotaToday } from './entities.js'
 import { recalculateAlerts } from './alerts.js'
 import { facebookTransmission } from './facebook.js'
@@ -15,11 +15,12 @@ import { applyGroupCoverage } from './group-coverage.js'
 import { readNeighborhoodCatalog } from './neighborhood-catalog.js'
 import { welcomeContext, sendAccountWelcome } from './account-welcome.js'
 import { parseRecurrence, fixedStart } from './recurrence-dates.js'
-import { recurrenceColumns, recurrenceJoins, nearestPublicDate, seriesTemplate, createRecurringActivity, ensureRecurringActivities, reviseFixedActivity, retireFutureDates } from './recurring-activities.js'
+import { recurrenceColumns, recurrenceJoins, nearestPublicDate, nearestManagedDate, seriesTemplate, createRecurringActivity, ensureRecurringActivities, reviseFixedActivity, retireFutureDates } from './recurring-activities.js'
 import { recordMemberState } from './member-state-history.js'
 import { pastoralCalendarRouter, publicCalendar } from './pastoral-calendar.js'
 import { memberImportRouter } from './member-import.js'
 import { discipleConsentRouter } from './disciple-consent.js'
+import { attendanceToolsRouter, attendanceRoster } from './attendance-tools.js'
 
 export const managementRouter = Router()
 export const publicRouter = Router()
@@ -120,7 +121,7 @@ async function exportDisciples(req,res,id=null) {
     LEFT JOIN sede s ON s.id_sede=m.id_sede LEFT JOIN miembro c ON c.id_miembro=m.id_cobertura_pastoral
     WHERE m.archivado=0 ${reportScope.sql} ${viewScope.sql} ${clauses.length?'AND '+clauses.join(' AND '):''} ORDER BY m.nombres,m.apellidos,m.id_miembro`,params)
   if(id && !rows.length) throw invalid('Discípulo no disponible en tu alcance.',404)
-  await sendReport(res,'discipulos','xlsx',discipleReportRows(rows.map(row=>cleanMember(req,row))),{title:'Ficha de discípulos',columns:discipleColumns(can(req,'miembros.sensibles'))})
+  await sendReport(res,'discipulos','xlsx',discipleReportRows(rows.map(row=>cleanMember(req,row))),{title:id?'Ficha del discípulo':'Listado de discípulos',columns:discipleColumns(can(req,'miembros.sensibles')),profile:Boolean(id)})
 }
 
 publicRouter.get('/institution',async (_req,res) => {
@@ -147,8 +148,9 @@ const exportLimit=databaseRateLimit({prefix:'exports',maximum:12,key:req=>String
 managementRouter.use((req,res,next)=>req.path.startsWith('/reports/') || /^\/members\/\d+\/(excel|consent\.pdf)$/.test(req.path) ? exportLimit(req,res,next) : next())
 managementRouter.use('/mapa',mapRouter)
 managementRouter.use(pastoralCalendarRouter({transaction,currentActor,memberFilter,activityFilter,getMember}))
-managementRouter.use(memberImportRouter({transaction,currentActor,registrationPermission,groupFilter}))
+managementRouter.use(memberImportRouter({transaction,currentActor,registrationPermission,groupFilter,memberFilter}))
 managementRouter.use(discipleConsentRouter({transaction,currentActor,getMember,cleanMember}))
+managementRouter.use(attendanceToolsRouter({transaction,currentActor,getActivity,getMember,activityFilter}))
 managementRouter.get('/training/books', requireTraining, async (_req,res) => res.json({items:await trainingBooks()}))
 managementRouter.post('/training/books', requireTraining, async (req,res) => {
   const name=text(req.body?.nombre,150,true), description=text(req.body?.descripcion,2000)
@@ -253,6 +255,7 @@ managementRouter.post('/members',(req,res,next)=>can(req,'miembros.registrar') |
       const [ranks]=await connection.execute('SELECT nivel_jerarquico FROM rol_eclesiastico WHERE id_rol_eclesiastico=?',[values.id_rol_eclesiastico])
       const rank=pastoralRoles.find(role=>role.level===Number(ranks[0]?.nivel_jerarquico))
       if(!rank) throw invalid('Cargo pastoral no disponible.')
+      if(!outranks(actor,rank.level)) throw invalid('No puedes crear administrativos con un cargo igual o superior al tuyo.',403)
       const [roles]=await connection.execute('SELECT id_rol FROM rol_sistema WHERE nombre=? AND estado=1',[rank.systemRole])
       if(!roles.length) throw invalid('Actualiza las migraciones antes de crear administrativos.',409)
       systemRole=roles[0].id_rol
@@ -438,14 +441,22 @@ managementRouter.post('/groups/:id/processes',requirePermission('grupos.editar')
 managementRouter.get('/activities',async(req,res)=>{
   const codes=['asistencia.registrar','asistencia.ver','eventos.editar','eventos.publicar','grupos.editar'].filter(code=>can(req,code))
   if(!codes.length) throw invalid('No tienes permiso para consultar actividades.',403)
+  const view=choice(req.query.view || 'all',['all','agenda','attendance']),agenda=view==='agenda'
+  const period=view==='attendance'?choice(req.query.period || 'upcoming',['past','upcoming']):null
+  const page=view==='attendance'?identifier(req.query.page || 1):1
+  if(page>10000)throw invalid('Selecciona una página válida.')
+  const search=view==='attendance'?text(req.query.q,100)||'':''
   await ensureRecurringActivities()
   const accessCode=codes.find(code=>req.authUser.permissions[code]==='todos') || codes[0]
   const filter=activityFilter(req,accessCode)
   const [items]=await pool.execute(`SELECT ac.*,CAST(ac.fecha AS CHAR) AS fecha,rg.id_grupo,e.requiere_inscripcion,e.url_inscripcion,${recurrenceColumns} FROM actividad ac
     LEFT JOIN reunion_grupo rg ON rg.id_actividad=ac.id_actividad LEFT JOIN evento e ON e.id_actividad=ac.id_actividad
     ${recurrenceJoins}
-    WHERE ac.archivado=0 ${filter.sql} ORDER BY ac.fecha DESC,ac.hora DESC LIMIT 500`,filter.params)
-  res.json({items})
+    WHERE ac.archivado=0 ${agenda?`AND TIMESTAMP(ac.fecha,ac.hora)>=DATE_SUB(UTC_TIMESTAMP(),INTERVAL 5 HOUR) ${nearestManagedDate}`:''}
+    ${period?`AND ac.fecha${period==='past'?'<':'>='}DATE(DATE_SUB(UTC_TIMESTAMP(),INTERVAL 5 HOUR)) AND ac.titulo LIKE ?`:''}
+    ${filter.sql} ORDER BY ac.fecha ${agenda||period==='upcoming'?'ASC':'DESC'},ac.hora ${agenda||period==='upcoming'?'ASC':'DESC'},ac.id_actividad ${agenda||period==='upcoming'?'ASC':'DESC'}
+    LIMIT ${period?`101 OFFSET ${(page-1)*100}`:'500'}`,[...(period?[`%${search}%`]:[]),...filter.params])
+  res.json(period?{items:items.slice(0,100),hasMore:items.length>100,page}:{items})
 })
 async function saveActivity(req,res,create) {
   const id=create?null:identifier(req.params.id)
@@ -577,13 +588,12 @@ managementRouter.delete('/activities/:id',requirePermission('eventos.eliminar'),
 })
 managementRouter.get('/attendance/roster',requirePermission('asistencia.registrar'),async(req,res)=>{
   const activity=await getActivity(req,req.query.activityId,'asistencia.registrar')
-  const [items]=await pool.execute(`SELECT id_miembro,CONCAT_WS(' ',nombres,apellidos) AS nombre FROM miembro WHERE archivado=0 ${activity.id_grupo?'AND id_grupo=?':''} ORDER BY nombres`,activity.id_grupo?[activity.id_grupo]:[])
-  res.json({items})
+  res.json(await attendanceRoster(pool,activity))
 })
 managementRouter.get('/attendance',requirePermission('asistencia.ver'),async(req,res)=>{
   const activity=await getActivity(req,req.query.activityId,'asistencia.ver')
   const [items]=await pool.execute(`SELECT a.*,CONCAT_WS(' ',m.nombres,m.apellidos) AS nombre FROM asistencia a LEFT JOIN miembro m ON m.id_miembro=a.id_miembro WHERE a.id_actividad=? AND a.archivado=0 ORDER BY a.fecha_registro`,[activity.id_actividad])
-  res.json({items})
+  res.json({items,activity})
 })
 managementRouter.post('/attendance',requirePermission('asistencia.registrar'),async(req,res)=>{
   const activity=await getActivity(req,req.body?.id_actividad,'asistencia.registrar')
@@ -679,16 +689,19 @@ managementRouter.post('/users/:id/member',requirePermission('usuarios.gestionar'
   const id=identifier(req.params.id), linkedId=identifier(req.body?.memberId,true)
   await transaction(async connection=>{
   const actor=await currentActor(req,connection)
-  if(!canAdministerAccounts(actor)) throw invalid('Solo los administradores y cargos pastorales autorizados pueden vincular cuentas.',403)
+  if(!canAdministerAccounts(actor)) throw invalid('Solo el Administrador y los cargos pastorales autorizados pueden vincular cuentas.',403)
   const [users]=await connection.execute('SELECT id_usuario FROM usuario WHERE id_usuario=?',[id])
   if(!users.length) throw invalid('Cuenta no disponible.',404)
-  if(!actor.roles.includes('Superadmin')) {
-    const [owners]=await connection.execute("SELECT ur.id_usuario FROM usuario_rol ur JOIN rol_sistema r ON r.id_rol=ur.id_rol WHERE ur.id_usuario=? AND ur.activo=1 AND r.nombre='Superadmin'",[id])
-    if(owners.length) throw invalid('La cuenta del propietario técnico está protegida.',403)
-  }
+  const [configuration]=await connection.execute('SELECT id_superadmin_inicial FROM configuracion_sistema WHERE id=1')
+  if(configuration[0]?.id_superadmin_inicial===id && id!==actor.id) throw invalid('La cuenta del propietario técnico está protegida.',403)
+  const rankError='No puedes vincular cuentas ni fichas con un cargo igual o superior al tuyo.'
+  if(id!==actor.id && !outranks(actor,await targetLevel(connection,id))) throw invalid(rankError,403)
   if(linkedId) {
     const [members]=await connection.execute('SELECT id_miembro FROM miembro WHERE id_miembro=? AND archivado=0',[linkedId])
     if(!members.length) throw invalid('Discípulo no disponible.',404)
+    const level=await memberLevel(connection,linkedId)
+    // Linking yourself to a record of your own rank changes nothing; anything higher is an escalation.
+    if(!outranks(actor,level) && !(id===actor.id && level!=null && level>=actor.pastoralRole?.level)) throw invalid(rankError,403)
   }
   await update(connection,'usuario','id_usuario',id,{id_miembro:linkedId})
   })
@@ -698,25 +711,39 @@ managementRouter.get('/permissions',requirePermission('permisos.gestionar'),asyn
   const [roles]=await pool.execute('SELECT id_rol,nombre FROM rol_sistema WHERE estado=1 ORDER BY nombre')
   const [permissions]=await pool.execute("SELECT * FROM permiso WHERE codigo NOT IN ('sedes.gestionar','estadisticas.ver') ORDER BY codigo")
   const [grants]=await pool.execute("SELECT * FROM rol_permiso WHERE codigo_permiso NOT IN ('sedes.gestionar','estadisticas.ver')")
-  res.json({roles,permissions:permissions.map(permission=>({...permission,descripcion:permission.descripcion.replace(/\bmiembro(s)?\b/gi,(word,plural)=>`${word[0]==='M'?'Discípulo':'discípulo'}${plural || ''}`),admite_grupo:groupScopedPermissions.has(permission.codigo)})),grants})
+  res.json({roles:roles.map(role=>({...role,...rolePermissionPolicy(role.nombre)})),permissions:permissions.map(permission=>({...permission,descripcion:permission.descripcion.replace(/\bmiembro(s)?\b/gi,(word,plural)=>`${word[0]==='M'?'Discípulo':'discípulo'}${plural || ''}`),admite_grupo:groupScopedPermissions.has(permission.codigo)})),grants})
 })
 managementRouter.put('/permissions/:roleId',requirePermission('permisos.gestionar'),async(req,res)=>{
   const roleId=identifier(req.params.roleId), grants=req.body?.grants
   if(!Array.isArray(grants)||grants.length>100) throw invalid('Permisos inválidos.')
   await transaction(async connection=>{
-    const [roles]=await connection.execute('SELECT nombre FROM rol_sistema WHERE id_rol=? FOR UPDATE',[roleId])
+    await currentActor(req,connection)
+    if(!can(req,'permisos.gestionar')) throw invalid('Ya no tienes permiso para configurar perfiles.',403)
+    const [roles]=await connection.execute('SELECT nombre FROM rol_sistema WHERE id_rol=? AND estado=1 FOR UPDATE',[roleId])
     if(!roles.length) throw invalid('Rol no disponible.',404)
-    if(['Superadmin','Administrador','Pastor',...pastoralRoles.filter(role=>role.level<=4).map(role=>role.systemRole)].includes(roles[0].nombre)) throw invalid('Este rol conserva todos los permisos.',409)
-    if(roles[0].nombre==='Usuario') throw invalid('Usuario no tiene acceso operativo. Asigna un rol autorizado.',409)
-    await connection.execute('DELETE FROM rol_permiso WHERE id_rol=?',[roleId])
+    const policy=rolePermissionPolicy(roles[0].nombre)
+    if(!policy.editable) throw invalid(policy.reason,409)
+    const [catalog]=await connection.execute("SELECT codigo FROM permiso WHERE codigo NOT IN ('sedes.gestionar','estadisticas.ver')")
+    const available=new Set(catalog.map(permission=>permission.codigo)),seen=new Set(),values=[]
     for(const grant of grants) {
+      if(!grant || typeof grant!=='object' || Array.isArray(grant)) throw invalid('Permisos inválidos.')
       const code=text(grant.codigo,80,true),scope=choice(grant.alcance,['todos','grupo'])
-      if(code==='sedes.gestionar') throw invalid('La plataforma utiliza una sola sede y una sola zona.')
-      if(code==='estadisticas.ver') throw invalid('El módulo de estadísticas fue retirado.')
+      if(!available.has(code)) throw invalid('El permiso seleccionado no está disponible.')
+      if(seen.has(code)) throw invalid('No repitas un permiso en el mismo perfil.')
+      seen.add(code)
       if(scope==='grupo' && !groupScopedPermissions.has(code)) throw invalid(`El permiso ${code} requiere alcance general.`)
-      if(roles[0].nombre==='Discipulador' && !(code==='adiestramiento.gestionar' && scope==='todos') && (scope!=='grupo' || !groupScopedPermissions.has(code))) throw invalid('El Discipulador debe conservar el alcance de sus grupos.')
-      await insert(connection,'rol_permiso',{id_rol:roleId,codigo_permiso:code,alcance:scope})
+      if(policy.groupOnly && !(code==='adiestramiento.gestionar' && scope==='todos') && (scope!=='grupo' || !groupScopedPermissions.has(code))) throw invalid('El Discipulador debe conservar el alcance de sus grupos.')
+      values.push({codigo:code,alcance:scope})
     }
+    if(Object.hasOwn(req.body,'expectedGrants')) {
+      const expected=req.body.expectedGrants
+      if(!Array.isArray(expected) || expected.length>100 || expected.some(grant=>!grant || typeof grant.codigo!=='string' || !available.has(grant.codigo) || !['todos','grupo'].includes(grant.alcance)) || new Set(expected.map(grant=>grant.codigo)).size!==expected.length) throw invalid('La referencia de permisos no es válida.')
+      const [current]=await connection.execute("SELECT codigo_permiso AS codigo,alcance FROM rol_permiso WHERE id_rol=? AND codigo_permiso NOT IN ('sedes.gestionar','estadisticas.ver')",[roleId])
+      const signature=items=>JSON.stringify(items.map(grant=>[grant.codigo,grant.alcance]).sort(([a],[b])=>a.localeCompare(b)))
+      if(signature(current)!==signature(expected)) throw invalid('Otro administrador actualizó este perfil. Recarga sus permisos antes de guardar.',409)
+    }
+    await connection.execute('DELETE FROM rol_permiso WHERE id_rol=?',[roleId])
+    for(const grant of values) await insert(connection,'rol_permiso',{id_rol:roleId,codigo_permiso:grant.codigo,alcance:grant.alcance})
   })
   res.json({ok:true})
 })
@@ -739,15 +766,26 @@ managementRouter.get('/reports/:type',async(req,res)=>{
   } else {
     const filter=activityFilter(req,code)
     const clauses=[],params=[...filter.params]
+    const activityId=identifier(req.query.activityId,true)
+    const activity=activityId?await getActivity(req,activityId,code):null
+    if(activity){clauses.push('ac.id_actividad=?');params.push(activity.id_actividad)}
     if(req.query.from){clauses.push('ac.fecha>=?');params.push(date(req.query.from))}
     if(req.query.to){clauses.push('ac.fecha<=?');params.push(date(req.query.to))}
+    if(req.query.from && req.query.to && req.query.from>req.query.to)throw invalid('La fecha inicial no puede ser posterior a la final.')
     // Multimedia receives operational attendance, with no personal names in exports.
-    const name=can(req,'miembros.ver')?"COALESCE(CONCAT_WS(' ',m.nombres,m.apellidos),a.nombre_visitante)":"CAST(a.id_miembro AS CHAR)"
+    const memberScope=memberFilter(req,'miembros.ver')
+    const name=can(req,'miembros.ver')?`CASE WHEN m.id_miembro IS NULL THEN COALESCE(a.nombre_visitante,'Visitante') WHEN 1=1 ${memberScope.sql} THEN CONCAT_WS(' ',m.nombres,m.apellidos) ELSE CONCAT('Discípulo #',a.id_miembro) END`:"COALESCE(CONCAT('Discípulo #',a.id_miembro),'Visitante')"
     ;[rows]=await pool.execute(`SELECT ac.titulo AS Actividad,CAST(ac.fecha AS CHAR) AS Fecha,ac.tipo_actividad AS Tipo,${name} AS Discípulo,a.estado_asistencia AS Estado,a.metodo_registro AS Metodo
       FROM asistencia a JOIN actividad ac ON ac.id_actividad=a.id_actividad LEFT JOIN miembro m ON m.id_miembro=a.id_miembro
-      WHERE a.archivado=0 AND ac.archivado=0 ${filter.sql} ${clauses.length?'AND '+clauses.join(' AND '):''} ORDER BY ac.fecha,ac.hora,a.id_asistencia`,params)
+      WHERE a.archivado=0 AND ac.archivado=0 ${filter.sql} ${clauses.length?'AND '+clauses.join(' AND '):''} ORDER BY ac.fecha,ac.hora,a.id_asistencia`,[...(can(req,'miembros.ver')?memberScope.params:[]),...params])
+    if(activity) {
+      const labels={presente:'Presente',ausente:'Ausente sin justificación',justificado:'Justificado',visitante:'Visitante'}
+      return sendReport(res,type,format,rows.map(row=>({...row,Estado:labels[row.Estado]||row.Estado,'Método':row.Metodo})),{
+        title:'Registro de asistencia',columns:['Discípulo','Estado','Método'],metadata:[['Evento',activity.titulo],['Fecha',activity.fecha],['Hora (Colombia)',String(activity.hora).slice(0,5)],['Lugar',activity.lugar],['ID de actividad',activity.id_actividad],['Registros guardados',rows.length]]
+      })
+    }
   }
-  await sendReport(res,type,format,rows)
+  await sendReport(res,type,format,rows,type==='asistencia' && (req.query.from || req.query.to) ? {metadataTitle:'Filtros del reporte',metadata:[['Desde',req.query.from || 'Sin límite inicial'],['Hasta',req.query.to || 'Sin límite final']]} : {})
 })
 export function managementError(error,_req,res,_next) {
   if(res.headersSent) return res.end()

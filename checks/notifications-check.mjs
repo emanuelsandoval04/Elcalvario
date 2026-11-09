@@ -35,8 +35,8 @@ try {
   const [secrets] = await db.execute('SELECT password_hash FROM usuario WHERE id_usuario=?',[owner.data.user.id])
   await db.execute("INSERT INTO usuario(correo_login,password_hash,estado_usuario) VALUES (?,?,'pendiente')",['pending@example.invalid',secrets[0].password_hash])
   const pending = await request('login',{body:{email:'pending@example.invalid',password}})
-  const accounts = { Superadmin: owner }
-  for (const [index,role] of ['Administrador','Apóstol General','Asistencia Apostólica','Pastor de Distrito','Pastor Local','Asistencia Pastoral','Usuario','Discipulador','Multimedia','Pastor'].entries()) {
+  const accounts = { Administrador: owner }
+  for (const [index,role] of ['Apóstol General','Asistencia Apostólica','Pastor de Distrito','Pastor Local','Asistencia Pastoral','Usuario','Discipulador','Multimedia','Pastor'].entries()) {
     const email = `role-${index}@example.invalid`
     const [result] = await db.execute("INSERT INTO usuario(correo_login,password_hash,estado_usuario) VALUES (?,?,'activo')",[email,secrets[0].password_hash])
     await db.execute('INSERT INTO usuario_rol(id_usuario,id_rol) SELECT ?,id_rol FROM rol_sistema WHERE nombre=?',[result.insertId,role])
@@ -60,14 +60,14 @@ try {
   const dismiss = (account,id,options = {}) => request('notifications/dismiss',{cookie:account.cookie,body:{id},...options})
   await request('notifications',{status:401})
   await request('notifications/dismiss',{body:{id:'account:1'},status:401})
-  const administrators = ['Superadmin','Administrador','Apóstol General','Asistencia Apostólica','Pastor de Distrito','Pastor Local','Asistencia Pastoral']
+  const administrators = ['Administrador','Apóstol General','Asistencia Apostólica','Pastor de Distrito','Pastor Local','Asistencia Pastoral']
   for (const role of administrators) {
     const data = await feed(accounts[role])
     assert.equal(data.canManageAccounts,true,role)
     assert.equal(data.total,5,role)
     assert.equal(data.items.filter(item=>item.type==='account').length,1,role)
     assert.equal(data.items[0].title,pending.data.user.email)
-    assert.equal((await request('admin/users',{cookie:accounts[role].cookie})).data.users.length,12)
+    assert.equal((await request('admin/users',{cookie:accounts[role].cookie})).data.users.length,11)
   }
   const accountNotice = (await feed(owner)).items.find(item=>item.type==='account')
   for (const account of [accounts.Usuario,accounts.Discipulador,accounts.Multimedia,accounts.Pastor,pending]) {
@@ -140,7 +140,7 @@ try {
       await page.getByRole('button',{name:/^Notificaciones: /}).waitFor()
       return {context,page}
     }
-    const manager=await openAccount(accounts.Administrador)
+    const manager=await openAccount(accounts['Apóstol General'])
     await manager.page.getByRole('button',{name:/^Notificaciones: /}).click()
     const panel=manager.page.locator('#account-notifications-panel')
     await panel.getByText(pending.data.user.email,{exact:true}).waitFor()

@@ -2,6 +2,7 @@ import CommunityIcon from './CommunityIcon'
 import type { IconName } from './CommunityIcon'
 import './ministries.css'
 import { useEffect, useState } from 'react'
+import { getPublicMinistries } from './public-ministries'
 
 const ministries = [
   { name: 'Alabanza / Adoración', description: null as string | null, icon: 'music' },
@@ -11,7 +12,7 @@ const ministries = [
 
 export default function Ministries() {
   const [items, setItems] = useState<{ name: string; description: string | null; icon: IconName }[]>([...ministries])
-  useEffect(() => { const controller = new AbortController(); fetch('/api/public/ministries', { signal: controller.signal }).then(async response => { if (!response.ok) return; const data = await response.json(); setItems(data.items.map((item: { nombre: string; descripcion: string | null }) => ({ name: item.nombre, description: item.descripcion, icon: ministries.find(ministry => ministry.name === item.nombre)?.icon || 'sparkles' }))) }).catch(() => {}); return () => controller.abort() }, [])
+  useEffect(() => { let active = true; void getPublicMinistries().then(items => { if (active) setItems(items.map(item => ({ name: item.nombre, description: item.descripcion, icon: ministries.find(ministry => ministry.name === item.nombre)?.icon || 'sparkles' }))) }).catch(() => {}); return () => { active = false } }, [])
   return (
     <section className="ministries-section" id="ministerios" aria-labelledby="ministries-title">
       <div className="ministries-container">

@@ -16,11 +16,15 @@ Ejemplo: **Culto**, hora **09:00**, día **Domingo**. La primera fecha correspon
 
 La web muestra la próxima fecha de cada programación con una indicación como **Cada domingo · 9:00 a. m.** Las siguientes fechas aparecen automáticamente. Después de pasar la hora de una repetición, la agenda pública avanza a su próxima fecha. Los avisos también muestran solo el próximo encuentro de la serie.
 
+El listado de **Eventos y Cultos** también muestra una sola tarjeta por programación activa: su próxima fecha pendiente, incluso si el evento es privado. Se ordena de la fecha más cercana a la más lejana. Después de pasar la fecha y hora de Colombia, esa sesión sale del listado y se muestra la próxima repetición. Los eventos individuales pasados tampoco aparecen en esta lista. El panel actualiza la agenda cada minuto mientras está visible y al volver a la pestaña, sin interrumpir formularios abiertos.
+
+Esta limpieza del listado solo filtra la consulta. No elimina, archiva ni modifica las actividades realizadas, sus asistencias o sus inscripciones. El historial puede consultarse en **Asistencia** y navegando a semanas anteriores en el calendario.
+
 La repetición está disponible para cultos y eventos especiales. Las reuniones privadas de grupo mantienen su flujo existente.
 
 ## Edición y asistencia
 
-Cada fecha tiene su propio `id_actividad` y sus propios registros de asistencia. No se reutiliza la asistencia del domingo anterior. El panel conserva el listado de fechas para poder elegir la sesión correcta.
+Cada fecha tiene su propio `id_actividad` y sus propios registros de asistencia. No se reutiliza la asistencia del domingo anterior. El selector de **Asistencia** y el calendario conservan las fechas individuales para elegir la sesión correcta.
 
 Al editar una fecha de una programación se puede elegir:
 
@@ -49,6 +53,8 @@ Se preparan las próximas 12 semanas al crear la programación y se amplía ese 
 La fila de serie se bloquea en una transacción y la base impone una clave única por fecha original. Las solicitudes concurrentes no duplican sesiones. Las excepciones conservan su fecha original de generación aunque su fecha visible cambie. Los horarios se comparan en hora de Colombia; el cálculo semanal usa fechas de calendario sin conversiones a la zona horaria del navegador.
 
 ## API
+
+`GET /api/management/activities?view=agenda` devuelve próximos encuentros, con una sola fecha por serie activa. La selección ocurre antes del límite de resultados y compara fecha y hora en Colombia. `GET /api/management/activities` conserva las fechas individuales para el selector de asistencia. Ambos mantienen los permisos y alcances existentes. Los calendarios siguen consultándose por intervalo, sin agrupar las sesiones.
 
 `POST /api/management/activities` admite el campo opcional:
 

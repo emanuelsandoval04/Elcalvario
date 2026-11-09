@@ -67,16 +67,18 @@ export default function AccountNotifications({ user, disabled = false }: { user?
     setData(null); setError(''); setOpen(false); setFeedback(''); setPending(null)
     dismissed.current.clear()
     if (!allowed) return
-    let active = true, running = false, queued = false
+    let active = true, running = false, queued = false, lastStarted = -Infinity
     const refresh = async () => {
-      if (document.visibilityState !== 'visible') return
+      if (!active || document.visibilityState !== 'visible' || !navigator.onLine) return
       if (running) { queued = true; return }
       running = true
+      lastStarted = Date.now()
       try {
         const result = await authRequest<Notifications>('notifications')
         if (active) {
           const hidden = result.items.filter(item => dismissed.current.has(item.id)).length
-          setData({ ...result, total: Math.max(0, result.total - hidden), items: result.items.filter(item => !dismissed.current.has(item.id)) })
+          const next = { ...result, total: Math.max(0, result.total - hidden), items: result.items.filter(item => !dismissed.current.has(item.id)) }
+          setData(previous => JSON.stringify(previous) === JSON.stringify(next) ? previous : next)
           setError('')
         }
       } catch (cause) {
@@ -86,16 +88,19 @@ export default function AccountNotifications({ user, disabled = false }: { user?
         if (active && queued) { queued = false; void refresh() }
       }
     }
+    const resume = () => { if (Date.now() - lastStarted >= 1000) void refresh() }
     void refresh()
     const timer = window.setInterval(() => void refresh(), 15000)
-    window.addEventListener('focus', refresh)
-    document.addEventListener('visibilitychange', refresh)
+    window.addEventListener('focus', resume)
+    document.addEventListener('visibilitychange', resume)
+    window.addEventListener('online', resume)
     window.addEventListener('calvario-users-updated', refresh)
     window.addEventListener('calvario-notifications-refresh', refresh)
     return () => {
       active = false; window.clearInterval(timer)
-      window.removeEventListener('focus', refresh)
-      document.removeEventListener('visibilitychange', refresh)
+      window.removeEventListener('focus', resume)
+      document.removeEventListener('visibilitychange', resume)
+      window.removeEventListener('online', resume)
       window.removeEventListener('calvario-users-updated', refresh)
       window.removeEventListener('calvario-notifications-refresh', refresh)
     }

@@ -5,6 +5,7 @@ import { createHash } from 'node:crypto'
 import { fileURLToPath } from 'node:url'
 import { invalid } from './entities.js'
 import { discipleColumns, discipleReportRows } from './reports.js'
+import { reportLogoPath } from './export-presentation.js'
 
 export const consentVersion = 'base-2026-11-08'
 export const maxConsentBytes = 2 * 1024 * 1024
@@ -27,7 +28,7 @@ export async function discipleConsentPdf(member,institution,sensitive,now=new Da
   const complete=collect(document), width=document.page.width-84
   const fullName=`${member.nombres} ${member.apellidos || ''}`.trim()
   function heading(title) {
-    document.image(fileURLToPath(new URL('./mail-assets/el-calvario.png',import.meta.url)),42,32,{fit:[150,64]})
+    document.image(reportLogoPath,42,32,{fit:[150,64]})
     document.image(fileURLToPath(new URL('./mail-assets/nexus.png',import.meta.url)),document.page.width-132,42,{fit:[90,36]})
     document.fillColor('#142e49').font('Helvetica-Bold').fontSize(18).text(title,42,112,{width})
     document.fillColor('#42556b').font('Helvetica').fontSize(9).text(institution.nombre,{width}).moveDown(.5)

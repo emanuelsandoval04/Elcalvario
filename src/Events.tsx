@@ -3,6 +3,8 @@ import Participation from './Participation'
 import './events.css'
 import { lazy, Suspense, useEffect, useState } from 'react'
 import { weeklySchedule } from './EventRecurrence'
+import { photoSources } from './photo-sources'
+import { pollWhileVisible } from './visible-poll'
 
 type PublicEvent = { id_actividad: number; tipo_actividad: 'culto' | 'evento'; titulo: string; fecha: string; hora: string; lugar: string; imagen: string | null; descripcion: string | null; estado_actividad: string; requiere_inscripcion: number | null; url_inscripcion: string | null; id_serie?: number | null; dia_semana?: number | null; repeticion_activa?: number; repeticion_fin?: string | null; repeticion_hora?: string; fecha_programada?: string }
 type Transmission = { videoUrl: string | null; pageUrl: string; automatic: boolean; live: boolean }
@@ -16,14 +18,13 @@ export default function Events() {
   useEffect(() => {
     const controller = new AbortController()
     async function updateEvents() {
-      try { const response = await fetch('/api/public/events', { signal: controller.signal }); if (!response.ok) throw new Error(); const result = await response.json(); setEvents(result.items); setFailed(false) } catch { if (!controller.signal.aborted) setFailed(true) }
+      try { const response = await fetch('/api/public/events', { signal: AbortSignal.any([controller.signal, AbortSignal.timeout(10000)]) }); if (!response.ok) throw new Error(); const result = await response.json(); if (!Array.isArray(result.items)) throw new Error(); if (!controller.signal.aborted) { setEvents(previous => JSON.stringify(previous) === JSON.stringify(result.items) ? previous : result.items); setFailed(false) } } catch { if (!controller.signal.aborted) setFailed(true) }
     }
     async function updateTransmission() {
-      try { const response = await fetch('/api/public/transmission', { signal: controller.signal }); if (response.ok) setTransmission(await response.json()) } catch { /* The page link remains available. */ }
+      try { const response = await fetch('/api/public/transmission', { signal: AbortSignal.any([controller.signal, AbortSignal.timeout(10000)]) }); if (response.ok) { const result = await response.json(); if (!controller.signal.aborted) setTransmission(previous => JSON.stringify(previous) === JSON.stringify(result) ? previous : result) } } catch { /* The page link remains available. */ }
     }
-    void updateEvents(); void updateTransmission()
-    const interval = window.setInterval(() => { void updateEvents(); void updateTransmission() }, 60000)
-    return () => { controller.abort(); window.clearInterval(interval) }
+    const stop = pollWhileVisible(() => Promise.all([updateEvents(), updateTransmission()]), 60000)
+    return () => { stop(); controller.abort() }
   }, [])
   const facebookEmbedUrl = transmission.videoUrl ? `https://www.facebook.com/plugins/video.php?height=314&href=${encodeURIComponent(transmission.videoUrl)}&show_text=false&width=560` : null
   return (
@@ -49,7 +50,7 @@ export default function Events() {
               </div>
             </article>) : <article className="event-card">
               <div className="event-image-wrap">
-                <img src="/784197648_122328947036230206_1156999774695897129_n.jpg" alt="La comunidad de El Calvario reunida durante un encuentro" loading="lazy" />
+                <img {...photoSources('784197648_122328947036230206_1156999774695897129_n.jpg')} sizes="(max-width: 767px) calc(100vw - 48px), 560px" width="2048" height="1366" alt="La comunidad de El Calvario reunida durante un encuentro" loading="lazy" decoding="async" />
                 <span className="event-image-label">Vida en comunidad</span>
               </div>
               <div className="event-information">

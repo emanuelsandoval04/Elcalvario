@@ -6,7 +6,21 @@ export type AuthUser = { id: number; memberId: number | null; name: string | nul
 export const hasPermission = (user: AuthUser | null, code: string) => user?.state === 'activo' && Boolean(user.permissions[code])
 
 type AuthResult = { user?: AuthUser | null; error?: string; ok?: boolean }
-export async function authRequest<T extends object = AuthResult>(path: string, data?: object): Promise<T & AuthResult> {
+let pendingSession: Promise<AuthResult> | null = null
+export function authRequest<T extends object = AuthResult>(path: string, data?: object): Promise<T & AuthResult> {
+  // Share simultaneous checks, without caching permissions between requests.
+  if (path === 'me' && !data) {
+    if (!pendingSession) {
+      const request = sendAuthRequest(path).finally(() => { if (pendingSession === request) pendingSession = null })
+      pendingSession = request
+    }
+    return pendingSession as Promise<T & AuthResult>
+  }
+  if (data) pendingSession = null
+  return sendAuthRequest<T>(path, data)
+}
+
+async function sendAuthRequest<T extends object = AuthResult>(path: string, data?: object): Promise<T & AuthResult> {
   const response = await fetch(`/api/auth/${path}`, {
     method: data ? 'POST' : 'GET',
     credentials: 'same-origin',
@@ -39,10 +53,11 @@ export function useAuthSession() {
     return result.user || null
   }, [])
   useEffect(() => {
-    let active = true, running = false
+    let active = true, running = false, lastStarted = -Infinity
     const check = async () => {
       if (running) return
       running = true
+      lastStarted = Date.now()
       try {
         const result = await authRequest('me')
         if (active) {
@@ -53,13 +68,15 @@ export function useAuthSession() {
         if (active) setError(cause instanceof Error ? cause.message : 'No pudimos verificar tu sesión.')
       } finally { running = false; if (active) setChecking(false) }
     }
-    const resume = () => { if (document.visibilityState === 'visible') void check() }
+    const resume = () => { if (document.visibilityState === 'visible' && navigator.onLine && Date.now() - lastStarted >= 1000) void check() }
+    const accountUpdated = () => { if (document.visibilityState === 'visible') void check() }
     void check()
     const timer = window.setInterval(resume, 15000)
     window.addEventListener('focus', resume)
-    window.addEventListener('calvario-account-updated', resume)
+    window.addEventListener('calvario-account-updated', accountUpdated)
+    window.addEventListener('online', resume)
     document.addEventListener('visibilitychange', resume)
-    return () => { active = false; window.clearInterval(timer); window.removeEventListener('focus', resume); window.removeEventListener('calvario-account-updated', resume); document.removeEventListener('visibilitychange', resume) }
+    return () => { active = false; window.clearInterval(timer); window.removeEventListener('focus', resume); window.removeEventListener('calvario-account-updated', accountUpdated); window.removeEventListener('online', resume); document.removeEventListener('visibilitychange', resume) }
   }, [])
   return { user, setUser, checking, error, refresh }
 }

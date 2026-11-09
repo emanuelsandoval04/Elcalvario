@@ -13,7 +13,7 @@ export default function AccountSecurity({ user, onBusy }: { user: AuthUser; onBu
   const [data, setData] = useState<SecurityData | null>(null), [busy, setBusy] = useState(false)
   const [error, setError] = useState(''), [message, setMessage] = useState('')
   const [confirmRevoke, setConfirmRevoke] = useState<string | null>(null), [audit, setAudit] = useState<SecurityEvent[] | null>(null)
-  const canViewAudit = user.registration?.canManageAccounts && (user.roles.includes('Superadmin') || Boolean(user.pastoralRole && user.pastoralRole.level >= 1 && user.pastoralRole.level <= 5))
+  const canViewAudit = user.registration?.canManageAccounts && (user.roles.includes('Administrador') || Boolean(user.pastoralRole && user.pastoralRole.level >= 1 && user.pastoralRole.level <= 5))
   async function load() { setData(await authRequest<SecurityData>('account/security')) }
   useEffect(() => { void load().catch(cause => setError(cause instanceof Error ? cause.message : 'No pudimos consultar tu seguridad.')) }, [])
   async function perform(action: () => Promise<void>) {

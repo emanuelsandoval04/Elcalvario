@@ -1,26 +1,15 @@
-import { useEffect, useState } from 'react'
 import type { RefObject } from 'react'
 import gsap from 'gsap'
 import { useGSAP } from '@gsap/react'
+import { useMediaQuery } from './use-media-query'
 
 gsap.registerPlugin(useGSAP)
 export { gsap, useGSAP }
-
-export function useMediaQuery(query: string) {
-  const [matches, setMatches] = useState(() => window.matchMedia(query).matches)
-  useEffect(() => {
-    const media = window.matchMedia(query)
-    const update = () => setMatches(media.matches)
-    update()
-    media.addEventListener('change', update)
-    return () => media.removeEventListener('change', update)
-  }, [query])
-  return matches
-}
+export { useMediaQuery }
 
 // One delegated interaction layer also covers forms and rows loaded asynchronously.
 export function useAdminMotion(root: RefObject<HTMLDivElement | null>) {
-  const reducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)')
+  const reducedMotion = useMediaQuery('(prefers-reduced-motion: reduce), (max-width: 900px), (pointer: coarse)')
   useGSAP((_context, contextSafe) => {
     const element = root.current
     if (!element || reducedMotion || !contextSafe) return

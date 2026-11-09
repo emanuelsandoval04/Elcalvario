@@ -3,7 +3,7 @@ import { randomBytes, randomUUID, scrypt, timingSafeEqual, createHash } from 'no
 import { promisify } from 'node:util'
 import { pool } from './db.js'
 import { isAllowedOrigin } from './origin.js'
-import { pastoralRoleFor, registrationCapabilities, hasPastoralAuthority, pastoralRoles, canAdministerAccounts } from './pastoral-policy.js'
+import { pastoralRoleFor, registrationCapabilities, hasPastoralAuthority, pastoralRoles, canAdministerAccounts, roleLevel, accountLevel, outranks } from './pastoral-policy.js'
 import { readNotifications, dismissNotification } from './notifications.js'
 import { parseProfilePhoto, saveProfilePhoto } from './profile-photo.js'
 import { sessionMilliseconds } from './config.js'
@@ -61,8 +61,8 @@ export async function readUser(id, connection = pool) {
   const [linkedRoles] = users[0].memberId ? await connection.execute('SELECT r.nombre,r.nivel_jerarquico FROM miembro m JOIN rol_eclesiastico r ON r.id_rol_eclesiastico=m.id_rol_eclesiastico WHERE m.id_miembro=? AND m.archivado=0 AND m.estado_miembro=\'activo\'', [users[0].memberId]) : [[]]
   const user = { ...users[0], roles: roles.map(role => role.nombre), permissions }
   user.pastoralRole = pastoralRoleFor(user.roles, linkedRoles[0])
-  if (!user.roles.includes('Superadmin') && user.pastoralRole?.level === 6 && permissions['miembros.editar']) permissions['miembros.editar'] = 'grupo'
-  if (!user.roles.includes('Superadmin') && user.pastoralRole?.level === 6 && permissions['miembros.registrar']) permissions['miembros.registrar'] = 'grupo'
+  if (!user.roles.includes('Administrador') && user.pastoralRole?.level === 6 && permissions['miembros.editar']) permissions['miembros.editar'] = 'grupo'
+  if (!user.roles.includes('Administrador') && user.pastoralRole?.level === 6 && permissions['miembros.registrar']) permissions['miembros.registrar'] = 'grupo'
   user.registration = registrationCapabilities(user)
   return user
 }
@@ -372,6 +372,23 @@ authRouter.post('/account/password', rateLimit, requireAccountSession, async (re
   } finally { connection?.release() }
 })
 
+// Rank of any account, whatever its state: system roles plus the linked member's pastoral rank.
+export async function targetLevel(connection, id) {
+  const [roles] = await connection.execute('SELECT r.nombre FROM usuario_rol ur JOIN rol_sistema r ON r.id_rol=ur.id_rol WHERE ur.id_usuario=? AND ur.activo=1 AND r.estado=1', [id])
+  const [ranks] = await connection.execute('SELECT re.nivel_jerarquico FROM usuario u JOIN miembro m ON m.id_miembro=u.id_miembro AND m.archivado=0 JOIN rol_eclesiastico re ON re.id_rol_eclesiastico=m.id_rol_eclesiastico WHERE u.id_usuario=?', [id])
+  return accountLevel(roles.map(role => role.nombre), ranks[0]?.nivel_jerarquico)
+}
+export async function memberLevel(connection, memberId) {
+  const [ranks] = await connection.execute('SELECT re.nivel_jerarquico FROM miembro m JOIN rol_eclesiastico re ON re.id_rol_eclesiastico=m.id_rol_eclesiastico WHERE m.id_miembro=?', [memberId])
+  return ranks[0]?.nivel_jerarquico == null ? null : Number(ranks[0].nivel_jerarquico)
+}
+// The installation owner can only be changed or deleted by themselves through other means.
+async function isInstallationOwner(connection, id) {
+  const [configuration] = await connection.execute('SELECT id_superadmin_inicial FROM configuracion_sistema WHERE id=1')
+  return configuration[0]?.id_superadmin_inicial === id
+}
+const rankError = 'No puedes asignar ni administrar cargos iguales o superiores al tuyo.'
+
 export const hasPermission = (user, code) => user?.state === 'activo' && Boolean(user?.permissions?.[code])
 export function requirePermission(code) {
   return (request, response, next) => hasPermission(request.authUser, code) ? next() : response.status(403).json({ error: 'No tienes permiso para esta operación.' })
@@ -423,11 +440,12 @@ authRouter.post('/admin/users', securityLimit, async (request, response) => {
     if (!canAdministerAccounts(actor)) throw invalid('Ya no tienes permiso para crear cuentas.', 403)
     const [roles] = await connection.execute('SELECT nombre FROM rol_sistema WHERE id_rol=? AND estado=1', [roleId])
     if (!roles.length) throw invalid('Selecciona un rol disponible.')
-    if (roles[0].nombre === 'Superadmin' && !actor.roles.includes('Superadmin')) throw invalid('El rol técnico Superadmin solo puede asignarlo el propietario de la instalación.', 403)
+    if (!outranks(actor, roleLevel(roles[0].nombre))) throw invalid(rankError, 403)
     if (memberId) {
       if (actor.permissions['miembros.ver'] !== 'todos') throw invalid('No tienes permiso para vincular esta ficha.', 403)
       const [members] = await connection.execute('SELECT id_miembro FROM miembro WHERE id_miembro=? AND archivado=0 FOR UPDATE', [memberId])
       if (!members.length) throw invalid('Ficha del discípulo no disponible.', 404)
+      if (!outranks(actor, await memberLevel(connection, memberId))) throw invalid(rankError, 403)
       const [linked] = await connection.execute('SELECT id_usuario FROM usuario WHERE id_miembro=?', [memberId])
       if (linked.length) throw invalid('La ficha del discípulo ya tiene una cuenta vinculada.', 409)
     }
@@ -478,7 +496,7 @@ authRouter.get('/admin/users', async (request, response) => {
     const [users] = await pool.execute(`SELECT id_usuario AS id, id_miembro AS memberId, correo_login AS email, estado_usuario AS state, fecha_creacion AS createdAt, ultimo_acceso AS lastAccess FROM usuario${where} ORDER BY estado_usuario = 'pendiente' DESC, id_usuario DESC LIMIT 50 OFFSET ${ (page - 1) * 50 }`, params)
     const [assignments] = await pool.execute('SELECT ur.id_usuario, r.nombre FROM usuario_rol ur JOIN rol_sistema r ON r.id_rol = ur.id_rol WHERE ur.activo = 1 AND r.estado = 1')
     const [roles] = await pool.execute('SELECT id_rol AS id, nombre AS name FROM rol_sistema WHERE estado = 1 ORDER BY nombre')
-    response.json({ users: users.map(user => ({ ...user, roles: assignments.filter(role => role.id_usuario === user.id).map(role => role.nombre) })), roles: request.authUser.roles.includes('Superadmin') ? roles : roles.filter(role => role.name !== 'Superadmin'), total: counts[0].total, page, pageSize: 50 })
+    response.json({ users: users.map(user => ({ ...user, roles: assignments.filter(role => role.id_usuario === user.id).map(role => role.nombre) })), roles: roles.filter(role => outranks(request.authUser, roleLevel(role.name))), total: counts[0].total, page, pageSize: 50 })
   } catch (error) {
     console.error('Error de consulta de usuarios:', error.code || 'USERS_ERROR')
     response.status(503).json({ error: 'No pudimos cargar los usuarios.' })
@@ -507,10 +525,13 @@ authRouter.delete('/admin/users/:id', async (request, response) => {
       await connection.rollback()
       return response.status(404).json({ error: 'La cuenta ya no existe.' })
     }
-    const [owners] = await connection.execute("SELECT ur.id_usuario FROM usuario_rol ur JOIN rol_sistema r ON r.id_rol=ur.id_rol WHERE ur.id_usuario=? AND ur.activo=1 AND r.nombre='Superadmin'", [id])
-    if (owners.length || configuration[0]?.id_superadmin_inicial === id) {
+    if (configuration[0]?.id_superadmin_inicial === id) {
       await connection.rollback()
       return response.status(403).json({ error: 'La cuenta del propietario técnico está protegida.' })
+    }
+    if (!outranks(actor, await targetLevel(connection, id))) {
+      await connection.rollback()
+      return response.status(403).json({ error: rankError })
     }
     if (targets[0].correo_login !== expectedEmail || targets[0].estado_usuario !== expectedState || action === 'reject' && targets[0].estado_usuario !== 'pendiente') {
       await connection.rollback()
@@ -539,10 +560,15 @@ authRouter.post('/admin/users/:id/role', async (request, response) => {
     connection = await pool.getConnection()
     await connection.beginTransaction()
     await connection.execute('SELECT id FROM configuracion_sistema WHERE id = 1 FOR UPDATE')
+    await lockedAccount(request, connection)
     const actor = await readUser(request.authUser.id, connection)
     if (!canAdministerAccounts(actor)) {
       await connection.rollback()
       return response.status(403).json({ error: 'Ya no tienes permiso para asignar roles.' })
+    }
+    if (await isInstallationOwner(connection, id)) {
+      await connection.rollback()
+      return response.status(403).json({ error: 'La cuenta del propietario técnico está protegida.' })
     }
     const [targets] = await connection.execute('SELECT id_usuario, id_miembro, estado_usuario FROM usuario WHERE id_usuario = ? FOR UPDATE', [id])
     const [roles] = await connection.execute('SELECT nombre FROM rol_sistema WHERE id_rol = ? AND estado = 1', [roleId])
@@ -550,16 +576,10 @@ authRouter.post('/admin/users/:id/role', async (request, response) => {
       await connection.rollback()
       return response.status(404).json({ error: 'Usuario o rol no disponible.' })
     }
-    if (roles[0].nombre === 'Superadmin' && !actor.roles.includes('Superadmin')) {
+    // Both the role being granted and the account's current rank must be below the actor's rank.
+    if (!outranks(actor, roleLevel(roles[0].nombre)) || !outranks(actor, await targetLevel(connection, id))) {
       await connection.rollback()
-      return response.status(403).json({ error: 'El rol técnico Superadmin solo puede asignarlo el propietario de la instalación.' })
-    }
-    if (!actor.roles.includes('Superadmin')) {
-      const [owners] = await connection.execute("SELECT ur.id_usuario FROM usuario_rol ur JOIN rol_sistema r ON r.id_rol=ur.id_rol WHERE ur.id_usuario=? AND ur.activo=1 AND r.nombre='Superadmin'", [id])
-      if (owners.length) {
-        await connection.rollback()
-        return response.status(403).json({ error: 'La cuenta del propietario técnico está protegida.' })
-      }
+      return response.status(403).json({ error: rankError })
     }
     await connection.execute('UPDATE usuario_rol SET activo = 0 WHERE id_usuario = ?', [id])
     await connection.execute('INSERT INTO usuario_rol (id_usuario, id_rol) VALUES (?, ?) ON DUPLICATE KEY UPDATE activo = 1, fecha_asignacion = UTC_TIMESTAMP()', [id, roleId])
@@ -573,6 +593,7 @@ authRouter.post('/admin/users/:id/role', async (request, response) => {
     response.json({ ok: true })
   } catch (error) {
     if (connection) await connection.rollback()
+    if (error.status) return response.status(error.status).json({ error: error.message })
     console.error('Error de asignación de rol:', error.code || 'ROLE_ERROR')
     response.status(503).json({ error: 'No pudimos guardar el rol.' })
   } finally { connection?.release() }

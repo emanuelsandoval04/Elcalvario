@@ -1,3 +1,4 @@
+import { reportTable } from './report-table.mjs'
 import assert from 'node:assert/strict'
 import { randomUUID } from 'node:crypto'
 import mysql from 'mysql2/promise'
@@ -31,16 +32,21 @@ try {
     assert.equal(response.status,expected,`${method || 'request'} ${path}: ${JSON.stringify(data)}`)
     return {data,cookie:response.headers.get('set-cookie')?.split(';')[0]}
   }
+  const {bootstrapAdmin}=await import('../server/bootstrap-admin.js')
+  const {hashPassword}=await import('../server/auth.js')
+  await bootstrapAdmin({name:'Propietario de prueba',email:'Administrador@example.invalid',password})
+  const passwordHash=await hashPassword(password)
   const accounts={}
-  for(const role of ['Superadmin','Usuario','Pastor','Asistencia Pastoral','Discipulador','Multimedia']) {
-    const result=await request('auth/register',{email:`${role.replaceAll(' ','-')}@example.invalid`,password},'','POST',201)
-    accounts[role]={id:result.data.user.id,cookie:result.cookie}
-    if(role!=='Superadmin' && role!=='Usuario') {
-      const [roles]=await pool.execute('SELECT id_rol FROM rol_sistema WHERE nombre=?',[role])
-      await request(`auth/admin/users/${result.data.user.id}/role`,{roleId:roles[0].id_rol},accounts.Superadmin.cookie)
+  for(const role of ['Administrador','Usuario','Pastor','Asistencia Pastoral','Discipulador','Multimedia']) {
+    const email=`${role.replaceAll(' ','-')}@example.invalid`
+    if(role!=='Administrador') {
+      const [created]=await pool.execute("INSERT INTO usuario(correo_login,password_hash,estado_usuario) VALUES (?,?,'activo')",[email,passwordHash])
+      await pool.execute('INSERT INTO usuario_rol(id_usuario,id_rol) SELECT ?,id_rol FROM rol_sistema WHERE nombre=?',[created.insertId,role])
     }
+    const result=await request('auth/login',{email,password})
+    accounts[role]={id:result.data.user.id,cookie:result.cookie}
   }
-  const admin=accounts.Superadmin.cookie,pastor=accounts.Pastor.cookie,assistant=accounts['Asistencia Pastoral'].cookie,disciple=accounts.Discipulador.cookie,media=accounts.Multimedia.cookie
+  const admin=accounts.Administrador.cookie,pastor=accounts.Pastor.cookie,assistant=accounts['Asistencia Pastoral'].cookie,disciple=accounts.Discipulador.cookie,media=accounts.Multimedia.cookie
   await request('management/members',undefined,'',undefined,401)
   await request('management/dashboard',undefined,accounts.Usuario.cookie,undefined,403)
   await request('management/members',undefined,media,undefined,403)
@@ -122,12 +128,15 @@ try {
   await request('management/attendance',{id_actividad:first,estado_asistencia:'visitante',nombre_visitante:'Visita'},media,'POST',201)
   const [qr]=await pool.execute('SELECT codigo_qr FROM miembro WHERE id_miembro=?',[leader])
   await request('management/attendance',{id_actividad:meeting,estado_asistencia:'presente',metodo_registro:'qr',codigo_qr:qr[0].codigo_qr},disciple,'POST',201)
-  const consent={version_politica:'1',medio:'papel',estado_consentimiento:'aceptado',acepta_politica_privacidad:1,acepta_datos_religiosos:1,fecha_aceptacion:'2026-01-01T15:00:00.000Z'}
+  const {PDFDocument}=await import('pdf-lib')
+  const signedFixture=await PDFDocument.create();signedFixture.addPage()
+  const consent={files:[{type:'application/pdf',data:Buffer.from(await signedFixture.save()).toString('base64')}],confirmSigned:true,religious:true,health:false}
   await request(`management/members/${member}/consents`,consent,admin,'POST',201)
-  await request(`management/members/${member}/consents`,{...consent,estado_consentimiento:'revocado',fecha_revocacion:'2026-02-01T15:00:00.000Z'},admin,'POST',201)
-  assert.equal((await request(`management/members/${member}/consents`,undefined,admin)).data.items.length,2)
+  const latestConsent=(await request(`management/members/${member}/consents`,undefined,admin)).data.items[0]
+  await request(`management/members/${member}/consents/${latestConsent.id_consentimiento}/revoke`,{},admin)
+  assert.equal((await request(`management/members/${member}/consents`,undefined,admin)).data.items.length,1)
   const [kept]=await pool.execute('SELECT estado_miembro FROM miembro WHERE id_miembro=?',[member]);assert.equal(kept[0].estado_miembro,'inactivo')
-  await request(`management/members/${member}/consents`,{...consent,acepta_datos_religiosos:0},admin,'POST',201)
+  await request(`management/members/${member}/consents`,{...consent,religious:false},admin,'POST',201)
   const independentConsent=(await request(`management/members/${member}/consents`,undefined,admin)).data.items.find(row=>row.acepta_datos_religiosos===0)
   assert.ok(independentConsent,'Las autorizaciones se conservan de manera independiente')
   for(const type of ['asistencia','cumpleanos','grupos']) for(const format of ['pdf','xlsx']) {
@@ -135,7 +144,7 @@ try {
     assert.equal(response.status,200)
     const data=Buffer.from(await response.arrayBuffer())
     if(format==='pdf') assert.equal(data.subarray(0,5).toString(),'%PDF-')
-    else { const workbook=new ExcelJS.Workbook();await workbook.xlsx.load(data);assert.ok(workbook.worksheets[0].rowCount>1);if(type==='asistencia'){assert.ok(workbook.worksheets[0].getRow(1).values.includes('Discípulo'));assert.ok(workbook.worksheets[0].getColumn(4).values.slice(2).some(Boolean))} }
+    else { const workbook=new ExcelJS.Workbook();await workbook.xlsx.load(data);assert.ok(reportTable(workbook.worksheets[0]).count>0);if(type==='asistencia'){assert.ok(reportTable(workbook.worksheets[0]).header.includes('Discípulo'));assert.ok(reportTable(workbook.worksheets[0]).rows.some(row=>Boolean(row.getCell(4).value)))} }
   }
   const mediaExport=await fetch(`${base}/api/management/reports/asistencia?format=xlsx`,{headers:{Cookie:media}})
   const mediaWorkbook=new ExcelJS.Workbook();await mediaWorkbook.xlsx.load(Buffer.from(await mediaExport.arrayBuffer()))

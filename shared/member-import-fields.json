@@ -1,0 +1,22 @@
+{
+  "nombres": { "label": "Nombres", "required": true, "max": 100 },
+  "apellidos": { "label": "Apellidos", "max": 100 },
+  "tipo_identificacion": { "label": "Tipo de identificación", "required": true, "max": 30 },
+  "numero_identificacion": { "label": "Identificación", "required": true, "max": 30 },
+  "celular": { "label": "Celular", "required": true, "max": 20 },
+  "correo": { "label": "Correo", "max": 120 },
+  "fecha_nacimiento": { "label": "Fecha de nacimiento", "required": true, "max": 10 },
+  "grupo_sanguineo_rh": { "label": "Grupo sanguíneo / RH", "max": 10 },
+  "eps": { "label": "EPS", "max": 100 },
+  "contacto_emergencia_nombre": { "label": "Contacto de emergencia", "max": 150 },
+  "contacto_emergencia_celular": { "label": "Celular de emergencia", "max": 20 },
+  "funcion_iglesia": { "label": "Función en la iglesia", "max": 150 },
+  "sede": { "label": "Sede", "max": 150 },
+  "rol_eclesiastico": { "label": "Rol eclesiástico", "max": 80 },
+  "grupo_comunion": { "label": "Grupo de Comunión", "max": 150 },
+  "cobertura_pastoral": { "label": "Cobertura pastoral", "max": 240 },
+  "libro_adiestramiento": { "label": "Libro de adiestramiento", "max": 150 },
+  "ministerios": { "label": "Ministerios", "max": 2000 },
+  "estado_miembro": { "label": "Estado", "max": 20 },
+  "codigo_grupo": { "label": "Código de grupo", "max": 30 }
+}

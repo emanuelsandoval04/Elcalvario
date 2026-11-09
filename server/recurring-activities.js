@@ -13,6 +13,15 @@ export const nearestPublicDate = `AND (ar.id_serie IS NULL OR (TIMESTAMP(ac.fech
     AND (pa.fecha<ac.fecha OR (pa.fecha=ac.fecha AND (pa.hora<ac.hora OR (pa.hora=ac.hora AND pa.id_actividad<ac.id_actividad))))
 )))`
 
+// The management agenda includes private dates, and only one pending date of an active series.
+// Attendance and calendars continue to query the independent occurrence records.
+export const nearestManagedDate = `AND (ar.id_serie IS NULL OR (s.activa=1 AND NOT EXISTS (
+  SELECT 1 FROM actividad_repetida prior JOIN actividad pa ON pa.id_actividad=prior.id_actividad
+  WHERE prior.id_serie=ar.id_serie AND pa.archivado=0
+    AND TIMESTAMP(pa.fecha,pa.hora)>=DATE_SUB(UTC_TIMESTAMP(),INTERVAL 5 HOUR)
+    AND (pa.fecha<ac.fecha OR (pa.fecha=ac.fecha AND (pa.hora<ac.hora OR (pa.hora=ac.hora AND pa.id_actividad<ac.id_actividad))))
+)))`
+
 export function seriesTemplate(type, values, eventValues) {
   const { fecha: ignored, ...activity } = values
   return { activity: { ...activity, tipo_actividad: type }, event: eventValues || null }

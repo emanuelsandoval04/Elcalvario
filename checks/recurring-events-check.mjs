@@ -120,6 +120,38 @@ try {
   await edit(clockDates[0].id_actividad, { fecha: today, hora: '00:00', edit_scope: 'single' })
   const clockPublic = (await request('public/events')).data.items.find(row => row.id_serie === clockSeries.seriesId)
   assert.equal(clockPublic.id_actividad, clockDates[1].id_actividad, 'La agenda debe avanzar después de la hora de una repetición de hoy.')
+  const agenda=async()=> (await request('management/activities?view=agenda',{cookie:owner.cookie})).data.items
+  let agendaItems=await agenda()
+  assert.equal(agendaItems.filter(row=>row.id_serie===clockSeries.seriesId).length,1)
+  assert.equal(agendaItems.find(row=>row.id_serie===clockSeries.seriesId).id_actividad,clockDates[1].id_actividad)
+  assert.equal(agendaItems.filter(row=>row.id_serie===privateSeries.seriesId).length,1,'Los fijos privados también deben aparecer una sola vez para sus responsables.')
+  assert.equal(agendaItems.find(row=>row.id_serie===privateSeries.seriesId).id_actividad,(await occurrences(privateSeries.seriesId))[1].id_actividad,'Una fecha archivada no debe impedir mostrar la siguiente.')
+  const pastOneOff=(await create({...base,titulo:'Evento individual pasado',fecha:plusDays(today,-1),recurrence:null})).data
+  const elapsedToday=(await create({...base,titulo:'Evento individual realizado hoy',fecha:today,hora:'00:00',recurrence:null})).data
+  const futureOneOff=(await create({...base,titulo:'Evento individual próximo',fecha:plusDays(today,2),recurrence:null})).data
+  const originalActivities=(await db.execute('SELECT * FROM actividad ORDER BY id_actividad'))[0]
+  const originalAttendance=(await db.execute('SELECT * FROM asistencia ORDER BY id_asistencia'))[0]
+  agendaItems=await agenda()
+  assert.ok(!agendaItems.some(row=>row.id_actividad===pastOneOff.id || row.id_actividad===elapsedToday.id))
+  assert.ok(agendaItems.some(row=>row.id_actividad===futureOneOff.id))
+  const order=agendaItems.map(row=>`${row.fecha} ${row.hora} ${String(row.id_actividad).padStart(12,'0')}`)
+  assert.deepEqual(order,[...order].sort(),'La lista debe ordenarse por la próxima fecha y hora, después de agrupar las series.')
+  assert.deepEqual((await db.execute('SELECT * FROM actividad ORDER BY id_actividad'))[0],originalActivities,'Ocultar fechas pasadas no debe modificarlas ni archivarlas.')
+  assert.deepEqual((await db.execute('SELECT * FROM asistencia ORDER BY id_asistencia'))[0],originalAttendance)
+  const history=(await request('management/activities',{cookie:owner.cookie})).data.items
+  assert.ok(history.some(row=>row.id_actividad===pastOneOff.id));assert.ok(history.some(row=>row.id_actividad===clockDates[0].id_actividad))
+  assert.ok(history.filter(row=>row.id_serie===clockSeries.seriesId).length>1,'Asistencia debe conservar cada fecha independiente.')
+  await request('management/activities?view=agenda',{cookie:basic.cookie,status:403})
+  assert.ok(!(await request('management/activities?view=agenda',{cookie:disciple.cookie})).data.items.some(row=>row.id_serie),'El listado simplificado no debe ampliar los permisos por grupo.')
+  await request('management/activities?view=invalid',{cookie:owner.cookie,status:400})
+  await edit(clockDates[1].id_actividad,{fecha:plusDays(today,2),hora:'09:00',edit_scope:'single'})
+  await edit(clockDates[2].id_actividad,{fecha:plusDays(today,2),hora:'09:00',edit_scope:'single'})
+  agendaItems=await agenda()
+  assert.equal(agendaItems.filter(row=>row.id_serie===clockSeries.seriesId).length,1,'Dos excepciones en la misma fecha no deben producir tarjetas duplicadas.')
+  assert.equal(agendaItems.find(row=>row.id_serie===clockSeries.seriesId).id_actividad,clockDates[1].id_actividad)
+  const sameTitle=(await create({...base,titulo:'Próxima fecha después del horario de hoy'})).data
+  assert.equal((await agenda()).filter(row=>[clockSeries.seriesId,sameTitle.seriesId].includes(row.id_serie)).length,2,'Las programaciones diferentes conservan su tarjeta aunque compartan título.')
+  console.log('PASS agenda: one pending date per active series, private dates, archived exceptions, clock rollover, distinct series, chronological order, scoped access and unchanged history/attendance.')
   const oneOff = (await create({ ...base, titulo: 'Evento para convertir', recurrence: null })).data
   await request(`management/activities/${oneOff.id}`, { body: { recurrence: { dayOfWeek: 0 } }, cookie: editor.cookie, method: 'PATCH', status: 403 })
   const converted = (await edit(oneOff.id, { recurrence: { dayOfWeek: 0 } })).data
@@ -159,6 +191,7 @@ try {
   await ensureRecurringActivities(plusDays(today,200))
   assert.equal((await occurrences(fixed.seriesId)).length,deletedCount)
   assert.ok(!(await request('public/events')).data.items.some(row=>row.id_serie===fixed.seriesId))
+  assert.ok(!(await agenda()).some(row=>row.id_serie===fixed.seriesId || row.id_serie===created.seriesId),'Las series detenidas no deben reaparecer por conservar asistencias futuras.')
   console.log('PASS API: Sunday/Thursday schedules, distinct attendance, concurrent generation, future extension, date exceptions, following edits, public/notification deduplication, privacy, conversion and stopping without deleting history')
 
   if (process.argv.includes('--ui')) {
@@ -203,6 +236,21 @@ try {
     }
     await form.getByRole('button', { name: 'Guardar', exact: true }).click()
     await page.getByRole('status').filter({ hasText: 'Programación semanal creada.' }).waitFor()
+    await page.getByRole('button',{name:'Ver ficha de Culto semanal de prueba UI',exact:true}).waitFor()
+    assert.equal(await page.getByRole('button',{name:'Ver ficha de Culto semanal de prueba UI',exact:true}).count(),1)
+    assert.equal(await page.getByRole('button',{name:'Pasados',exact:true}).count(),0)
+    assert.equal(await page.getByRole('button',{name:'Ver ficha de Evento individual pasado',exact:true}).count(),0)
+    assert.equal(await page.getByRole('button',{name:'Ver ficha de Evento individual realizado hoy',exact:true}).count(),0)
+    const [uiSeries]=await db.execute("SELECT ar.id_serie FROM actividad_repetida ar JOIN actividad ac ON ac.id_actividad=ar.id_actividad WHERE ac.titulo='Culto semanal de prueba UI' LIMIT 1")
+    const uiDates=await occurrences(uiSeries[0].id_serie)
+    assert.ok(uiDates.length>1)
+    const priorUiDate=uiDates[0].id_actividad
+    await edit(priorUiDate,{fecha:plusDays(today,-7),edit_scope:'single'})
+    await page.evaluate(()=>window.dispatchEvent(new Event('focus')))
+    await page.waitForFunction(id=>document.querySelector(`.record-open[aria-label="Ver ficha de Culto semanal de prueba UI"]`)?.closest('article')?.textContent?.includes(id),uiDates[1].fecha)
+    assert.equal(await page.getByRole('button',{name:'Ver ficha de Culto semanal de prueba UI',exact:true}).count(),1)
+    const uiPast=(await db.execute('SELECT CAST(fecha AS CHAR) AS fecha FROM actividad WHERE id_actividad=?',[priorUiDate]))[0][0]
+    assert.equal(uiPast.fecha,plusDays(today,-7))
     await page.goto(`${ui}/#eventos`)
     const card = page.locator('.event-card').filter({ hasText: 'Culto semanal de prueba UI' })
     await card.waitFor(); assert.equal(await card.count(), 1)

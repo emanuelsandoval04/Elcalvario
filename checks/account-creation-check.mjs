@@ -81,7 +81,7 @@ try {
   await create(input('basic@example.invalid'), owner.cookie, 409)
   await create({ ...input('no-member@example.invalid'), memberId: 999999 }, owner.cookie, 404)
   await create({ ...input('no-photo@example.invalid'), photo: 'invalid' }, owner.cookie, 400)
-  for (const roleName of ['Administrador', 'Apóstol General', 'Asistencia Apostólica', 'Pastor de Distrito', 'Pastor Local', 'Asistencia Pastoral']) {
+  for (const roleName of ['Apóstol General', 'Asistencia Apostólica', 'Pastor de Distrito', 'Pastor Local', 'Asistencia Pastoral']) {
     await db.execute('DELETE FROM limite_solicitud')
     const email = `authority-${role(roleName)}@example.invalid`
     await create(input(email, roleName))
@@ -89,15 +89,31 @@ try {
     assert.equal(actor.data.user.registration.canManageAccounts, true)
     const created = await create(input(`created-${role(roleName)}@example.invalid`), actor.cookie)
     assert.equal(created.data.user.state, 'activo')
-    await create(input('privileged@example.invalid', 'Superadmin'), actor.cookie, 403)
-    assert.ok(!(await request('admin/users', { cookie: actor.cookie })).data.roles.some(item => item.name === 'Superadmin'))
+    await create(input('privileged@example.invalid', 'Administrador'), actor.cookie, 403)
+    // Nobody but Administrador grants a rank equal to or above their own.
+    await create(input(`same-rank-${role(roleName)}@example.invalid`, roleName), actor.cookie, 403)
+    await create(input(`above-${role(roleName)}@example.invalid`, 'Apóstol General'), actor.cookie, 403)
+    await create(input(`pastor-${role(roleName)}@example.invalid`, 'Pastor'), actor.cookie, roleName === 'Asistencia Pastoral' || roleName === 'Pastor Local' ? 403 : 201)
+    const listed = (await request('admin/users', { cookie: actor.cookie })).data.roles.map(item => item.name)
+    assert.ok(!listed.includes('Administrador') && !listed.includes(roleName) && !listed.includes('Apóstol General'), roleName)
   }
+  assert.ok(roles.some(item => item.name === 'Administrador') && !roles.some(item => item.name === 'Superadmin'), 'Superadmin se unificó con Administrador.')
+  // A lower rank can neither change nor delete a higher-ranked account.
+  await db.execute('DELETE FROM limite_solicitud')
+  const assistant = await request('login', { body: { email: `authority-${role('Asistencia Pastoral')}@example.invalid`, password } })
+  const [[apostle]] = await db.execute('SELECT id_usuario, correo_login, estado_usuario FROM usuario WHERE correo_login=?', [`authority-${role('Apóstol General')}@example.invalid`])
+  await request(`admin/users/${apostle.id_usuario}/role`, { body: { roleId: role('Usuario') }, cookie: assistant.cookie, status: 403 })
+  const removal = await fetch(`${origin}/api/auth/admin/users/${apostle.id_usuario}`, { method: 'DELETE', headers: { Origin: origin, Cookie: assistant.cookie, 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'delete', expectedEmail: apostle.correo_login, expectedState: apostle.estado_usuario }) })
+  assert.equal(removal.status, 403)
+  const [[ownerRow]] = await db.execute('SELECT id_usuario FROM usuario WHERE correo_login=?', [ownerEmail])
+  const apostleSession = await request('login', { body: { email: apostle.correo_login, password } })
+  await request(`admin/users/${ownerRow.id_usuario}/role`, { body: { roleId: role('Usuario') }, cookie: apostleSession.cookie, status: 403 })
   const leaderEmail = 'leader@example.invalid'
   await create(input(leaderEmail, 'Discipulador'))
   const leader = await request('login', { body: { email: leaderEmail, password } })
   await create(input('leader-forbidden@example.invalid'), leader.cookie, 403)
-  const [[administrator]] = await db.execute("SELECT id_usuario FROM usuario WHERE correo_login=?", [`authority-${role('Administrador')}@example.invalid`])
-  const adminLogin = await request('login', { body: { email: `authority-${role('Administrador')}@example.invalid`, password } })
+  const [[administrator]] = await db.execute("SELECT id_usuario FROM usuario WHERE correo_login=?", [`authority-${role('Apóstol General')}@example.invalid`])
+  const adminLogin = await request('login', { body: { email: `authority-${role('Apóstol General')}@example.invalid`, password } })
   await db.execute('UPDATE usuario_rol SET activo=0 WHERE id_usuario=?', [administrator.id_usuario])
   await create(input('revoked@example.invalid'), adminLogin.cookie, 403)
 

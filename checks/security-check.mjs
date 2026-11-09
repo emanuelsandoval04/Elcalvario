@@ -86,7 +86,7 @@ try{
   const candidate=await request('auth/register',{email:'browser@example.invalid',password},candidateJar,201)
   await request('auth/logout',{},candidateJar)
   await db.execute("UPDATE usuario SET estado_usuario='activo' WHERE id_usuario=?",[candidate.data.user.id])
-  await db.execute("INSERT INTO usuario_rol(id_usuario,id_rol) SELECT ?,id_rol FROM rol_sistema WHERE nombre='Superadmin'",[candidate.data.user.id])
+  await db.execute("INSERT INTO usuario_rol(id_usuario,id_rol) SELECT ?,id_rol FROM rol_sistema WHERE nombre='Administrador'",[candidate.data.user.id])
   const {chromium}=await import('../.secrets/browser-tools/node_modules/playwright-core/index.mjs')
   browser=await chromium.launch({channel:'msedge',headless:true})
   async function context(){

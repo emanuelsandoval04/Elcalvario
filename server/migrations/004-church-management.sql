@@ -41,7 +41,7 @@ CREATE TABLE IF NOT EXISTS rol_permiso (
   FOREIGN KEY(codigo_permiso) REFERENCES permiso(codigo) ON DELETE RESTRICT
 ) ENGINE=InnoDB;
 INSERT INTO rol_sistema(nombre,descripcion) VALUES
-  ('Administrador','Todos los permisos'), ('Pastor','Todos los permisos'),
+  ('Pastor','Todos los permisos'),
   ('Asistencia Pastoral','Acompañamiento pastoral y corrección de asistencia'),
   ('Discipulador','Gestión de los grupos a su cargo'), ('Multimedia','Eventos, asistencia y estadísticas')
 ON DUPLICATE KEY UPDATE nombre=rol_sistema.nombre;
@@ -62,7 +62,7 @@ INSERT INTO permiso(codigo,descripcion) VALUES
 ON DUPLICATE KEY UPDATE codigo=permiso.codigo;
 INSERT INTO rol_permiso(id_rol,codigo_permiso,alcance)
 SELECT r.id_rol,p.codigo,'todos' FROM rol_sistema r CROSS JOIN permiso p
-WHERE r.nombre IN ('Superadmin','Administrador','Pastor')
+WHERE r.nombre IN ('Administrador','Pastor')
 AND NOT EXISTS (SELECT 1 FROM migracion_aplicada WHERE nombre='004-church-management.sql')
 ON DUPLICATE KEY UPDATE codigo_permiso=rol_permiso.codigo_permiso;
 INSERT INTO rol_permiso(id_rol,codigo_permiso,alcance)

@@ -7,6 +7,7 @@ import type { AuthUser } from './auth'
 import { hasPermission } from './auth'
 import { InstallApp, ConnectionStatus } from './pwa'
 import './admin-frame.css'
+import './app-theme.css'
 
 const iconPaths: Record<string, ReactNode> = {
   training: <><path d="M12 5c-3-2-6-2-9-1v15c3-1 6-1 9 1 3-2 6-2 9-1V4c-3-1-6-1-9 1ZM12 5v15"/><path d="M6 8h3M15 8h3M6 12h3M15 12h3"/></>,
@@ -133,7 +134,7 @@ export default function AdminFrame({ title, sectionName, navigation, children, v
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/>{open && <path d="m8 9-3 3 3 3"/>}</svg>
       </button>
       {!home && <a href="#gestion" className="panel-mobile-back" aria-label="Volver al inicio"><AdminIcon name="back"/></a>}
-      <a className={`panel-brand${!home ? ' panel-brand-section' : ''}`} href="#gestion" aria-label="El Calvario, panel de gestión"><img src="/logo1.png" alt=""/><span><span className="panel-brand-name">El Calvario</span><span className="panel-mobile-title">{sectionName}</span><small>MI COMUNIDAD · VILLAVICENCIO</small></span></a>
+      <a className={`panel-brand${!home ? ' panel-brand-section' : ''}`} href="#gestion" aria-label="El Calvario, panel de gestión"><img src="/media/logo-compact.webp" alt=""/><span><span className="panel-brand-name">El Calvario</span><span className="panel-mobile-title">{sectionName}</span><small>MI COMUNIDAD · VILLAVICENCIO</small></span></a>
       <AccountNotifications user={user} disabled={mobile && open}/>
       <AccountMenu user={user} onUpdate={onUserChange} disabled={mobile && open}/>
     </header>

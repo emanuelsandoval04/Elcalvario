@@ -115,7 +115,7 @@ try {
   const salt=randomBytes(16).toString('hex')
   const key=await promisify(scrypt)(credentials.password,salt,64,{N:32768,r:8,p:3,maxmem:64*1024*1024})
   const [fixture]=await connection.execute(`INSERT INTO \`${testDatabase}\`.usuario(correo_login,password_hash,estado_usuario) VALUES (?,?,'activo')`,[credentials.email,`scrypt$${salt}$${key.toString('hex')}`])
-  await connection.execute(`INSERT INTO \`${testDatabase}\`.usuario_rol(id_usuario,id_rol) SELECT ?,id_rol FROM \`${testDatabase}\`.rol_sistema WHERE nombre='Superadmin'`,[fixture.insertId])
+  await connection.execute(`INSERT INTO \`${testDatabase}\`.usuario_rol(id_usuario,id_rol) SELECT ?,id_rol FROM \`${testDatabase}\`.rol_sistema WHERE nombre='Administrador'`,[fixture.insertId])
   await connection.query(`UPDATE \`${testDatabase}\`.configuracion_sistema SET bootstrap_completado=1 WHERE id=1`)
   const authenticated=await request('auth/login',credentials)
   assert.equal(authenticated.status,200)
@@ -128,7 +128,7 @@ try {
   const cookie = setCookie.split(';')[0]
   const me = await request('auth/me', undefined, cookie)
   assert.equal(me.status, 200)
-  assert.ok((await me.json()).user.roles.includes('Superadmin'))
+  assert.ok((await me.json()).user.roles.includes('Administrador'))
   assert.equal((await request('management/dashboard', undefined, cookie)).status, 200)
   const logout = await request('auth/logout', {}, cookie)
   assert.equal(logout.status, 200)

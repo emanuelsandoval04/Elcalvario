@@ -1,3 +1,4 @@
+import { photoSources } from './photo-sources'
 import { useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import { authRequest, hasPermission, useAuthSession } from './auth'
@@ -48,7 +49,7 @@ export default function Login() {
     <main className="login-page" id="login">
       <div className="login-layout">
         <section className="login-story" aria-label="Comunidad El Calvario">
-          <img src="/660789788_122300754752230206_1313097966135355932_n.jpg" alt="La comunidad de El Calvario reunida" />
+          <img {...photoSources('660789788_122300754752230206_1313097966135355932_n.jpg')} sizes="(max-width: 767px) 100vw, 520px" width="1280" height="960" decoding="async" alt="La comunidad de El Calvario reunida" />
           <div className="login-story-content">
             <span className="login-story-label"><span /> Una iglesia. Una familia.</span>
             <h2>Juntos en la fe.<br /><em>Cerca de cada persona.</em></h2>
@@ -69,7 +70,7 @@ export default function Login() {
               <span className={`account-status${user.state === 'pendiente' ? ' is-pending' : ''}`}>{user.state === 'pendiente' ? 'Cuenta pendiente de habilitación' : 'Sesión iniciada'}</span>
               <strong>{user.email}</strong>
               <p>Rol: {user.roles.join(', ') || 'Pendiente de asignación'}</p>
-              <p>{user.state === 'pendiente' ? 'Un administrador, pastor o Superadmin debe asignarte tu rol. Hasta entonces, las herramientas de gestión estarán deshabilitadas.' : hasPermission(user, 'gestion.acceder') ? 'Las herramientas disponibles corresponden a los permisos de tu rol.' : 'Tu cuenta requiere la asignación de un rol autorizado para acceder a gestión.'}</p>
+              <p>{user.state === 'pendiente' ? 'El Administrador o un cargo pastoral autorizado debe asignarte tu rol. Hasta entonces, las herramientas de gestión estarán deshabilitadas.' : hasPermission(user, 'gestion.acceder') ? 'Las herramientas disponibles corresponden a los permisos de tu rol.' : 'Tu cuenta requiere la asignación de un rol autorizado para acceder a gestión.'}</p>
               {user.state === 'pendiente' && <button className="account-logout" disabled={busy} onClick={() => { setBusy(true); void refresh().then(updated => setMessage(updated?.state === 'pendiente' ? 'Tu cuenta sigue pendiente de habilitación.' : 'Estado de la cuenta actualizado.')).catch(cause => setMessage(cause instanceof Error ? cause.message : 'No pudimos consultar tu cuenta.')).finally(() => setBusy(false)) }}>Consultar habilitación</button>}
               {hasPermission(user, 'gestion.acceder') && <a className="login-submit" href="#gestion">Entrar a gestión</a>}
               {hasPermission(user, 'usuarios.gestionar') && user.registration?.canManageAccounts && <a className="login-submit" href="#usuarios">Administrar usuarios y roles</a>}

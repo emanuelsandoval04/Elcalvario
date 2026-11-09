@@ -2,12 +2,13 @@ import AppSelect from './AppSelect'
 import { useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import ValidatedForm from './ValidatedForm'
+import { getPublicMinistries } from './public-ministries'
 
 const confirmedMinistries = ['Alabanza / Adoración', 'Multimedia', 'Servidores / Ujieres']
 
 export default function Participation() {
   const [ministries, setMinistries] = useState(confirmedMinistries)
-  useEffect(() => { const controller = new AbortController(); fetch('/api/public/ministries', { signal: controller.signal }).then(async response => { if (response.ok) { const data = await response.json(); setMinistries(data.items.map((item: { nombre: string }) => item.nombre)) } }).catch(() => {}); return () => controller.abort() }, [])
+  useEffect(() => { let active = true; void getPublicMinistries().then(items => { if (active) setMinistries(items.map(item => item.nombre)) }).catch(() => {}); return () => { active = false } }, [])
   const dialog = useRef<HTMLDialogElement>(null)
   const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState('')

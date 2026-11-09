@@ -9,7 +9,7 @@ Kennet S. Gutierrez R.
 Ingeniería de Software · Gestión de la Información · Ingeniería de Sistemas  
 Universidad Cooperativa de Colombia – Bloque Principal  
 Docentes: Francy Y. Patiño M. · Mayra A. Amador L.  
-Villavicencio · 03/11/2026
+Villavicencio · 08/11/2026
 
 ---
 
@@ -105,7 +105,7 @@ La plataforma opera con **una sola sede** y **una sola zona** (Villavicencio, Me
 | Empaquetador | Vite + @vitejs/plugin-react | 8.3.2 | Servidor de desarrollo con proxy `/api`, compilación optimizada y generación del Service Worker. |
 | Animaciones | GSAP + @gsap/react | 3.15.0 | Transiciones suaves en el panel administrativo y carrusel, respetando `prefers-reduced-motion`. |
 | Cartografía | Google Maps JavaScript API | Carga bajo demanda | Visualización de ubicadores de cobertura pastoral por barrios en Villavicencio. |
-| Backend | Node.js + Express | Node ≥ 22.12 / Express 5.2 | Servidor HTTP local (`127.0.0.1:3001`), seguridad de sesiones, reglas de negocio y rutas REST. |
+| Backend | Node.js + Express | Node 24.x / Express 5.2 | Servidor HTTP local (`127.0.0.1:3001`), seguridad de sesiones, reglas de negocio y rutas REST. |
 | Acceso a datos | mysql2 (Pool de promesas) | 3.24.5 | Consultas SQL parametrizadas y transacciones explícitas sin ORM. |
 | Base de datos | MySQL Server LTS | 8.4.11 | Almacenamiento relacional InnoDB con codificación `utf8mb4` y llaves foráneas. |
 | Reportes | PDFKit y ExcelJS | 0.20.2 / 4.4.0 | Generación en servidor de documentos PDF (A4 horizontal) y hojas de cálculo `.xlsx`. |
@@ -208,8 +208,9 @@ IGLESIA/
 | `/#gestion/falls/registro` (o `/#gestion/attendance`) | Toma de Asistencia | `asistencia.registrar` o `asistencia.ver` |
 | `/#gestion/falls/alertas` (o `/#gestion/alerts`) | Alertas Pastorales | `alertas.ver` |
 | `/#gestion/reports` | Módulo de Reportes (PDF y Excel) | `reportes.asistencia`, `reportes.cumpleanos` o `reportes.grupos` |
-| `/#gestion/permissions` | Editor de Permisos por Rol (RBAC) | `permisos.gestionar` |
-| `/#usuarios` | Creación y administración de usuarios y roles | `usuarios.gestionar` + Administrador, autoridad pastoral (niveles 1–5) o Superadmin |
+| `/#usuarios` | Usuarios, roles y permisos; cuentas y asignación junto al editor de perfiles | Autoridad para administrar cuentas o `gestion.acceder` + `permisos.gestionar`; operaciones según autorización |
+| `/#usuarios/perfiles/:id` | Permisos de un perfil dentro de la sección unificada | `gestion.acceder` + `permisos.gestionar` |
+| `/#gestion/permissions` | Redirige a `/#usuarios/perfiles` | Conserva la autorización para editar perfiles |
 
 ---
 
@@ -229,7 +230,7 @@ IGLESIA/
 ### 3.2. Registro e inicio de sesión
 - **Registro público deshabilitado:** `/#registro` redirige a `/#login` y `POST /api/auth/register` devuelve 403, incluso con una base vacía.
 - **Bootstrap del propietario:** se ejecuta exclusivamente desde el servidor con `npm run account:bootstrap`, usando `INITIAL_ADMIN_EMAIL`, `INITIAL_ADMIN_PASSWORD` e `INITIAL_ADMIN_NAME`. Requiere una instalación vacía con `bootstrap_completado = 0`, toma un bloqueo transaccional y crea un único Superadmin activo. La marca es permanente.
-- **Creación autorizada:** en Usuarios y roles, Administrador, Superadmin y los cinco cargos pastorales con `usuarios.gestionar` asignan nombre, correo (máx. 120 caracteres), contraseña (10 a 128), rol, foto opcional y ficha opcional. La cuenta se crea activa, sin sustituir la sesión del creador. Los demás datos personales se administran en la ficha del discípulo. Crear una cuenta no crea una ficha.
+- **Creación autorizada:** en Usuarios y roles, Superadmin y los cinco cargos pastorales con `usuarios.gestionar` asignan nombre, correo (máx. 120 caracteres), contraseña (10 a 128), rol, foto opcional y ficha opcional. La cuenta se crea activa, sin sustituir la sesión del creador. Los demás datos personales se administran en la ficha del discípulo. Crear una cuenta no crea una ficha.
 - **Inicio de sesión (`/#login`):** valida las credenciales asignadas con `scrypt` y abre `/#gestion`. Las cuentas pendientes anteriores conservan el aviso **"Tu cuenta está pendiente por activación"** y la consulta de habilitación.
 - **Revalidación automática:** la sesión dura 8 horas (cookie `HttpOnly`, `SameSite=Strict`) y el frontend consulta `/api/auth/me` cada 15 segundos mientras la pestaña está visible y cada vez que recupera el foco. Si un administrador le cambia el rol o le revoca permisos, la interfaz se actualiza al instante.
 
@@ -301,19 +302,19 @@ En `/#gestion/reports` presenta tres tarjetas de descarga inmediata en **PDF** (
 3. **Grupos de Comunión (`reportes.grupos`):** columnas *Código, Grupo, Dirección, Barrio, Día, Hora, Estado*.
 Todos los reportes aplican el filtro de alcance (`todos` o `grupo`) del usuario que los descarga.
 
-### 3.12. Usuarios y roles
-En `/#usuarios` (exclusivo para usuarios con `usuarios.gestionar` y autoridad pastoral):
-- Muestra la lista de cuentas (hasta 200), ubicando primero las cuentas en estado `pendiente`.
+### 3.12. Usuarios, roles y permisos
+En `/#usuarios`, una sola sección reúne cuentas y perfiles. Administrar cuentas sigue requiriendo `usuarios.gestionar` y Superadmin o autoridad pastoral. Nadie, salvo Superadmin, puede asignar un rol de cargo igual o superior al propio ni cambiar, eliminar o vincular cuentas de ese nivel (Pastor equivale al nivel 4). Editar perfiles requiere su permiso independiente. Consulta [el funcionamiento de la sección unificada](usuarios-roles-permisos.md).
+- Muestra cuentas paginadas, ubicando primero las cuentas en estado `pendiente`.
 - **Habilitar cuenta:** al elegir un rol para una cuenta pendiente y pulsar *Habilitar cuenta*, la API asigna el rol y cambia el estado a `activo` en una transacción.
 - **Cambio de rol y sincronización:** permite cambiar el rol principal de una cuenta existente. Si el nuevo rol corresponde a uno de los 6 niveles pastorales y la cuenta está vinculada a una ficha de discípulo, actualiza automáticamente el `id_rol_eclesiastico` en la ficha.
 - **Vinculación con ficha de discípulo:** permite asociar o desasociar cada cuenta con su registro en `miembro`.
 - **Protecciones:** ningún usuario puede cambiar su propio rol desde el panel; solo un `Superadmin` puede otorgar el rol `Superadmin`; y ningún otro rol puede alterar la cuenta del propietario técnico.
 
-### 3.13. Permisos (RBAC)
-En `/#gestion/permissions` (requiere `permisos.gestionar`):
+### 3.13. Perfiles y permisos dentro de Usuarios (RBAC)
+En `/#usuarios/perfiles` o mediante «Permisos del perfil» junto al rol de una cuenta (requiere `gestion.acceder` y `permisos.gestionar`; la dirección anterior redirige aquí):
 - Muestra la matriz de permisos por rol del sistema (ocultando `sedes.gestionar` dado que hay una sola sede).
 - Permite activar o desactivar permisos y elegir su alcance (`todos` o `grupo` en los 20 permisos que admiten alcance de grupo) para los roles configurables (*Asistencia Pastoral*, *Discipulador* y *Multimedia*).
-- Los roles de autoridad total (*Superadmin, Administrador, Pastor* y niveles pastorales 1 a 4) conservan todos los permisos bloqueados contra edición, el rol *Usuario* se mantiene sin permisos operativos y el *Discipulador* exige siempre alcance `grupo`.
+- Los roles de autoridad total (*Superadmin, Pastor* y niveles pastorales 1 a 4) conservan todos los permisos bloqueados contra edición, el rol *Usuario* se mantiene sin permisos operativos y el *Discipulador* exige siempre alcance `grupo`.
 
 ### 3.14. Aplicación instalable (PWA)
 - Definida en `public/manifest.webmanifest` con nombre **"El Calvario – Mi comunidad"**, modo `standalone`, inicio directo en `/#gestion`, íconos de 180, 192 y 512 px más SVG adaptable, y atajos directos a *Discípulos*, *Asistencia* y *Eventos*.
@@ -337,7 +338,7 @@ En `/#gestion/permissions` (requiere `permisos.gestionar`):
 
 Además de los 6 roles pastorales, `rol_sistema` incluye:
 - **Superadmin:** propietario técnico de la instalación; posee autoridad total y es el único que puede asignar el rol Superadmin.
-- **Administrador** y **Pastor:** roles de acceso total conservados por compatibilidad; requieren cargo pastoral válido (niveles 1–5) para operaciones exclusivas de autoridad pastoral.
+- **Pastor:** rol de acceso total conservado por compatibilidad (equivale al nivel 4 en la jerarquía). Administrador se unificó con Superadmin; requieren cargo pastoral válido (niveles 1–5) para operaciones exclusivas de autoridad pastoral.
 - **Multimedia:** equipo operativo encargado de eventos, publicación, asistencia, estadísticas y reportes no personales, con permiso de alta de discípulos normales (`miembros.registrar`).
 - **Usuario:** cuenta activa básica sin acceso a módulos de gestión.
 
@@ -345,7 +346,7 @@ Además de los 6 roles pastorales, `rol_sistema` incluye:
 
 Leyenda: **✔ (`todos`)** = Permiso global en toda la iglesia · **G (`grupo`)** = Permiso limitado a los grupos donde el usuario es discipulador · **—** = Sin permiso.
 
-| Código del permiso | Descripción | Admite alcance `grupo` | Superadmin / Administrador / Pastor | Niveles 1 a 4 (Apóstol General, Asistencia Apostólica, Pastor de Distrito, Pastor Local) | Asistencia Pastoral (Nivel 5) | Discipulador (Nivel 6) | Multimedia | Usuario |
+| Código del permiso | Descripción | Admite alcance `grupo` | Superadmin / Pastor | Niveles 1 a 4 (Apóstol General, Asistencia Apostólica, Pastor de Distrito, Pastor Local) | Asistencia Pastoral (Nivel 5) | Discipulador (Nivel 6) | Multimedia | Usuario |
 | --- | --- | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
 | `gestion.acceder` | Acceso a gestión privada | Sí | ✔ | ✔ | ✔ | G | ✔ | — |
 | `usuarios.gestionar` | Asignar roles y vincular cuentas | No | ✔ | ✔ | ✔ | — | — | — |
@@ -374,7 +375,7 @@ Leyenda: **✔ (`todos`)** = Permiso global en toda la iglesia · **G (`grupo`)*
 | `consentimientos.gestionar` | Registrar y consultar consentimiento de datos | Sí | ✔ | ✔ | — | — | — | — |
 | `ministerios.gestionar` | Gestionar pertenencia a ministerios | Sí | ✔ | ✔ | ✔ | — | — | — |
 
-*\* Superadmin, Administrador y Pastor cuentan con `miembros.editar`, que autoriza tanto registrar como editar.*
+*\* Superadmin y Pastor cuentan con `miembros.editar`, que autoriza tanto registrar como editar.*
 
 ---
 
@@ -703,9 +704,9 @@ Prioridad: **Alta** (esencial para la operación) · **Media** (importante) · *
 | 23 | `asistencia` | `id_asistencia` | FK: `id_actividad`, `id_miembro`, `id_usuario_registro`, `id_usuario_modificacion`<br>UK: `(id_actividad, id_miembro)` | Registros de asistencia: `nombre_visitante`, `estado_asistencia` (`presente\|ausente\|justificado\|visitante`), `metodo_registro` (`manual\|qr`), `dispositivo_origen` y `archivado`. |
 | 24 | `alerta_ausencia` | `id_alerta` | FK: `id_miembro`, `id_actividad`<br>UK: `(id_miembro, id_actividad)` | Alertas calculadas por 2 ausencias consecutivas (`vigente`, `fecha_creacion`). |
 | 25 | `consentimiento_datos` | `id_consentimiento` | FK: `id_miembro` | Evidencia de consentimiento: `version_politica`, `acepta_politica_privacidad`, `acepta_datos_religiosos`, `medio` (`papel\|digital`), fechas y `estado_consentimiento` (`aceptado\|revocado\|pendiente`). |
-| 26 | `solicitud_participacion`, `barrio`, `discipulador_barrio`, `grupo_barrio`, `grupo_barrio_cobertura`, `migracion_aplicada` | Claves propias por tabla | FK hacia `miembro`, `grupo_comunion`, `barrio`, `usuario` | Solicitudes públicas de participación; catálogo de 668 barrios con 340 polígonos `geojson`; historial de cobertura de barrios por discipulador (con columna generada `vigente`); relación múltiple de barrios por grupo; y control de las 12 migraciones aplicadas. |
+| 26 | `solicitud_participacion`, `barrio`, `discipulador_barrio`, `grupo_barrio`, `grupo_barrio_cobertura`, `migracion_aplicada` | Claves propias por tabla | FK hacia `miembro`, `grupo_comunion`, `barrio`, `usuario` | Solicitudes públicas de participación; catálogo de barrios con geometría; historial de cobertura pastoral; relación múltiple de barrios por grupo; y registro de migraciones aplicadas. Esta entrada agrupa varias tablas del esquema. |
 
-### 8.3. Resumen de las 12 migraciones SQL (`server/migrations/`)
+### 8.3. Historial de las 19 migraciones SQL (`server/migrations/`)
 
 | Migración | Descripción |
 | --- | --- |
@@ -721,6 +722,13 @@ Prioridad: **Alta** (esencial para la operación) · **Media** (importante) · *
 | `010-map-coverage.sql` | Tablas `barrio`, `discipulador_barrio` y `grupo_barrio` para el mapa de cobertura. |
 | `011-group-neighborhoods.sql` | Tabla `grupo_barrio_cobertura` para asociar múltiples barrios a cada grupo. |
 | `012-group-neighborhood-text.sql` | Amplía `grupo_comunion.barrio` a `TEXT` para almacenar la lista de nombres de barrios. |
+| `013-shared-rate-limits.sql` | Guarda contadores de límites de solicitudes compartidos entre instancias del servidor. |
+| `014-training-books.sql` | Añade el catálogo y permisos del módulo de adiestramiento. |
+| `015-account-security.sql` | Añade sesiones de cuenta y registros de auditoría de seguridad. |
+| `016-account-deletion.sql` | Habilita la eliminación administrativa protegida de cuentas. |
+| `017-notification-dismissals.sql` | Conserva el estado de avisos que cada usuario ya descartó. |
+| `018-password-recovery.sql` | Añade los registros de uso único y vencimiento para recuperación de contraseña. |
+| `019-recurring-activities.sql` | Añade reglas de recurrencia para actividades y sus sesiones programadas. |
 
 ---
 
@@ -744,7 +752,7 @@ Prefijo base: `/api`. Todas las respuestas se entregan en JSON (salvo fotos en `
 | Método | Endpoint | Autenticación / Permiso | Descripción y parámetros |
 | :-: | --- | --- | --- |
 | `POST` | `/api/auth/register` | Deshabilitado | Devuelve 403; no crea cuentas ni sesiones. |
-| `POST` | `/api/auth/admin/users` | `usuarios.gestionar` + Administrador, pastoral autorizado o Superadmin | Recibe `{name,email,password,confirmation,roleId,memberId?,photo?}`. Crea una cuenta activa en una transacción, sin reemplazar la sesión del creador. |
+| `POST` | `/api/auth/admin/users` | `usuarios.gestionar` + pastoral autorizado o Superadmin | Recibe `{name,email,password,confirmation,roleId,memberId?,photo?}`. Crea una cuenta activa en una transacción, sin reemplazar la sesión del creador. |
 | `POST` | `/api/auth/login` | Público (límite 20/15m por IP) | Recibe `{email, password}`. Inicia sesión para cuentas `activo` o `pendiente` y emite cookie `HttpOnly`. |
 | `GET` | `/api/auth/me` | Cookie de sesión | Devuelve `{user}` con `id`, `memberId`, `email`, `name`, `state`, `photoUrl`, `displaySize`, `roles`, `permissions`, `pastoralRole` y `registration`. |
 | `POST` | `/api/auth/logout` | Cookie de sesión | Elimina la sesión en base de datos y limpia la cookie. |
@@ -808,7 +816,7 @@ Prefijo base: `/api`. Todas las respuestas se entregan en JSON (salvo fotos en `
 ## 10. Casos de Uso Principales (7 Casos de Uso)
 
 ### CU-01: Crear cuenta e iniciar sesión
-- **Actor:** Administrador o integrante del equipo pastoral autorizado; titular de la cuenta para el login.
+- **Actor:** Superadmin o integrante del equipo pastoral autorizado; titular de la cuenta para el login.
 - **Precondición:** Sesión autorizada en `/#usuarios`; propietario inicial configurado desde el servidor.
 - **Flujo principal:**
   1. El administrador abre **Crear cuenta** y asigna nombre, correo, contraseña, confirmación, rol y opcionalmente foto y ficha del discípulo.
@@ -925,7 +933,7 @@ npm install
 npm run db:init
 npm run db:check
 
-# 3. Aplicar las 12 migraciones SQL (001 a 012) de forma segura
+# 3. Aplicar las migraciones SQL pendientes (el historial del proyecto llega a 019)
 npm run db:migrate
 
 # 4. (Opcional) Importar el catálogo municipal de barrios de Villavicencio y sus geometrías GeoJSON
@@ -978,13 +986,11 @@ La plataforma cuenta con una batería completa de pruebas automatizadas en la ca
 
 ## 13. Limitaciones Conocidas y Aspectos Pendientes
 
-1. **Vista administrativa de solicitudes de participación:** el formulario público *"Quiero participar"* valida y guarda correctamente los registros en la tabla `solicitud_participacion`, pero aún no se ha incluido una pestaña dentro del panel `/#gestion` para listarlos desde la interfaz.
-2. **Sin envío de correos electrónicos ni SMS:** la plataforma no integra un servidor SMTP externo; la recuperación de contraseñas y la notificación de activación de cuentas se gestionan de forma directa a través de la administración pastoral.
+1. **Vista administrativa de solicitudes de participación:** el formulario público *"Quiero participar"* valida y guarda correctamente los registros en la tabla `solicitud_participacion`; el panel aún no incluye una pestaña para listarlos.
+2. **Servicios de correo externos:** la recuperación de contraseñas y algunos avisos por correo requieren configurar un proveedor y sus credenciales en el servidor. No se envían SMS.
 3. **Operación de datos en línea:** la PWA ofrece pantalla de reconexión sin internet y precachea la interfaz, pero la consulta y el guardado de registros exigen conexión activa con el servidor (no hay cola de sincronización offline de escrituras).
-4. **Límites de intentos en memoria y paginación:** el rate limiting por IP se almacena en la memoria del proceso Node.js (se reinicia al reiniciar el servidor) y las consultas de discípulos y actividades están acotadas a 500 resultados; para volúmenes mayores a futuro se deberá añadir paginación por cursor.
-5. **Credenciales de producción pendientes de configurar en `.env`:**
-   - `FACEBOOK_PAGE_ACCESS_TOKEN` y `FACEBOOK_GRAPH_VERSION` con permisos de lectura de la página oficial de Meta para activar la detección automática de directos en producción.
-   - `VITE_GOOGLE_MAPS_API_KEY` restringida por referente HTTP para el mapa interactivo en producción.
+4. **Paginación:** algunas consultas de discípulos y actividades están acotadas a 500 resultados; para volúmenes mayores se deberá añadir paginación por cursor.
+5. **Servicios externos:** el directo automático de Facebook, el correo y la vista cartográfica dependen de credenciales y servicios válidos. Los tokens privados de Meta y correo se configuran solo en el servidor; la clave de Maps se restringe por referente HTTP.
 6. **Validaciones institucionales y documentales pendientes por parte de la iglesia:**
    - Nombres definitivos y responsables iniciales de los 5 Grupos de Comunión Familiar.
    - Responsables, descripciones extensas y horarios específicos de cada ministerio.

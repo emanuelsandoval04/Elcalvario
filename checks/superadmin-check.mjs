@@ -37,17 +37,17 @@ try {
   return {status:response.status,data,cookie:response.headers.get('set-cookie')?.split(';')[0]}
  }
  assert.equal((await api('register',{email:'weak@example.invalid',password:'weak'})).status,400)
- await pool.execute("UPDATE rol_sistema SET estado=0 WHERE nombre='Superadmin'")
+ await pool.execute("UPDATE rol_sistema SET estado=0 WHERE nombre='Administrador'")
  assert.equal((await api('register',{email:'failed@example.invalid',password})).status,503)
  const [initial]=await pool.execute('SELECT bootstrap_completado FROM configuracion_sistema WHERE id=1')
  assert.equal(initial[0].bootstrap_completado,0)
  const [empty]=await pool.execute('SELECT COUNT(*) AS total FROM usuario')
  assert.equal(empty[0].total,0)
- await pool.execute("UPDATE rol_sistema SET estado=1 WHERE nombre='Superadmin'")
- const firstTwo=await Promise.all(['first','second'].map(name=>api('register',{email:`${name}@example.invalid`,password,role:'Superadmin'})))
+ await pool.execute("UPDATE rol_sistema SET estado=1 WHERE nombre='Administrador'")
+ const firstTwo=await Promise.all(['first','second'].map(name=>api('register',{email:`${name}@example.invalid`,password,role:'Administrador'})))
  firstTwo.forEach(result=>assert.equal(result.status,201))
  accounts.push(...firstTwo.map(result=>result.data.user.id))
- const admin=firstTwo.find(result=>result.data.user.roles.includes('Superadmin'))
+ const admin=firstTwo.find(result=>result.data.user.roles.includes('Administrador'))
  const basic=firstTwo.find(result=>result.data.user.state==='pendiente')
  assert.ok(admin && basic)
  assert.equal(admin.data.user.state,'activo')
@@ -57,10 +57,10 @@ try {
  assert.equal((await api('me',undefined,basic.cookie)).data.user.state,'pendiente')
  const [pendingAssignments]=await pool.execute('SELECT * FROM usuario_rol WHERE id_usuario=?',[basic.data.user.id])
  assert.equal(pendingAssignments.length,0)
- assert.equal(firstTwo.filter(result=>result.data.user.roles.includes('Superadmin')).length,1)
+ assert.equal(firstTwo.filter(result=>result.data.user.roles.includes('Administrador')).length,1)
  const catalog=await api('admin/users',undefined,admin.cookie)
  assert.equal(catalog.status,200)
- const superRole=catalog.data.roles.find(role=>role.name==='Superadmin').id
+ const superRole=catalog.data.roles.find(role=>role.name==='Administrador').id
  const basicRole=catalog.data.roles.find(role=>role.name==='Usuario').id
  assert.equal((await api('admin/users')).status,401)
  assert.equal((await api('admin/users',undefined,basic.cookie)).status,403)
@@ -74,7 +74,7 @@ try {
  assert.equal((await api('admin/users',undefined,basic.cookie)).status,200)
  assert.equal((await api(`admin/users/${basic.data.user.id}/role`,{roleId:basicRole},admin.cookie)).status,200)
  assert.equal((await api('admin/users',undefined,basic.cookie)).status,403)
- const third=await api('register',{email:'third@example.invalid',password,role:'Superadmin'})
+ const third=await api('register',{email:'third@example.invalid',password,role:'Administrador'})
  assert.equal(third.status,201)
  assert.equal(third.data.user.state,'pendiente')
  assert.deepEqual(third.data.user.roles,[])
@@ -102,8 +102,8 @@ try {
  await page.waitForURL(`${uiOrigin}/#gestion`)
  await page.locator('#dashboard-title').waitFor()
  assert.equal(await page.locator('.site-header').count(),0)
- await page.getByRole('link',{name:'Usuarios y roles',exact:true}).click()
- await page.getByRole('heading',{name:'Usuarios y roles'}).waitFor()
+ await page.getByRole('link',{name:'Usuarios, roles y permisos',exact:true}).click()
+ await page.getByRole('heading',{name:'Usuarios, roles y permisos'}).waitFor()
  const row=page.locator('.admin-user-row').filter({hasText:basic.data.user.email})
  await pickOption(row.getByRole('combobox',{name:`Rol de ${basic.data.user.email}`}), String(superRole))
  await row.getByRole('button',{name:'Guardar',exact:true}).click()
@@ -169,10 +169,9 @@ try {
  await mobilePage.getByRole('button',{name:'Consultar activación',exact:true}).tap()
  await mobilePage.locator('.manage-session').filter({hasText:'Multimedia'}).waitFor({state:'attached'})
  const expectedMenus={
-  Superadmin:['Inicio','Discípulos','Grupos de Comunión','Eventos y Cultos','Asistencia y alertas','Permisos','Reportes','Usuarios y roles'],
-  Administrador:['Inicio','Discípulos','Grupos de Comunión','Eventos y Cultos','Asistencia y alertas','Permisos','Reportes','Usuarios y roles'],
-  Pastor:['Inicio','Discípulos','Grupos de Comunión','Eventos y Cultos','Asistencia y alertas','Permisos','Reportes'],
-  'Asistencia Pastoral':['Inicio','Discípulos','Grupos de Comunión','Eventos y Cultos','Asistencia y alertas','Reportes','Usuarios y roles'],
+  Administrador:['Inicio','Discípulos','Grupos de Comunión','Eventos y Cultos','Asistencia y alertas','Reportes','Usuarios, roles y permisos'],
+  Pastor:['Inicio','Discípulos','Grupos de Comunión','Eventos y Cultos','Asistencia y alertas','Reportes'],
+  'Asistencia Pastoral':['Inicio','Discípulos','Grupos de Comunión','Eventos y Cultos','Asistencia y alertas','Reportes','Usuarios, roles y permisos'],
   Discipulador:['Inicio','Discípulos','Grupos de Comunión','Eventos y Cultos','Asistencia y alertas','Reportes'],
   Multimedia:['Inicio','Discípulos','Grupos de Comunión','Eventos y Cultos','Asistencia y alertas','Reportes'],
  }
@@ -183,7 +182,7 @@ try {
    return !drawer.inert && Math.abs(drawer.getBoundingClientRect().left-12)<1 && getComputedStyle(drawer).visibility==='visible'
   })
  }
- for(const name of ['Multimedia','Discipulador','Asistencia Pastoral','Pastor','Administrador','Superadmin']){
+ for(const name of ['Multimedia','Discipulador','Asistencia Pastoral','Pastor','Administrador']){
   const roleId=catalog.data.roles.find(role=>role.name===name).id
   assert.equal((await api(`admin/users/${mobileAccount.id}/role`,{roleId},admin.cookie)).status,200)
   await mobilePage.evaluate(()=>window.dispatchEvent(new Event('focus')))
@@ -197,14 +196,14 @@ try {
   await openMobileMenu()
   await mobilePage.getByRole('button',{name:'Asistencia y alertas',exact:true}).tap()
   await mobilePage.getByRole('heading',{name:'Asistencia',exact:true}).waitFor()
-  assert.equal(await mobilePage.locator('.falls-tabs a[href$="/alertas"]').count(),['Asistencia Pastoral','Pastor','Administrador','Superadmin'].includes(name)?1:0,'Las alertas conservan sus permisos propios')
+  assert.equal(await mobilePage.locator('.falls-tabs a[href$="/alertas"]').count(),['Asistencia Pastoral','Pastor','Administrador'].includes(name)?1:0,'Las alertas conservan sus permisos propios')
   assert.equal(await mobilePage.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false)
  }
  // Navigate to users from the drawer, then use the same permitted module menu there.
  await openMobileMenu()
- await mobilePage.getByRole('link',{name:'Usuarios y roles',exact:true}).tap()
+ await mobilePage.getByRole('link',{name:'Usuarios, roles y permisos',exact:true}).tap()
  await mobilePage.getByRole('button',{name:'Actualizar usuarios',exact:true}).waitFor()
- assert.deepEqual(await mobilePage.locator('.panel-nav [data-panel-item] > span:not(.panel-click-wave)').allTextContents(),expectedMenus.Superadmin)
+ assert.deepEqual(await mobilePage.locator('.panel-nav [data-panel-item] > span:not(.panel-click-wave)').allTextContents(),expectedMenus.Administrador)
  await openMobileMenu()
  await mobilePage.getByRole('link',{name:'Grupos de Comunión',exact:true}).tap()
  await mobilePage.getByRole('heading',{name:'Grupos de Comunión',exact:true}).waitFor()

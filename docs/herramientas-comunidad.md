@@ -25,12 +25,12 @@ La página pública ofrece **Ver calendario de encuentros** y muestra todas las 
 En **Discípulos → Importar desde Excel**:
 
 1. Descargar la plantilla XLSX y completar la hoja `Discipulos`.
-2. Seleccionar el libro existente para las fichas, igual que en el registro individual. Si el catálogo no tiene libros, pueden quedar sin asignar.
+2. Indicar el libro en cada fila del Excel o seleccionar en la web un libro por defecto para las filas vacías. Si el catálogo no tiene libros, pueden quedar sin asignar.
 3. Cargar el archivo: hasta **500 filas y 512 KB**. Identificación y celular deben guardarse como texto para conservar ceros iniciales. Fechas: `AAAA-MM-DD`, `DD/MM/AAAA` o celdas de fecha de Excel.
 4. Revisar la vista previa y corregir las filas desde la web. Se detectan datos inválidos, fórmulas, duplicados dentro del archivo o contra fichas existentes, incluidas las archivadas, y códigos de grupo fuera del alcance.
 5. Seleccionar filas válidas, marcar la confirmación y pulsar **Importar N discípulos**.
 
-Solo se importan nombres, apellidos, identificación, celular, correo, nacimiento y código de grupo. Las demás columnas se anuncian como ignoradas. No se importan cargos, servicios, información médica, contraseñas ni cuentas de acceso. El libro se asigna desde el catálogo actual y el grupo debe estar autorizado para quien registra.
+La plantilla incluye todos los campos de la ficha: datos personales, salud y emergencia, función, sede, rol eclesiástico, grupo, cobertura, libro, ministerios y estado. Los datos opcionales admiten celdas vacías o `Sin registrar`. Las asignaciones se resuelven contra los catálogos actuales y se comprueban los permisos de quien importa. No se crean cuentas de acceso ni se importan contraseñas. El formato y las restricciones se detallan en [Importación de fichas completas](importacion-discipulos.md).
 
 Antes de guardar se repiten las comprobaciones dentro de una transacción. Cualquier error cancela toda la importación; nunca se sobrescriben fichas existentes. El archivo se procesa en memoria y no se conserva en el servidor. La inspección previa del ZIP limita tamaños descomprimidos, dimensiones y cantidad de elementos antes de cargar ExcelJS.
 

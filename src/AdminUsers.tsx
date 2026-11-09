@@ -1,5 +1,5 @@
 import AppSelect from './AppSelect'
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { hasPermission, useAuthSession } from './auth'
 import type { AuthUser } from './auth'
 import './admin.css'
@@ -11,10 +11,12 @@ import type { FormEvent } from 'react'
 import { welcomeEmailMessage } from './account-mail'
 import type { WelcomeEmailStatus } from './account-mail'
 import ValidatedForm from './ValidatedForm'
+import RolePermissions from './RolePermissions'
 
 type ManagedUser = AuthUser & { createdAt: string; lastAccess: string | null }
 type Role = { id: number; name: string }
 const accountStates: Record<string, string> = { activo: 'Activa', pendiente: 'Pendiente de habilitación', inactivo: 'Inactiva', bloqueado: 'Bloqueada' }
+const requestedProfile = () => /^#usuarios\/perfiles\/(\d+)$/.exec(window.location.hash)?.[1] || ''
 
 async function adminRequest(path = '', body?: object, method = body ? 'POST' : 'GET') {
   const response = await fetch(`/api/auth/admin/users${path}`, {
@@ -51,11 +53,38 @@ export default function AdminUsers() {
   const [createError, setCreateError] = useState('')
   const [photo, setPhoto] = useState<string | null>(null)
   const [photoBusy, setPhotoBusy] = useState(false)
+  const [profileId, setProfileId] = useState(requestedProfile)
+  const [profilesOpen, setProfilesOpen] = useState(() => window.location.hash.startsWith('#usuarios/perfiles'))
+  const [profileSaving, setProfileSaving] = useState(false)
+  const profileDirty = useRef(false)
+  const updateProfileDirty = useCallback((dirty: boolean) => { profileDirty.current = dirty }, [])
+  const canAccounts = hasPermission(sessionUser, 'usuarios.gestionar') && Boolean(sessionUser?.registration?.canManageAccounts)
+  const canProfiles = hasPermission(sessionUser, 'gestion.acceder') && hasPermission(sessionUser, 'permisos.gestionar')
+  const section = canProfiles && (profilesOpen || !canAccounts) ? 'profiles' : 'users'
   const removalDialog = useRef<HTMLDialogElement>(null)
   const loadVersion = useRef(0)
-  const protectedOwner = (user: ManagedUser) => user.roles.includes('Superadmin') && !sessionUser?.roles.includes('Superadmin')
-  const cannotDelete = (user: ManagedUser) => user.id === sessionUser?.id || user.roles.includes('Superadmin')
+  // The server only lists roles below the actor's rank; an account holding any other role outranks the actor.
+  const protectedOwner = (user: ManagedUser) => !sessionUser?.roles.includes('Administrador') && user.roles.some(name => !roles.some(role => role.name === name))
+  const cannotDelete = (user: ManagedUser) => user.id === sessionUser?.id || protectedOwner(user)
   const displayDate = (date: string | null) => date ? new Date(date).toLocaleDateString('es-CO', { timeZone: 'America/Bogota' }) : 'Nunca'
+
+  useEffect(() => {
+    const update = () => {
+      setProfilesOpen(window.location.hash.startsWith('#usuarios/perfiles'))
+      const selected = requestedProfile()
+      if (selected) setProfileId(selected)
+    }
+    window.addEventListener('hashchange', update)
+    return () => window.removeEventListener('hashchange', update)
+  }, [])
+
+  function chooseProfile(id: string) {
+    if (profileSaving) return
+    if (id !== profileId && profileDirty.current && !window.confirm('Este perfil tiene cambios sin guardar. ¿Descartarlos y abrir otro perfil?')) return
+    setProfileId(id); setProfilesOpen(true)
+    window.location.hash = id ? `#usuarios/perfiles/${id}` : '#usuarios/perfiles'
+    requestAnimationFrame(() => document.getElementById('role-permissions-title')?.focus({ preventScroll: true }))
+  }
 
   async function load() {
     const version = ++loadVersion.current
@@ -139,11 +168,17 @@ export default function AdminUsers() {
   }
 
   return (
-    <AdminFrame title="Usuarios y roles" sectionName="Usuarios y roles" user={sessionUser} onUserChange={setUser} viewKey="users" navigation={<AdminNavigation user={sessionUser} active="users"/>}>
+    <AdminFrame title="Usuarios, roles y permisos" sectionName="Usuarios, roles y permisos" user={sessionUser} onUserChange={setUser} viewKey="users" navigation={<AdminNavigation user={sessionUser} active="users"/>}>
       <section className="admin-panel admin-users-panel" aria-labelledby="panel-page-title">
         <div className="admin-message" role="status" aria-live="polite">{message || error}</div>
-        {checking ? <p>Verificando acceso…</p> : !hasPermission(sessionUser, 'usuarios.gestionar') || !sessionUser?.registration?.canManageAccounts ? <p>Solo los administradores y cargos pastorales autorizados pueden crear cuentas y asignar roles. <a href="#login">Ir a mi cuenta</a></p> : <>
-        <div className="admin-users-heading"><div><h2>Administración de cuentas</h2><p>Crea accesos, asigna roles y vincula cada cuenta con su ficha de discípulo.</p></div>
+        {checking ? <p>Verificando acceso…</p> : !canAccounts && !canProfiles ? <p>Solo los administradores y cargos pastorales autorizados pueden crear cuentas y asignar roles. <a href="#login">Ir a mi cuenta</a></p> : <>
+        <nav className="access-tabs" aria-label="Administración de accesos">
+          {canAccounts && <a href="#usuarios" aria-current={section === 'users' ? 'page' : undefined} onClick={event => { if (profileSaving) event.preventDefault() }}>Usuarios y asignación de roles</a>}
+          {canProfiles && <a href={profileId ? `#usuarios/perfiles/${profileId}` : '#usuarios/perfiles'} aria-current={section === 'profiles' ? 'page' : undefined} onClick={event => { if (profileSaving) event.preventDefault() }}>Perfiles y permisos</a>}
+        </nav>
+        <div className="access-layout" data-profiles={canProfiles && canAccounts} data-section={section}>
+        {canAccounts && <div className="access-users">
+        <div className="admin-users-heading"><div><h2>Administración de cuentas</h2><p>Crea accesos y asigna roles. Abre los permisos junto a cada perfil para configurar sus herramientas.</p></div>
           {!creating && <button className="admin-save" disabled={loading || saving !== null} onClick={() => { setCreateError(''); setPhoto(null); setCreating(true) }}><AdminIcon name="plus"/>Crear cuenta</button>}
         </div>
         {creating && <ValidatedForm className="admin-create-account" aria-labelledby="create-account-title" onSubmit={createAccount}>
@@ -155,7 +190,7 @@ export default function AdminUsers() {
             <label>Contraseña de acceso<input name="password" type="password" required minLength={10} maxLength={128} autoComplete="new-password" placeholder="Mínimo 10 caracteres" /></label>
             <label>Confirmar contraseña de acceso<input name="confirmation" type="password" required minLength={10} maxLength={128} autoComplete="new-password" /></label>
             <label>Rol de la cuenta<AppSelect name="roleId" defaultValue="" required><option value="" disabled>Selecciona un rol…</option>{roles.map(role => <option key={role.id} value={role.id}>{role.name}</option>)}</AppSelect></label>
-            {hasPermission(sessionUser, 'gestion.acceder') && sessionUser.permissions['miembros.ver'] === 'todos' && <label>Ficha del discípulo (opcional)<AppSelect name="memberId" defaultValue=""><option value="">Sin vincular</option>{members.map(member => <option key={member.id_miembro} value={member.id_miembro}>{member.nombres} {member.apellidos || ''} · ID {member.id_miembro}</option>)}</AppSelect></label>}
+            {hasPermission(sessionUser, 'gestion.acceder') && sessionUser?.permissions['miembros.ver'] === 'todos' && <label>Ficha del discípulo (opcional)<AppSelect name="memberId" defaultValue=""><option value="">Sin vincular</option>{members.map(member => <option key={member.id_miembro} value={member.id_miembro}>{member.nombres} {member.apellidos || ''} · ID {member.id_miembro}</option>)}</AppSelect></label>}
             <ProfilePhoto value={photo} onChange={setPhoto} onBusyChange={setPhotoBusy} disabled={createBusy} />
           </fieldset>
           {hasPermission(sessionUser, 'gestion.acceder') && hasPermission(sessionUser, 'miembros.editar') && <p>Completa los demás datos personales en <a href="#gestion/members">Discípulos</a> y vincula aquí su ficha.</p>}
@@ -173,15 +208,23 @@ export default function AdminUsers() {
             <header className="admin-user-header"><span className="admin-user-avatar" aria-hidden="true">{(user.name || user.email).slice(0, 1).toUpperCase()}</span><div className="admin-user-info"><strong>{user.name || user.email}</strong>{user.name && <span className="admin-user-email">{user.email}</span>}<span>{user.roles.join(', ') || 'Sin rol asignado'}{user.id === sessionUser?.id && ' · Tu cuenta'}</span></div><span className={`admin-user-state is-${user.state}`}>{accountStates[user.state] || user.state}</span></header>
             <div className="admin-user-controls"><div className="admin-user-control"><label className="admin-role-label"><span>Rol de la cuenta</span><AppSelect aria-label={`Rol de ${user.email}`} value={choices[user.id] || 0} disabled={user.id === sessionUser?.id || protectedOwner(user) || saving !== null} onChange={event => setChoices({ ...choices, [user.id]: Number(event.target.value) })}><option value={0} disabled>Selecciona un rol…</option>{roles.map(role => <option value={role.id} key={role.id}>{role.name}</option>)}</AppSelect></label>
             <button className="admin-save" disabled={user.id === sessionUser?.id || protectedOwner(user) || saving !== null || !choices[user.id] || user.state !== 'pendiente' && user.roles.length === 1 && user.roles[0] === roles.find(role => role.id === choices[user.id])?.name} onClick={() => void save(user)}>{saving === user.id ? 'Guardando…' : user.state === 'pendiente' ? 'Habilitar cuenta' : 'Guardar'}</button>
+            {canProfiles && <button type="button" className="admin-role-permissions" aria-label={`Permisos del perfil de ${user.email}`} disabled={!choices[user.id] || profileSaving} onClick={() => chooseProfile(String(choices[user.id]))}><AdminIcon name="permissions"/>Permisos del perfil</button>}
             </div>
             {hasPermission(sessionUser, 'gestion.acceder') && hasPermission(sessionUser, 'miembros.ver') && <div className="admin-user-control"><label className="admin-member-link">Ficha del discípulo<AppSelect value={links[user.id] || ''} disabled={protectedOwner(user) || saving !== null} onChange={event => setLinks({ ...links, [user.id]: event.target.value })}><option value="">Sin vincular</option>{members.map(member => <option key={member.id_miembro} value={member.id_miembro}>{member.nombres} {member.apellidos || ''} · ID {member.id_miembro}</option>)}</AppSelect></label>
             <button className="admin-save admin-secondary" disabled={protectedOwner(user) || saving !== null || String(user.memberId || '') === (links[user.id] || '')} onClick={() => { setSaving(user.id); void managementRequest(`users/${user.id}/member`, { memberId: links[user.id] ? Number(links[user.id]) : null }).then(async () => { await load(); setMessage('Cuenta vinculada a la ficha del discípulo.') }).catch(error => setMessage(error instanceof Error ? error.message : 'No pudimos vincular la cuenta.')).finally(() => setSaving(null)) }}>Vincular</button>
             </div>}</div>
-            <footer className="admin-user-footer"><dl className="admin-user-dates"><div><dt>Registro</dt><dd>{displayDate(user.createdAt)}</dd></div><div><dt>Último acceso</dt><dd>{displayDate(user.lastAccess)}</dd></div></dl><div className="admin-user-removal">{cannotDelete(user) && <small><AdminIcon name="permissions"/>{user.id === sessionUser?.id ? 'Tu cuenta está protegida.' : 'Propietario técnico protegido.'}</small>}<button type="button" className="admin-delete" disabled={cannotDelete(user) || saving !== null} onClick={() => { setRemovalError(''); setRemoval(user) }}>{user.state === 'pendiente' ? 'Rechazar solicitud' : 'Eliminar cuenta'}</button></div></footer>
+            <footer className="admin-user-footer"><dl className="admin-user-dates"><div><dt>Registro</dt><dd>{displayDate(user.createdAt)}</dd></div><div><dt>Último acceso</dt><dd>{displayDate(user.lastAccess)}</dd></div></dl><div className="admin-user-removal">{cannotDelete(user) && <small><AdminIcon name="permissions"/>{user.id === sessionUser?.id ? 'Tu cuenta está protegida.' : 'Cargo igual o superior al tuyo.'}</small>}<button type="button" className="admin-delete" disabled={cannotDelete(user) || saving !== null} onClick={() => { setRemovalError(''); setRemoval(user) }}>{user.state === 'pendiente' ? 'Rechazar solicitud' : 'Eliminar cuenta'}</button></div></footer>
           </article>)}
         </div> : <p className="admin-users-empty">No hay cuentas que coincidan con la búsqueda.</p>}
         <div className="admin-user-pagination"><span>Página {filters.page} de {Math.max(1, Math.ceil(total / pageSize))}</span><div className="admin-pagination-actions"><button className="admin-save admin-secondary" disabled={loading || saving !== null || filters.page <= 1} onClick={() => setFilters(previous => ({ ...previous, page: previous.page - 1 }))}>Anterior</button><button className="admin-save admin-secondary" disabled={loading || saving !== null || filters.page * pageSize >= total} onClick={() => setFilters(previous => ({ ...previous, page: previous.page + 1 }))}>Siguiente</button></div></div>
         <p className="admin-note">El rol Usuario ofrece acceso básico. Los roles operativos muestran los módulos autorizados. Vincula a cada discipulador con su ficha para delimitar los grupos a su cargo. Las cuentas pendientes anteriores se habilitan asignándoles un rol.</p>
+        </div>}
+        {canProfiles && sessionUser && <RolePermissions user={sessionUser} roleId={profileId} onChooseRole={chooseProfile} onDirtyChange={updateProfileDirty} onBusyChange={setProfileSaving} onSaved={name => {
+          setMessage(`Permisos de ${name} actualizados para todas las cuentas con ese perfil.`)
+          window.dispatchEvent(new Event('calvario-account-updated'))
+          window.dispatchEvent(new Event('calvario-users-updated'))
+        }}/>}
+        </div>
         </>}
         {removal && <dialog ref={removalDialog} className="admin-removal-dialog" aria-labelledby="admin-removal-title" aria-describedby="admin-removal-description" onKeyDown={event => { if (event.key === 'Escape') event.stopPropagation() }} onCancel={event => { event.preventDefault(); dismissRemoval() }}>
           <h2 id="admin-removal-title">{removal.state === 'pendiente' ? 'Rechazar solicitud de cuenta' : 'Eliminar cuenta definitivamente'}</h2>

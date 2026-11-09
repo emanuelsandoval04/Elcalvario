@@ -105,7 +105,10 @@ try {
 
   const template=await request('management/members/import/template',{cookie:owner.cookie,raw:true})
   const sample=new ExcelJS.Workbook();await sample.xlsx.load(Buffer.from(await template.arrayBuffer()))
-  assert.equal(sample.getWorksheet('Discipulos').getRow(1).cellCount,8)
+  assert.deepEqual(sample.getWorksheet('Discipulos').getRow(1).values.slice(1),Object.values(importColumns))
+  assert.equal(sample.getWorksheet('Discipulos').getRow(1).cellCount,20)
+  assert.ok(sample.getWorksheet('Referencias'))
+  await spreadsheetRows(Buffer.from(await sample.xlsx.writeBuffer()).toString('base64'))
   const data={nombres:'Importado con ceros',apellidos:'Prueba',tipo_identificacion:'CC',numero_identificacion:'00001',celular:'03001234567',correo:'import@example.invalid',fecha_nacimiento:'1990-01-01',codigo_grupo:'G-A'}
   const workbook=new ExcelJS.Workbook(),sheet=workbook.addWorksheet('Discipulos')
   sheet.columns=Object.entries(importColumns).map(([key,label])=>({key,header:label,width:24}))
@@ -137,6 +140,52 @@ try {
   assert.deepEqual(responses.map(r=>r.status).sort(),[201,400])
   console.log('PASS import: real XLSX/template, zero preservation, formulas/size limits, field errors, duplicate detection, group boundaries, all-or-nothing rollback, race protection and no accounts/emails.')
 
+  // Every populated field must survive the XLSX -> preview -> commit -> member record path.
+  await db.execute('DELETE FROM limite_solicitud')
+  const [secondBook]=await db.execute("INSERT INTO libro_adiestramiento(nombre,id_usuario_creacion) VALUES ('Libro de dios',?)",[ownerId])
+  const [site]=await db.execute("INSERT INTO sede(nombre) VALUES ('Sede importada')")
+  const [ministry1]=await db.execute("INSERT INTO ministerio(nombre) VALUES ('Ministerio Excel A')")
+  const [ministry2]=await db.execute("INSERT INTO ministerio(nombre) VALUES ('Ministerio Excel B')")
+  const [pastoralRank]=await db.execute("SELECT id_rol_eclesiastico FROM rol_eclesiastico WHERE nombre='Pastor Local'")
+  const fullData={nombres:'Andrés Felipe',apellidos:'Castro Romero',tipo_identificacion:'CC',numero_identificacion:'9999000104',celular:'3000000104',correo:'andres.castro104@example.com',fecha_nacimiento:'1987-06-19',grupo_sanguineo_rh:'O+',eps:'EPS de prueba',contacto_emergencia_nombre:'Persona de emergencia',contacto_emergencia_celular:'3001112233',funcion_iglesia:'Servicio de enseñanza',sede:'Sede importada',rol_eclesiastico:'Pastor Local',grupo_comunion:'Grupo A',cobertura_pastoral:'CC L-A',libro_adiestramiento:'Libro de dios',ministerios:'Ministerio Excel A; Ministerio Excel B',estado_miembro:'inactivo'}
+  const fullBook=new ExcelJS.Workbook(),fullSheet=fullBook.addWorksheet('Discipulos')
+  fullSheet.columns=Object.entries(importColumns).map(([key,label])=>({key,header:label,width:24}));fullSheet.addRow(fullData)
+  const fullFile=Buffer.from(await fullBook.xlsx.writeBuffer()).toString('base64')
+  let fullPreview=(await request('management/members/import/preview',{cookie:owner.cookie,body:{file:fullFile}})).data
+  assert.equal(fullPreview.valid,1,JSON.stringify(fullPreview.rows[0].errors));assert.deepEqual(fullPreview.ignored,[])
+  await request('management/members/import/commit',{cookie:owner.cookie,status:201,body:{rows:fullPreview.rows.map(row=>row.data)}})
+  const [fullMembers]=await db.execute('SELECT * FROM miembro WHERE numero_identificacion=?',[fullData.numero_identificacion]),fullMember=fullMembers[0]
+  for(const key of ['nombres','apellidos','tipo_identificacion','numero_identificacion','celular','correo','grupo_sanguineo_rh','eps','contacto_emergencia_nombre','contacto_emergencia_celular','funcion_iglesia','estado_miembro'])assert.equal(fullMember[key],fullData[key],key)
+  assert.equal(fullMember.id_sede,site.insertId);assert.equal(fullMember.id_rol_eclesiastico,pastoralRank[0].id_rol_eclesiastico)
+  assert.equal(fullMember.id_grupo,gA.insertId);assert.equal(fullMember.id_cobertura_pastoral,leaderA);assert.equal(fullMember.id_libro,secondBook.insertId)
+  assert.equal((await db.execute('SELECT CAST(fecha_nacimiento AS CHAR) AS fecha FROM miembro WHERE id_miembro=?',[fullMember.id_miembro]))[0][0].fecha,fullData.fecha_nacimiento)
+  assert.deepEqual((await db.execute('SELECT id_ministerio FROM miembro_ministerio WHERE id_miembro=? ORDER BY id_ministerio',[fullMember.id_miembro]))[0].map(row=>row.id_ministerio),[ministry1.insertId,ministry2.insertId])
+  assert.equal((await db.execute('SELECT estado FROM historial_estado_miembro WHERE id_miembro=?',[fullMember.id_miembro]))[0][0].estado,'inactivo')
+  assert.equal((await db.execute('SELECT COUNT(*) AS total FROM usuario'))[0][0].total,5)
+  assert.equal((await db.execute('SELECT COUNT(*) AS total FROM consentimiento_datos WHERE id_miembro=?',[fullMember.id_miembro]))[0][0].total,0)
+  const blankData={...data,numero_identificacion:'BLANK-FIELDS',codigo_grupo:'Sin registrar',grupo_sanguineo_rh:'Sin registrar',eps:'Sin registrar',contacto_emergencia_nombre:'Sin registrar',contacto_emergencia_celular:'Sin registrar',funcion_iglesia:'Sin registrar',sede:'Sin registrar',rol_eclesiastico:'Sin registrar',grupo_comunion:'Sin registrar',cobertura_pastoral:'Sin registrar',libro_adiestramiento:'Libro de dios',ministerios:'Sin registrar',estado_miembro:'activo'}
+  const blankPreview=(await request('management/members/import/preview',{cookie:discipleA.cookie,body:{rows:[blankData]}})).data
+  assert.equal(blankPreview.valid,1,JSON.stringify(blankPreview.rows[0].errors))
+  const restricted=(await request('management/members/import/preview',{cookie:discipleA.cookie,body:{rows:[{...fullData,numero_identificacion:'RESTRICTED'}]}})).data.rows[0]
+  for(const key of ['grupo_sanguineo_rh','eps','contacto_emergencia_nombre','contacto_emergencia_celular','funcion_iglesia','rol_eclesiastico','cobertura_pastoral','ministerios','estado_miembro'])assert.ok(restricted.errors[key],key)
+  const badCatalogs=(await request('management/members/import/preview',{cookie:owner.cookie,body:{rows:[{...fullData,numero_identificacion:'BAD-CATALOGS',sede:'No existe',rol_eclesiastico:'No existe',grupo_comunion:'Grupo B',codigo_grupo:'G-A',cobertura_pastoral:'No existe',libro_adiestramiento:'No existe',ministerios:'No existe',estado_miembro:'borrado'}]}})).data.rows[0]
+  for(const key of ['sede','rol_eclesiastico','grupo_comunion','cobertura_pastoral','libro_adiestramiento','ministerios','estado_miembro'])assert.ok(badCatalogs.errors[key],key)
+  const missingBook=(await request('management/members/import/preview',{cookie:owner.cookie,body:{rows:[{...data,numero_identificacion:'NO-BOOK'}]}})).data.rows[0]
+  assert.ok(missingBook.errors.libro_adiestramiento)
+  const precedence=(await request('management/members/import/preview',{cookie:owner.cookie,body:{bookId:book.insertId,rows:[{...blankData,numero_identificacion:'PER-ROW-BOOK'},{...data,numero_identificacion:'DEFAULT-BOOK'}]}})).data
+  assert.equal(precedence.rows[0].data.id_libro,secondBook.insertId);assert.equal(precedence.rows[1].data.id_libro,book.insertId)
+  await db.execute('DELETE FROM limite_solicitud')
+  await member('Nombre repetido','DUP-NAME-1');await member('Nombre repetido','DUP-NAME-2')
+  const ambiguous=(await request('management/members/import/preview',{cookie:owner.cookie,body:{rows:[{...fullData,numero_identificacion:'AMBIGUOUS',cobertura_pastoral:'Nombre repetido'}]}})).data.rows[0]
+  assert.ok(ambiguous.errors.cobertura_pastoral)
+  const countBeforeFailure=(await db.execute('SELECT COUNT(*) AS total FROM miembro'))[0][0].total
+  await db.query('CREATE TRIGGER fail_import_ministry BEFORE INSERT ON miembro_ministerio FOR EACH ROW SET NEW.activo=NULL')
+  await request('management/members/import/commit',{cookie:owner.cookie,status:503,body:{rows:[{...fullData,numero_identificacion:'MINISTRY-ROLLBACK'}]}})
+  await db.query('DROP TRIGGER fail_import_ministry')
+  assert.equal((await db.execute('SELECT COUNT(*) AS total FROM miembro'))[0][0].total,countBeforeFailure)
+  await db.execute('DELETE FROM limite_solicitud')
+  console.log('PASS complete import: 20 columns, all disciple fields persisted, per-row books, catalogue relations, multiple ministries, actual state history, optional placeholders, restricted fields and rollback of assignments.')
+
   if(process.argv.includes('--ui')) {
     const ui='http://127.0.0.1:5198';process.env.APP_ORIGINS=`${origin},${ui}`
     preview=spawn(process.execPath,['node_modules/vite/bin/vite.js','preview','--host','127.0.0.1','--port','5198','--strictPort'],{windowsHide:true,stdio:'ignore'})
@@ -164,12 +213,20 @@ try {
     await page.locator('.form-error-summary a').first().click();assert.equal(await page.locator('input[name=nombres]').evaluate(node=>node===document.activeElement),true)
     await page.getByLabel('Nombres *',{exact:true}).fill('Validación en servidor');await pickOption(page.getByRole('combobox',{name:'Tipo de identificación *',exact:true}),{label:'Cédula de ciudadanía'});await page.getByLabel('Número de identificación *',{exact:true}).fill('NOT-SAVED');await page.getByLabel('Celular *',{exact:true}).fill('123');await page.getByLabel('Fecha de nacimiento / cumpleaños *',{exact:true}).fill('1990-01-01');await page.getByRole('button',{name:/Continuar/}).click();await pickOption(page.getByRole('combobox',{name:/Libro de adiestramiento/}),{label:'Libro existente'});await page.getByRole('button',{name:/Continuar/}).click();await page.getByRole('button',{name:'Guardar discípulo',exact:true}).click();await page.locator('input[name=celular][aria-invalid=true]').waitFor();assert.equal(await page.locator('input[name=celular]').inputValue(),'123')
     await page.getByRole('button',{name:'Cancelar',exact:true}).click();await page.getByRole('button',{name:'Importar desde Excel',exact:true}).click()
-    await pickOption(page.getByRole('combobox',{name:'Libro para las fichas importadas',exact:true}),{label:'Libro existente'})
-    const browserBook=new ExcelJS.Workbook(),browserSheet=browserBook.addWorksheet('Discipulos');browserSheet.columns=Object.entries(importColumns).map(([key,label])=>({key,header:label}));browserSheet.addRow({...data,nombres:'Importado desde navegador',numero_identificacion:'UI-001'});browserSheet.addRow({...data,nombres:'Fila para corregir',numero_identificacion:'UI-002',celular:'123'})
+    await pickOption(page.getByRole('combobox',{name:'Libro por defecto (para filas sin libro)',exact:true}),{label:'Libro existente'})
+    const browserBook=new ExcelJS.Workbook(),browserSheet=browserBook.addWorksheet('Discipulos');browserSheet.columns=Object.entries(importColumns).map(([key,label])=>({key,header:label}));browserSheet.addRow({...fullData,nombres:'Importado desde navegador',numero_identificacion:'UI-001'});browserSheet.addRow({...data,nombres:'Fila para corregir',numero_identificacion:'UI-002',celular:'123'})
     await page.locator('input[type=file]').setInputFiles({name:'discipulos.xlsx',mimeType:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',buffer:Buffer.from(await browserBook.xlsx.writeBuffer())})
-    await page.getByRole('button',{name:'Revisar archivo',exact:true}).click();await page.getByRole('button',{name:'Corregir fila 3',exact:true}).click();await page.locator('.import-editor').getByLabel('Celular *',{exact:true}).fill('3001112233');await page.getByRole('button',{name:'Guardar corrección y validar',exact:true}).click();await page.getByText('2 filas · 2 válidas · 0 con errores.',{exact:false}).waitFor()
-    for(const width of [1440,390,320]){await page.setViewportSize({width,height:1000});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);await page.screenshot({path:`checks/tools-import-${width}.png`,fullPage:true})}
+    await page.getByRole('button',{name:'Revisar archivo',exact:true}).click();await page.getByRole('button',{name:'Corregir fila 3',exact:true}).click()
+    for(const key of Object.keys(importColumns))assert.equal(await page.locator(`.import-editor [name="${key}"]`).count(),1,`Editor exposes ${importColumns[key]}`)
+    await page.locator('.import-editor').getByLabel('Celular *',{exact:true}).fill('3001112233');await page.locator('.import-editor').getByLabel('EPS',{exact:true}).fill('EPS corregida en navegador')
+    await pickOption(page.locator('.import-editor').getByRole('combobox',{name:'Grupo sanguíneo / RH',exact:true}),{label:'AB+'})
+    await page.getByRole('button',{name:'Guardar corrección y validar',exact:true}).click();await page.getByText('2 filas · 2 válidas · 0 con errores.',{exact:false}).waitFor()
+    for(const label of Object.values(importColumns))assert.equal(await page.locator('.import-preview').getByRole('columnheader',{name:label,exact:true}).count(),1)
+    for(const width of [1440,390,320]){await page.setViewportSize({width,height:1000});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);assert.ok(await page.locator('.import-preview').evaluate(node=>{node.scrollLeft=node.scrollWidth;return node.scrollLeft>0}));await page.screenshot({path:`checks/tools-import-${width}.png`,fullPage:true})}
     await page.getByLabel('Revisé las filas seleccionadas y confirmo la creación de sus fichas.').check();await page.getByRole('button',{name:'Importar 2 discípulos',exact:true}).click();await page.getByRole('status').filter({hasText:'2 discípulos importados.'}).waitFor()
+    const [uiMembers]=await db.execute("SELECT numero_identificacion,eps,grupo_sanguineo_rh,id_libro,id_sede FROM miembro WHERE numero_identificacion IN ('UI-001','UI-002') ORDER BY numero_identificacion")
+    assert.equal(uiMembers[0].id_libro,secondBook.insertId);assert.equal(uiMembers[0].id_sede,site.insertId)
+    assert.equal(uiMembers[1].id_libro,book.insertId);assert.equal(uiMembers[1].eps,'EPS corregida en navegador');assert.equal(uiMembers[1].grupo_sanguineo_rh,'AB+')
     for(const [path,ready,name] of [['#gestion','.dashboard-home','dashboard'],['#gestion/falls/alertas','.pastoral-case','pastoral'],['#gestion/members','.record-create','members']]) {
       await page.goto(ui+'/'+path);await page.locator(ready).first().waitFor()
       if(name==='pastoral'){await page.getByRole('button').filter({hasText:'Persona B'}).click();await page.getByRole('button',{name:'Guardar seguimiento',exact:true}).waitFor()}

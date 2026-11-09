@@ -1,3 +1,4 @@
+import { photoSources } from './photo-sources'
 import { useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import { authRequest } from './auth'
@@ -61,7 +62,7 @@ export default function PasswordRecovery({ reset = false }: { reset?: boolean })
   return <main className="login-page recovery-page" id={reset ? 'restablecer' : 'recuperar'}>
     <div className="login-layout">
       <section className="login-story" aria-label="Comunidad El Calvario">
-        <img src="/660789788_122300754752230206_1313097966135355932_n.jpg" alt="La comunidad de El Calvario reunida" />
+        <img {...photoSources('660789788_122300754752230206_1313097966135355932_n.jpg')} sizes="(max-width: 767px) 100vw, 520px" width="1280" height="960" decoding="async" alt="La comunidad de El Calvario reunida" />
         <div className="login-story-content">
           <span className="login-story-label"><span /> Una iglesia. Una familia.</span>
           <h2>Juntos en la fe.<br /><em>Cerca de cada persona.</em></h2>

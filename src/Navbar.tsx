@@ -60,9 +60,9 @@ export default function Navbar({ onNavigate }: { onNavigate: (label: string) => 
       <nav className="navbar" aria-label="Navegación principal">
         <a className="nav-brand" href="#inicio" onClick={() => navigate('Inicio')} aria-label="El Calvario, inicio">
           <svg className="brand-full-logo" viewBox="60 285 1340 550" aria-hidden="true">
-            <image href="/logo2.png" width="1448" height="1086" />
+            <image href="/media/logo-wide.webp" width="1448" height="1086" />
           </svg>
-          <img className="brand-logo" src="/logo1.png" alt="" aria-hidden="true" />
+          <img className="brand-logo" src="/media/logo-compact.webp" width="320" height="276" alt="" aria-hidden="true" decoding="async" />
         </a>
         <div className="nav-capsule">
           <div className="nav-desktop-links" inert={compact}>

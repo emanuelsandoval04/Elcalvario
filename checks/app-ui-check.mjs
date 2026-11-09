@@ -184,7 +184,7 @@ try {
   await bottom.getByRole('button', { name: 'Más opciones', exact: true }).click()
   await page.getByRole('button', { name: 'Cómo instalar', exact: true }).click()
   await page.getByRole('status').filter({ hasText: 'menú del navegador' }).waitFor()
-  await page.getByRole('link', { name: 'Usuarios y roles', exact: true }).click()
+  await page.getByRole('link', { name: 'Usuarios, roles y permisos', exact: true }).click()
   await page.getByRole('button', { name: 'Actualizar usuarios', exact: true }).waitFor()
   assert.equal(await page.locator('.site-header').count(), 0)
   await page.setViewportSize({ width: 1440, height: 844 })

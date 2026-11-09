@@ -108,7 +108,7 @@ try {
   await api(`management/members/${normal.data.id}`, { id_rol_eclesiastico: catalogs.roles[0].id_rol_eclesiastico }, disciple.cookie, 403, 'PATCH')
   await api(`management/members/${normal.data.id}/ministries`, { ids: [catalogs.ministerios[0].id_ministerio] }, disciple.cookie, 403, 'PUT')
   const systemRoles = (await api('auth/admin/users', undefined, owner.cookie)).data.roles
-  await api(`auth/admin/users/${disciple.data.user.id}/role`, { roleId: systemRoles.find(role => role.name === 'Superadmin').id }, actors[4].cookie, 403)
+  await api(`auth/admin/users/${disciple.data.user.id}/role`, { roleId: systemRoles.find(role => role.name === 'Administrador').id }, actors[4].cookie, 403)
   await api(`auth/admin/users/${owner.data.user.id}/role`, { roleId: systemRoles.find(role => role.name === 'Usuario').id }, actors[4].cookie, 403)
   await api(`management/users/${owner.data.user.id}/member`, { memberId: leader }, actors[4].cookie, 403)
   const mediaAccount = await api('auth/register', { email: 'media@example.invalid', password }, '', 201)

@@ -29,7 +29,7 @@ function AccountSettings({ user, initialSection, onClose, onUpdate }: { user: Au
   const [displaySize, setDisplaySize] = useState<DisplaySize>(user.displaySize || 'normal')
   const [message, setMessage] = useState('')
   const [failure, setFailure] = useState(false)
-  const reduced = useMediaQuery('(prefers-reduced-motion: reduce)')
+  const reduced = useMediaQuery('(prefers-reduced-motion: reduce), (max-width: 900px), (pointer: coarse)')
   const emailChanged = email.trim().toLowerCase() !== user.email
 
   useGSAP(() => {
@@ -113,7 +113,7 @@ export default function AccountMenu({ user, onUpdate, disabled = false }: { user
   const [section, setSection] = useState<Section | null>(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
-  const reduced = useMediaQuery('(prefers-reduced-motion: reduce)')
+  const reduced = useMediaQuery('(prefers-reduced-motion: reduce), (max-width: 900px), (pointer: coarse)')
   useEffect(() => {
     if (disabled || !user) setOpen(false)
     if (!user) setSection(null)

@@ -3,7 +3,7 @@ ON DUPLICATE KEY UPDATE codigo=permiso.codigo;
 
 INSERT INTO rol_permiso(id_rol,codigo_permiso,alcance)
 SELECT r.id_rol,'seguimiento.gestionar','todos' FROM rol_sistema r
-WHERE r.nombre IN ('Superadmin','Administrador','Pastor','Apóstol General','Asistencia Apostólica','Pastor de Distrito','Pastor Local','Asistencia Pastoral')
+WHERE r.nombre IN ('Administrador','Pastor','Apóstol General','Asistencia Apostólica','Pastor de Distrito','Pastor Local','Asistencia Pastoral')
 AND NOT EXISTS(SELECT 1 FROM migracion_aplicada WHERE nombre='020-pastoral-followup.sql')
 ON DUPLICATE KEY UPDATE codigo_permiso=rol_permiso.codigo_permiso;
 

@@ -54,7 +54,7 @@ try {
     JOIN rol_permiso g ON g.id_rol=r.id_rol AND g.codigo_permiso='gestion.acceder'
     JOIN rol_permiso p ON p.id_rol=r.id_rol AND p.codigo_permiso='reportes.grupos'
     JOIN rol_permiso e ON e.id_rol=r.id_rol AND e.codigo_permiso='eventos.eliminar'
-    WHERE r.estado=1 AND r.nombre NOT IN ('Superadmin','Usuario')
+    WHERE r.estado=1 AND r.nombre NOT IN ('Administrador','Usuario')
     ORDER BY r.nombre='Multimedia' DESC,r.id_rol LIMIT 1`)
   assert.ok(roles.length, 'No hay un rol operativo para probar las exportaciones.')
   attemptedRegistration = true

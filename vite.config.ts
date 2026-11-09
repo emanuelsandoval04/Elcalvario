@@ -14,9 +14,10 @@ export default defineConfig(({ mode }) => {
       name: 'calvario-pwa',
       apply: 'build',
       generateBundle(_options, bundle) {
-        const assets = ['/offline.html', '/app-icon.svg', ...Object.keys(bundle).filter(name => /\.(js|css|woff2)$/.test(name)).map(name => `/${name}`)]
+        // Install the offline screen only. Lazy screens are cached when visited.
+        const assets = ['/offline.html', '/app-icon.svg']
         const template = readFileSync(new URL('./scripts/service-worker.js', import.meta.url), 'utf8')
-        const version = createHash('sha256').update(template + JSON.stringify(assets) + readFileSync(new URL('./public/offline.html', import.meta.url), 'utf8') + readFileSync(new URL('./public/app-icon.svg', import.meta.url), 'utf8')).digest('hex').slice(0, 12)
+        const version = createHash('sha256').update(template + JSON.stringify(Object.keys(bundle).sort()) + readFileSync(new URL('./public/offline.html', import.meta.url), 'utf8') + readFileSync(new URL('./public/app-icon.svg', import.meta.url), 'utf8')).digest('hex').slice(0, 12)
         this.emitFile({ type: 'asset', fileName: 'sw.js', source: template.replace('__VERSION__', version).replace('__PRECACHE__', JSON.stringify(assets)) })
       },
     }],

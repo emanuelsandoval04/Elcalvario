@@ -1,6 +1,7 @@
 import AppSelect from './AppSelect'
 import ProfilePhoto from './ProfilePhoto'
 import DiscipleConsent from './DiscipleConsent'
+import { AttendanceActivityPicker, MemberAttendance } from './AttendanceTools'
 import { lazy, Suspense, useEffect, useId, useRef, useState } from 'react'
 import type { FormEvent, ReactNode } from 'react'
 import { authRequest, hasPermission, useAuthSession } from './auth'
@@ -143,12 +144,12 @@ function Records({ resource, user, catalogs, reloadCatalogs, notify }: { resourc
   const remove = { members: 'miembros.eliminar', groups: 'grupos.eliminar', activities: 'eventos.eliminar' }
   const memberOptions = (resource === 'members' ? items : members).map(row => ({ value: Number(row.id_miembro), label: `${row.nombres} ${row.apellidos || ''}`.trim() }))
   if (user.memberId && !memberOptions.some(option => option.value === user.memberId)) memberOptions.push({ value: user.memberId, label: 'Mi ficha de discípulo' })
-  async function load() {
+  async function load(silent = false) {
     const request = ++listRequest.current
-    setLoading(true)
+    if (!silent) setLoading(true)
     try {
       if (resource === 'members' && !has(user, 'miembros.ver')) { setItems([]); return }
-      const result = await api<{ items: Row[] }>(`${resource}${resource === 'members' ? `?q=${encodeURIComponent(search)}` : ''}`)
+      const result = await api<{ items: Row[] }>(`${resource}${resource === 'members' ? `?q=${encodeURIComponent(search)}` : resource === 'activities' ? '?view=agenda' : ''}`)
       if (request !== listRequest.current) return
       setItems(result.items)
       const detailId = window.location.hash.split('/')[2] === 'ficha' ? Number(window.location.hash.split('/')[3]) : null
@@ -160,6 +161,14 @@ function Records({ resource, user, catalogs, reloadCatalogs, notify }: { resourc
     const timer = window.setTimeout(() => void load(), resource === 'members' && search ? 250 : 0)
     return () => { window.clearTimeout(timer); listRequest.current++ }
   }, [resource, resource === 'members' ? search : ''])
+  useEffect(() => {
+    if (resource !== 'activities' || edit || detail || activityView !== 'list') return
+    const refresh = () => { if (document.visibilityState === 'visible') void load(true) }
+    const timer = window.setInterval(refresh, 60000)
+    window.addEventListener('focus', refresh)
+    document.addEventListener('visibilitychange', refresh)
+    return () => { window.clearInterval(timer); window.removeEventListener('focus', refresh); document.removeEventListener('visibilitychange', refresh) }
+  }, [resource, Boolean(edit), Boolean(detail), activityView])
   useEffect(() => {
     titleRef.current?.focus({ preventScroll: true })
     if (edit || detail) titleRef.current?.scrollIntoView({ block: 'start', behavior: 'instant' })
@@ -233,12 +242,10 @@ function Records({ resource, user, catalogs, reloadCatalogs, notify }: { resourc
   const createLabels = { members: 'Registrar discípulo', groups: 'Nuevo grupo', activities: 'Nuevo evento' }
   const groupId = window.location.hash.split('/')[2] === 'grupo' ? Number(window.location.hash.split('/')[3]) : null
   const scopedItems = resource === 'members' && groupId ? items.filter(item => Number(item.id_grupo) === groupId) : items
-  const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Bogota', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date())
   const visibleItems = scopedItems.filter(row => {
     const matches = searchable(`${row.nombres || ''} ${row.apellidos || ''} ${row.numero_identificacion || ''} ${row.nombre || ''} ${row.titulo || ''}`).includes(searchable(search))
     if (!matches) return false
     if (resource === 'members') return filter === 'todos' || (filter === 'sin_libro' ? !row.id_libro : row.estado_miembro === filter)
-    if (resource === 'activities') return filter === 'pasados' ? String(row.fecha) < today : String(row.fecha) >= today
     return true
   })
   const openEdit = (row: Row) => { setRegistrationType(row.id_rol_eclesiastico ? 'administrativo' : 'discipulo'); setActivityType(String(row.tipo_actividad || 'evento')); setEdit({ ...row, edit_scope: 'single' }); setDetail(null) }
@@ -266,7 +273,7 @@ function Records({ resource, user, catalogs, reloadCatalogs, notify }: { resourc
         const query = new URLSearchParams({ format: 'xlsx', ...(search ? { q: search } : {}), ...(['activo', 'inactivo', 'retirado'].includes(filter) ? { estado: filter } : {}), ...(filter === 'sin_libro' ? { sin_libro: '1' } : {}), ...(groupId ? { id_grupo: String(groupId) } : {}) })
         setExporting(true); void downloadReport(`reports/discipulos?${query}`, 'discipulos.xlsx').then(() => notify('Excel de discípulos descargado.')).catch(cause => notify(errorMessage(cause))).finally(() => setExporting(false))
       }}>{exporting ? 'Preparando Excel…' : 'Descargar discípulos en Excel'}</button>}</>}
-      {resource === 'activities' && <div className="record-filters event-filters" role="group" aria-label="Filtrar eventos"><button type="button" aria-pressed={filter !== 'pasados'} onClick={() => setFilter('proximos')}>Próximos</button><button type="button" aria-pressed={filter === 'pasados'} onClick={() => setFilter('pasados')}>Pasados</button></div>}
+      {resource === 'activities' && <p className="section-caption">Cada evento fijo muestra solo su próxima fecha. Los encuentros pasados se conservan en Asistencia y en el calendario.</p>}
     </>}
     {edit && <div className="manage-editor record-editor" ref={editorRef}>
       {resource === 'members' && !edit.id_miembro && <div className="registration-choice">
@@ -324,6 +331,7 @@ function MemberDetail({ row, user, catalogs, reloadCatalogs, notify, onSaved, on
     </section>
     {has(user, 'reportes.discipulos') && <button type="button" className="secondary" disabled={exporting} onClick={() => { setExporting(true); void downloadReport(`members/${row.id_miembro}/excel`, `discipulo-${row.id_miembro}.xlsx`).then(() => notify('Ficha completa descargada en Excel.')).catch(cause => notify(errorMessage(cause))).finally(() => setExporting(false)) }}>{exporting ? 'Preparando Excel…' : 'Descargar ficha en Excel'}</button>}
     <dl className="manage-details">{Object.entries(labels).filter(([key]) => Object.hasOwn(row, key)).map(([key, label]) => <div key={key}><dt>{label}</dt><dd>{String(row[key] || 'Sin registrar')}</dd></div>)}</dl>
+    {has(user,'asistencia.ver') && <MemberAttendance key={row.id_miembro} memberId={Number(row.id_miembro)}/>}
     {has(user, 'miembros.estado') && <form className="manage-actions" onSubmit={event => { event.preventDefault(); void api(`members/${row.id_miembro}/state`, { estado_miembro: state }).then(() => { notify('Estado actualizado.'); void onSaved() }).catch(error => notify(errorMessage(error))) }}><label>Estado del discípulo <AppSelect value={state} onChange={event => setState(event.target.value)}>{['activo', 'inactivo', 'retirado'].map(value => <option key={value}>{value}</option>)}</AppSelect></label><button>Actualizar estado</button></form>}
     {has(user, 'grupos.editar') && !has(user, 'miembros.editar') && <><h4>Grupo y cobertura</h4><DataForm fields={[
       { key: 'id_grupo', label: 'Grupo', options: catalogOptions(catalogs.grupos, 'id_grupo') },
@@ -350,7 +358,10 @@ function GroupDetail({ row, user, onClose, onEdit }: { row: Row; user: AuthUser;
 }
 
 function Attendance({ user, notify }: { user: AuthUser; notify: Message }) {
-  const [activities, setActivities] = useState<Row[]>([])
+  const [selectedActivity, setSelectedActivity] = useState<Row | null>(null)
+  const [rosterVersion,setRosterVersion] = useState('')
+  const [exporting,setExporting] = useState(false)
+  const [clock,setClock] = useState(Date.now())
   const [activityId, setActivityId] = useState(() => window.location.hash.split('/')[3] === 'actividad' ? window.location.hash.split('/')[4] || '' : '')
   const [roster, setRoster] = useState<Row[]>([])
   const [records, setRecords] = useState<Row[]>([])
@@ -361,48 +372,48 @@ function Attendance({ user, notify }: { user: AuthUser; notify: Message }) {
   const [saving, setSaving] = useState(false)
   const [loading, setLoading] = useState(false)
   const requestId = useRef(0)
-  useEffect(() => { api<{ items: Row[] }>('activities').then(result => setActivities(result.items)).catch(error => notify(errorMessage(error))) }, [])
+  useEffect(() => { const timer=window.setInterval(()=>setClock(Date.now()),60000);return()=>window.clearInterval(timer) },[])
   async function load() {
     const request = ++requestId.current
     if (!activityId) { setRoster([]); setRecords([]); return }
     setLoading(true)
     try {
-      const [people, attendance] = await Promise.all([has(user, 'asistencia.registrar') ? api<{ items: Row[] }>(`attendance/roster?activityId=${activityId}`) : Promise.resolve({ items: [] }), has(user, 'asistencia.ver') ? api<{ items: Row[] }>(`attendance?activityId=${activityId}`) : Promise.resolve({ items: [] })])
+      const [people, attendance] = await Promise.all([has(user, 'asistencia.registrar') ? api<{ items: Row[]; version?:string; activity?:Row }>(`attendance/roster?activityId=${activityId}`) : Promise.resolve({ items: [],version:'',activity:undefined }), has(user, 'asistencia.ver') ? api<{ items: Row[]; activity?:Row }>(`attendance?activityId=${activityId}`) : Promise.resolve({ items: [],activity:undefined })])
       if (request !== requestId.current) return
-      setRoster(people.items); setRecords(attendance.items); setCorrections({})
+      setRoster(people.items);setRosterVersion(people.version || ''); setRecords(attendance.items); setCorrections({})
+      setSelectedActivity(attendance.activity || people.activity || null)
     } catch (error) { if (request === requestId.current) { notify(errorMessage(error)); setRoster([]); setRecords([]) } }
     finally { if (request === requestId.current) setLoading(false) }
   }
   useEffect(() => { setPending({}); setSearch(''); void load(); return () => { requestId.current++ } }, [activityId])
-  const selected = activities.find(item => String(item.id_actividad) === activityId)
-  const states: Record<string, string> = { presente: 'Presente', ausente: 'Ausente', justificado: 'Justificado', visitante: 'Visitante' }
+  const selected = selectedActivity && String(selectedActivity.id_actividad)===activityId ? selectedActivity : null
+  const states: Record<string, string> = { presente: 'Presente', ausente: 'Ausente sin justificación', justificado: 'Justificado', visitante: 'Visitante' }
+  const outstanding=roster.filter(person=>!person.registrado&&!records.some(record=>record.id_miembro===person.id_miembro))
+  const started=selected ? new Date(`${selected.fecha}T${selected.hora}-05:00`).getTime()<=clock : false
   async function saveRoster() {
-    if (saving || !Object.keys(pending).length) return
+    if (saving || !outstanding.length) return
     setSaving(true)
-    let saved = 0
-    const failed: Record<string, string> = {}
-    let failure = ''
-    for (const [id, state] of Object.entries(pending)) {
-      try { await api('attendance', { id_actividad: Number(activityId), id_miembro: Number(id), estado_asistencia: state, metodo_registro: 'manual' }); saved++ }
-      catch (error) { failed[id] = state; failure = errorMessage(error) }
-    }
-    setPending(failed)
-    await load()
-    setSaving(false)
-    notify(failure ? `${saved} registros guardados. ${failure} Revisa las selecciones pendientes.` : saved === 1 ? '1 registro de asistencia guardado.' : `${saved} registros de asistencia guardados.`)
+    try {
+      const eligible=new Set(outstanding.map(person=>String(person.id_miembro)))
+      const result=await api<{created:number;absent:number;present:number;justified:number}>('attendance/save',{activityId:Number(activityId),rosterVersion,states:Object.fromEntries(Object.entries(pending).filter(([id])=>eligible.has(id)))})
+      setPending({});await load()
+      notify(`Asistencia guardada. Presentes: ${result.present}; justificados: ${result.justified}; ausentes sin justificación: ${result.absent}.`)
+    }catch(error){notify(errorMessage(error));await load()}finally{setSaving(false)}
   }
-  return <section className="attendance-page"><h2>Asistencia</h2><p className="section-caption">Un encuentro, muchas historias para acompañar.</p><label>Actividad <AppSelect aria-label="Actividad" value={activityId} disabled={saving} onChange={event => setActivityId(event.target.value)}><option value="">Selecciona una actividad</option>{activities.map(item => <option key={item.id_actividad} value={String(item.id_actividad)}>{item.fecha} · {typeNames[String(item.tipo_actividad)]} · {item.titulo}{item.estado_actividad === 'cancelada' && ' · Cancelada'}</option>)}</AppSelect></label>
+  return <section className="attendance-page"><h2>Asistencia</h2><p className="section-caption">Consulta encuentros actuales y anteriores, guarda la asistencia o descarga el registro de un evento.</p><AttendanceActivityPicker value={activityId} selected={selected} disabled={saving||loading} onChange={activity=>{setSelectedActivity(activity);setActivityId(activity?String(activity.id_actividad):'')}}/>
     {!activityId && <div className="app-empty"><span className="empty-icon"><AdminIcon name="attendance"/></span><h3>¿En qué encuentro estamos?</h3><p>Selecciona una actividad para consultar o registrar su asistencia.</p></div>}
     {activityId && <>
       {selected && <div className="attendance-event"><span className="dashboard-card-icon"><AdminIcon name="activities"/></span><div><strong>{selected.titulo}</strong><span>{selected.fecha} · {String(selected.hora).slice(0, 5)}</span></div><span className="app-count">{selected.estado_actividad === 'cancelada' ? 'Cancelada' : 'Encuentro'}</span></div>}
+      {has(user,'reportes.asistencia') && selected && <div className="attendance-export"><p>Descargar los registros guardados de este evento y esta fecha.</p>{(['pdf','xlsx'] as const).map(format=><button type="button" className="secondary" key={format} disabled={exporting||saving||loading} onClick={()=>{setExporting(true);void downloadReport(`reports/asistencia?${new URLSearchParams({activityId,format})}`,`asistencia-${selected.fecha}-${activityId}.${format}`).catch(error=>notify(errorMessage(error))).finally(()=>setExporting(false))}}>Descargar asistencia en {format==='pdf'?'PDF':'Excel'}</button>)}</div>}
       {has(user, 'asistencia.registrar') && <>
         <form className="record-search" onSubmit={event => event.preventDefault()}><AdminIcon name="search"/><label className="sr-only" htmlFor="attendance-search">Buscar discípulo para asistencia</label><input id="attendance-search" value={search} placeholder="Buscar discípulo" type="search" onChange={event => setSearch(event.target.value)}/></form>
         {loading ? <p role="status">Cargando asistencia…</p> : <div className="attendance-roster">{roster.filter(person => String(person.nombre).toLowerCase().includes(search.toLowerCase())).map(person => {
           const id = String(person.id_miembro)
           const existing = records.find(record => String(record.id_miembro) === id)
-          return <div key={id} className="attendance-person"><span className="member-avatar" aria-hidden="true">{String(person.nombre).split(' ').slice(0, 2).map(word => word[0]).join('')}</span><strong>{person.nombre}</strong>{existing ? <span className="attendance-saved" data-state={existing.estado_asistencia}>{states[String(existing.estado_asistencia)] || existing.estado_asistencia}<small>Guardado</small></span> : <AppSelect aria-label={`Asistencia de ${person.nombre}`} data-state={pending[id] || ''} disabled={saving || selected?.estado_actividad === 'cancelada'} value={pending[id] || ''} onChange={event => setPending(previous => { const next = { ...previous }; if (event.target.value) next[id] = event.target.value; else delete next[id]; return next })}><option value="">Sin marcar</option>{['presente', 'ausente', 'justificado'].map(state => <option key={state} value={state}>{states[state]}</option>)}</AppSelect>}</div>
+          return <div key={id} className="attendance-person"><span className="member-avatar" aria-hidden="true">{String(person.nombre).split(' ').slice(0, 2).map(word => word[0]).join('')}</span><strong>{person.nombre}</strong>{existing ? <span className="attendance-saved" data-state={existing.estado_asistencia}>{states[String(existing.estado_asistencia)] || existing.estado_asistencia}<small>Guardado</small></span> : person.registrado ? <span className="attendance-saved">Asistencia guardada</span> : <AppSelect aria-label={`Asistencia de ${person.nombre}`} data-state={pending[id] || 'ausente'} disabled={saving || selected?.estado_actividad === 'cancelada'} value={pending[id] || ''} onChange={event => setPending(previous => { const next = { ...previous }; if (event.target.value) next[id] = event.target.value; else delete next[id]; return next })}><option value="">Ausente sin justificación (sin marcar)</option>{['presente', 'ausente', 'justificado'].map(state => <option key={state} value={state}>{states[state]}</option>)}</AppSelect>}</div>
         })}{!roster.length && <p>No hay discípulos disponibles para esta actividad. Puedes registrar un visitante a continuación.</p>}</div>}
-        <button className="attendance-save" disabled={saving || !Object.keys(pending).length || selected?.estado_actividad === 'cancelada'} onClick={() => void saveRoster()}>{saving ? 'Guardando asistencia…' : `Guardar asistencia${Object.keys(pending).length ? ` (${Object.keys(pending).length})` : ''}`}</button>
+        <p className="attendance-save-note">Al guardar, quienes queden sin marcar se registrarán como ausentes sin justificación. Los justificados se seleccionan aparte. {!started&&'El guardado completo se habilita al comenzar el evento.'}</p>
+        <button className="attendance-save" disabled={saving || loading || !outstanding.length || !started || selected?.estado_actividad === 'cancelada'} onClick={() => void saveRoster()}>{saving ? 'Guardando asistencia…' : 'Guardar asistencia y registrar ausentes'}</button>
       </>}
       {has(user, 'asistencia.registrar') && <details className="attendance-other"><summary>Registrar visitante, identificador QR u otro estado</summary><div className="manage-editor"><label>Método <AppSelect value={method} disabled={saving} onChange={event => setMethod(event.target.value)}><option value="manual">Manual</option><option value="qr">QR: ingresar identificador</option></AppSelect></label>
       <DataForm key={`${activityId}-${method}`} fields={[
@@ -462,7 +473,7 @@ function Dashboard({ user }: { user: AuthUser }) {
   const widgetLinks: Record<string, string> = { miembros: '#gestion/members', grupos: '#gestion/groups', alertas: '#gestion/falls/alertas', cumpleanos: '#gestion/reports', eventos: '#gestion/activities' }
   const date = new Intl.DateTimeFormat('es-CO', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'America/Bogota' }).format(new Date())
   return <section className="dashboard-home" aria-labelledby="dashboard-title">
-    <div className="dashboard-intro"><div><span className="dashboard-eyebrow">QUÉ BUENO TENERTE AQUÍ</span><h2 id="dashboard-title">Hola, {user.name?.trim().split(/\s+/)[0] || 'bienvenido'}<span className="greeting-dot">.</span></h2><p className="dashboard-date">{date}</p></div><span className="dashboard-welcome-mark" aria-hidden="true"><img src="/logo1.png" alt=""/></span></div>
+    <div className="dashboard-intro"><div><span className="dashboard-eyebrow">QUÉ BUENO TENERTE AQUÍ</span><h2 id="dashboard-title">Hola, {user.name?.trim().split(/\s+/)[0] || 'bienvenido'}<span className="greeting-dot">.</span></h2><p className="dashboard-date">{date}</p></div><span className="dashboard-welcome-mark" aria-hidden="true"><img src="/media/logo-compact.webp" alt=""/></span></div>
     <section className="today-card" aria-labelledby="today-title"><div className="today-heading"><h3 id="today-title">Hoy en tu comunidad</h3><span>EL CALVARIO</span></div>
       {loading ? <p role="status">Consultando el resumen…</p> : failure ? <p role="alert">{failure}</p> : <div className="today-stats">{widgets.filter(widget => widgetIcons[widget.key]).map(widget => <a key={widget.key} href={widgetLinks[widget.key]} className="today-stat"><AdminIcon name={widgetIcons[widget.key]}/><span><strong>{widget.value}</strong><span>{widget.label}</span></span></a>)}{!widgets.some(widget => widgetIcons[widget.key]) && <p>Tus accesos disponibles están a continuación.</p>}</div>}
     </section>
@@ -505,30 +516,6 @@ function Falls({ user, notify }: { user: AuthUser; notify: Message }) {
       {section === 'registro' && canRegister && <Attendance user={user} notify={notify}/>}
       {section === 'alertas' && canSeeAlerts && <Suspense fallback={<p>Cargando seguimiento pastoral…</p>}><PastoralFollowup notify={notify}/></Suspense>}
     </div>
-  </section>
-}
-
-type PermissionCatalog = { roles: { id_rol: number; nombre: string }[]; permissions: { codigo: string; descripcion: string; admite_grupo: boolean }[]; grants: { id_rol: number; codigo_permiso: string; alcance: string }[] }
-function Permissions({ notify }: { notify: Message }) {
-  const [data, setData] = useState<PermissionCatalog | null>(null)
-  const [roleId, setRoleId] = useState('')
-  const [grants, setGrants] = useState<Record<string, string>>({})
-  const [busy, setBusy] = useState(false)
-  async function load() { try { setData(await api<PermissionCatalog>('permissions')) } catch (error) { notify(errorMessage(error)) } }
-  useEffect(() => { void load() }, [])
-  useEffect(() => { setGrants(Object.fromEntries((data?.grants || []).filter(grant => grant.id_rol === Number(roleId)).map(grant => [grant.codigo_permiso, grant.alcance]))) }, [roleId, data])
-  const protectedRole = ['Superadmin', 'Administrador', 'Pastor', 'Usuario', 'Apóstol General', 'Asistencia Apostólica', 'Pastor de Distrito', 'Pastor Local'].includes(data?.roles.find(role => role.id_rol === Number(roleId))?.nombre || '')
-  const discipleRole = data?.roles.find(role => role.id_rol === Number(roleId))?.nombre === 'Discipulador'
-  return <section><h2>Permisos por rol del sistema</h2><p>Los cambios se aplican también a las sesiones abiertas. Los roles eclesiásticos se gestionan en la ficha del discípulo.</p><label>Rol del sistema <AppSelect value={roleId} onChange={event => setRoleId(event.target.value)}><option value="">Selecciona…</option>{data?.roles.map(role => <option key={role.id_rol} value={role.id_rol}>{role.nombre}</option>)}</AppSelect></label>
-    {roleId && <form onSubmit={event => { event.preventDefault(); setBusy(true); void api(`permissions/${roleId}`, { grants: Object.entries(grants).filter(([, value]) => value).map(([codigo, alcance]) => ({ codigo, alcance })) }, 'PUT').then(() => { notify('Permisos actualizados.'); void load() }).catch(error => notify(errorMessage(error))).finally(() => setBusy(false)) }}>
-      <div className="manage-records">{data?.permissions.map(permission => <label className="manage-permission" key={permission.codigo}>
-        <span>{permission.descripcion}<small>{permission.codigo.startsWith('miembros.') ? 'Discípulos' : permission.codigo}</small></span>
-        <AppSelect disabled={protectedRole || busy || discipleRole && !permission.admite_grupo && permission.codigo !== 'adiestramiento.gestionar'} value={grants[permission.codigo] || ''} onChange={event => setGrants({ ...grants, [permission.codigo]: event.target.value })}>
-          <option value="">Sin permiso</option>{(!discipleRole || permission.codigo === 'adiestramiento.gestionar') && <option value="todos">Todos</option>}{permission.admite_grupo && <option value="grupo">Grupos a cargo</option>}
-        </AppSelect>
-      </label>)}</div>
-      {protectedRole ? <p>Este rol conserva su configuración protegida.</p> : <button disabled={busy}>Guardar permisos</button>}
-    </form>}
   </section>
 }
 
@@ -575,7 +562,7 @@ export default function Management() {
       <span className="manage-activation-icon"><AdminIcon name="permissions"/></span>
       <div role="status" aria-live="polite"><h2 id="activation-title">Tu cuenta está pendiente por activación.</h2>
         <p className="manage-activation-email">{user.email}</p>
-        <p>Tu sesión está iniciada. Un administrador, pastor o Superadmin debe activar tu cuenta y asignarte un rol para que puedas utilizar las herramientas del panel.</p>
+        <p>Tu sesión está iniciada. El Administrador o un cargo pastoral autorizado debe activar tu cuenta y asignarte un rol para que puedas utilizar las herramientas del panel.</p>
       </div>
       <div className="manage-actions"><button type="button" disabled={accountBusy} onClick={() => void checkActivation()}>{accountBusy ? 'Consultando…' : 'Consultar activación'}</button><button type="button" className="secondary" disabled={accountBusy} onClick={() => void logout()}>Cerrar sesión</button></div>
     </section> : !user || !has(user, 'gestion.acceder') ? <p>Necesitas una cuenta con un rol autorizado. <a href="#login">Ir a mi cuenta</a></p> : <>
@@ -585,7 +572,6 @@ export default function Management() {
       {tab === 'mapa' && <Suspense fallback={<p>Cargando mapa de zonas…</p>}><CoverageMap key={accessKey} user={user}/></Suspense>}
       {(['members', 'groups', 'activities'] as const).map(resource => tab === resource && <Records key={`${resource}-${accessKey}`} resource={resource} user={user} catalogs={catalogs} reloadCatalogs={reloadCatalogs} notify={setMessage} />)}
       {tab === 'falls' && <Falls key={accessKey} user={user} notify={setMessage} />}{tab === 'reports' && <Reports user={user} notify={setMessage} />}
-      {tab === 'permissions' && <Permissions notify={setMessage} />}
     </>}
     </div>
   </AdminFrame>

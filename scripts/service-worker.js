@@ -13,7 +13,13 @@ self.addEventListener('fetch', event => {
   if (request.method !== 'GET' || url.origin !== self.location.origin || url.pathname.startsWith('/api/')) return
   if (request.mode === 'navigate') {
     event.respondWith(fetch(request).catch(async () => (await caches.open(CACHE)).match('/offline.html')))
-  } else if (SHELL.includes(url.pathname)) {
-    event.respondWith(caches.open(CACHE).then(async cache => (await cache.match(request)) || fetch(request)))
+  } else if (SHELL.includes(url.pathname) || /^\/assets\/.+\.(js|css|woff2)$/.test(url.pathname)) {
+    event.respondWith(caches.open(CACHE).then(async cache => {
+      const cached = await cache.match(request)
+      if (cached) return cached
+      const response = await fetch(request)
+      if (response.ok) event.waitUntil(cache.put(request, response.clone()).catch(() => {}))
+      return response
+    }))
   }
 })

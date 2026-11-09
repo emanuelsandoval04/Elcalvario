@@ -41,7 +41,6 @@
 .admin-removal-actions { display:flex; flex-wrap:wrap; justify-content:flex-end; gap:12px; }
 .admin-member-link { grid-column: 1 / 3; display: grid; gap: 8px; font-size: 12px; min-width: 0; }
 .admin-member-link select { min-width: 0; max-width: 100%; width: 100%; border: 1px solid #e7e3dd; border-radius: 10px; padding: 10px; font: inherit; background: white; }
-.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
 .admin-panel button:focus-visible, .admin-panel select:focus-visible { outline: 2px solid #c74418; outline-offset: 3px; }
 @media (max-width: 639px) { .admin-page { padding: 110px 20px 24px; align-items: start; } .admin-panel { padding: 24px 20px; } .admin-user-row { grid-template-columns: 1fr 80px; gap: 10px; } .admin-user-info { grid-column: 1 / -1; } }
 @media (prefers-reduced-motion: reduce) { .admin-panel { animation: none; } .admin-save { transition: none; } }

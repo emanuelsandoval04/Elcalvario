@@ -1,4 +1,10 @@
-@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap');
+@font-face {
+  font-family: 'Manrope';
+  font-style: normal;
+  font-weight: 400 800;
+  font-display: swap;
+  src: url('/fonts/manrope-latin-v23.woff2') format('woff2');
+}
 
 :root {
   font-family: 'Manrope', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
@@ -11,6 +17,7 @@
 
 * { box-sizing: border-box; }
 body { margin: 0; min-width: 320px; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
 .welcome { max-width: 1380px; min-height: 100svh; margin: 0 auto; padding: 100px 48px 36px; display: grid; grid-template-columns: 1.25fr 1fr; align-items: center; gap: clamp(36px, 5vw, 72px); }
 .hero-copy { padding-top: 0; }
 .hero-church-name { margin: 0; color: #171717; font-size: clamp(16px, 1.4vw, 20px); font-weight: 700; line-height: 1.4; letter-spacing: -.025em; }
