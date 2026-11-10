@@ -1,6 +1,7 @@
 import { mailConfiguration, deliverEmail } from './mail-delivery.js'
 import { brandedEmail, mailButton, escapeHtml } from './mail-templates.js'
 import { canManageTraining } from './training.js'
+import { memberCode } from './public-codes.js'
 
 export function accountCapabilities(user) {
   const result = ['Actualizar tu nombre y foto, cambiar tu correo y contraseña y gestionar tus sesiones.']
@@ -50,7 +51,7 @@ export function accountCapabilities(user) {
 export async function welcomeContext(connection, user, actor) {
   let member = null, groups = [], ministries = []
   if (user.memberId) {
-    const [members] = await connection.execute(`SELECT m.id_miembro AS id,CONCAT_WS(' ',m.nombres,m.apellidos) AS name,
+    const [members] = await connection.execute(`SELECT m.id_miembro AS id,m.codigo_miembro AS code,CONCAT_WS(' ',m.nombres,m.apellidos) AS name,
       g.nombre AS groupName,g.codigo_grupo AS groupCode,r.nombre AS pastoralRole,m.funcion_iglesia AS service,
       CONCAT_WS(' ',c.nombres,c.apellidos) AS coverageName,l.nombre AS trainingBook
       FROM miembro m LEFT JOIN grupo_comunion g ON g.id_grupo=m.id_grupo AND g.archivado=0
@@ -67,10 +68,11 @@ export async function welcomeContext(connection, user, actor) {
 export async function welcomeMessage(user, password, context, configuration) {
   const link = `${configuration.origin}/#login`
   const details = [
+    ...(user.code ? [['ID de la cuenta', user.code]] : []),
     ['Nombre', user.name || user.email], ['Correo de acceso', user.email],
     ['Contraseña inicial', password], ['Rol asignado', user.roles.join(', ')],
     ['Estado de la cuenta', 'Activa'], ['Cuenta creada por', context.createdBy], ['Fecha de vinculación (Colombia)', context.createdAt],
-    ['Ficha del discípulo', context.member ? `${context.member.name} · ID ${context.member.id}` : 'Sin ficha vinculada'],
+    ['Ficha del discípulo', context.member ? `${context.member.name} · ID ${memberCode(context.member.code) || context.member.id}` : 'Sin ficha vinculada'],
   ]
   if (context.member) {
     const member = context.member

@@ -41,3 +41,14 @@ npm run test:church
 ```
 
 Las pruebas usan bases temporales locales. Comprueban asignación y persistencia, edición contextual, perfiles protegidos, permisos por grupo, separación de autoridades, conflictos entre administradores, recuperación de fallos, enlaces anteriores y vistas de 320 a 1440 px.
+
+## ID visibles de discípulos y cuentas
+
+- Cada ficha de discípulo recibe un ID consecutivo de 4 dígitos: **0101, 0102, 0103…** (después de 9999 sigue 10000).
+- Cada cuenta del panel recibe su propio ID: **ADM-0001, ADM-0002…**, sin importar su rol. Se muestra junto al rol en *Usuarios, roles y permisos* y en *Mi cuenta*, y aparece en el correo de bienvenida.
+- Los números salen de la tabla `secuencia_codigo` (migración `024-public-codes.sql`). Se asignan una sola vez, no se pueden elegir ni editar desde la API y nunca se reutilizan, aunque la ficha se archive o la cuenta se elimine.
+- Las fichas y cuentas que ya existían se numeraron en orden de creación.
+- Se puede buscar por ID: `0105` en Discípulos o `ADM-0003` en Usuarios.
+- La columna **ID** de los Excel y de la ficha PDF muestra este código, no el número interno de la base.
+- En producción, la cuenta web de MySQL necesita `GRANT SELECT, UPDATE ON defaultdb.secuencia_codigo TO '<cuenta de la app>'@'%';` y la migración debe aplicarse **antes** de publicar el código.
+- Prueba: `npm run test:codes` (base temporal, 10 grupos de verificación).

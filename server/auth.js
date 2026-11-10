@@ -9,6 +9,7 @@ import { parseProfilePhoto, saveProfilePhoto } from './profile-photo.js'
 import { sessionMilliseconds } from './config.js'
 import { databaseRateLimit } from './rate-limit.js'
 import { audit } from './audit.js'
+import { reserveCode, accountCode, parseAccountCode } from './public-codes.js'
 import { invalid, identifier, text } from './entities.js'
 import { createPasswordRecoveryRouter } from './password-recovery.js'
 import { welcomeContext, sendAccountWelcome } from './account-welcome.js'
@@ -46,8 +47,10 @@ async function createSession(connection, id, response, request) {
   return () => response.cookie(cookieName, token, { ...cookieOptions, maxAge: sessionMilliseconds })
 }
 export async function readUser(id, connection = pool) {
-  const [users] = await connection.execute("SELECT u.id_usuario AS id, u.id_miembro AS memberId, u.correo_login AS email, u.estado_usuario AS state, p.nombre AS name, f.version AS photoVersion, COALESCE(pr.tamano_interfaz,'normal') AS displaySize,l.id_libro AS trainingBookId,l.nombre AS trainingBookName FROM usuario u LEFT JOIN perfil_usuario p ON p.id_usuario=u.id_usuario LEFT JOIN foto_perfil_usuario f ON f.id_usuario=u.id_usuario LEFT JOIN preferencia_usuario pr ON pr.id_usuario=u.id_usuario LEFT JOIN miembro m ON m.id_miembro=u.id_miembro AND m.archivado=0 LEFT JOIN libro_adiestramiento l ON l.id_libro=m.id_libro WHERE u.id_usuario = ? AND u.estado_usuario IN ('activo','pendiente')", [id])
+  const [users] = await connection.execute("SELECT u.id_usuario AS id, u.codigo_usuario AS accountNumber, u.id_miembro AS memberId, u.correo_login AS email, u.estado_usuario AS state, p.nombre AS name, f.version AS photoVersion, COALESCE(pr.tamano_interfaz,'normal') AS displaySize,l.id_libro AS trainingBookId,l.nombre AS trainingBookName FROM usuario u LEFT JOIN perfil_usuario p ON p.id_usuario=u.id_usuario LEFT JOIN foto_perfil_usuario f ON f.id_usuario=u.id_usuario LEFT JOIN preferencia_usuario pr ON pr.id_usuario=u.id_usuario LEFT JOIN miembro m ON m.id_miembro=u.id_miembro AND m.archivado=0 LEFT JOIN libro_adiestramiento l ON l.id_libro=m.id_libro WHERE u.id_usuario = ? AND u.estado_usuario IN ('activo','pendiente')", [id])
   if (!users.length) return null
+  users[0].code = accountCode(users[0].accountNumber)
+  delete users[0].accountNumber
   users[0].photoUrl = users[0].photoVersion ? `/api/auth/account/photo?v=${users[0].photoVersion}` : null
   delete users[0].photoVersion
   users[0].trainingBook=users[0].trainingBookId ? {id:users[0].trainingBookId,name:users[0].trainingBookName} : null
@@ -449,7 +452,7 @@ authRouter.post('/admin/users', securityLimit, async (request, response) => {
       const [linked] = await connection.execute('SELECT id_usuario FROM usuario WHERE id_miembro=?', [memberId])
       if (linked.length) throw invalid('La ficha del discípulo ya tiene una cuenta vinculada.', 409)
     }
-    const [result] = await connection.execute("INSERT INTO usuario(correo_login,password_hash,estado_usuario,id_miembro) VALUES (?,?,'activo',?)", [email, hash, memberId])
+    const [result] = await connection.execute("INSERT INTO usuario(correo_login,password_hash,estado_usuario,id_miembro,codigo_usuario) VALUES (?,?,'activo',?,?)", [email, hash, memberId, await reserveCode(connection, 'usuario')])
     await connection.execute('INSERT INTO perfil_usuario(id_usuario,nombre) VALUES (?,?)', [result.insertId, name])
     await connection.execute('INSERT INTO usuario_rol(id_usuario,id_rol) VALUES (?,?)', [result.insertId, roleId])
     if (photo) await saveProfilePhoto(connection, result.insertId, photo)
@@ -490,13 +493,13 @@ authRouter.get('/admin/users', async (request, response) => {
   const state = request.query.state || ''
   if (!Number.isSafeInteger(page) || page < 1 || page > 1000000 || search.length > 120 || !['', 'pendiente', 'activo', 'inactivo', 'bloqueado'].includes(state)) return response.status(400).json({ error: 'Filtro de usuarios inválido.' })
   try {
-    const where = " WHERE (?='' OR estado_usuario=?) AND (?='' OR LOCATE(?,correo_login)>0)"
-    const params = [state, state, search, search]
+    const where = " WHERE (?='' OR estado_usuario=?) AND (?='' OR LOCATE(?,correo_login)>0 OR codigo_usuario=?)"
+    const params = [state, state, search, search, parseAccountCode(search) ?? -1]
     const [counts] = await pool.execute(`SELECT COUNT(*) AS total FROM usuario${where}`, params)
-    const [users] = await pool.execute(`SELECT id_usuario AS id, id_miembro AS memberId, correo_login AS email, estado_usuario AS state, fecha_creacion AS createdAt, ultimo_acceso AS lastAccess FROM usuario${where} ORDER BY estado_usuario = 'pendiente' DESC, id_usuario DESC LIMIT 50 OFFSET ${ (page - 1) * 50 }`, params)
+    const [users] = await pool.execute(`SELECT id_usuario AS id, codigo_usuario AS accountNumber, id_miembro AS memberId, correo_login AS email, estado_usuario AS state, fecha_creacion AS createdAt, ultimo_acceso AS lastAccess FROM usuario${where} ORDER BY estado_usuario = 'pendiente' DESC, id_usuario DESC LIMIT 50 OFFSET ${ (page - 1) * 50 }`, params)
     const [assignments] = await pool.execute('SELECT ur.id_usuario, r.nombre FROM usuario_rol ur JOIN rol_sistema r ON r.id_rol = ur.id_rol WHERE ur.activo = 1 AND r.estado = 1')
     const [roles] = await pool.execute('SELECT id_rol AS id, nombre AS name FROM rol_sistema WHERE estado = 1 ORDER BY nombre')
-    response.json({ users: users.map(user => ({ ...user, roles: assignments.filter(role => role.id_usuario === user.id).map(role => role.nombre) })), roles: roles.filter(role => outranks(request.authUser, roleLevel(role.name))), total: counts[0].total, page, pageSize: 50 })
+    response.json({ users: users.map(({ accountNumber, ...user }) => ({ ...user, code: accountCode(accountNumber), roles: assignments.filter(role => role.id_usuario === user.id).map(role => role.nombre) })), roles: roles.filter(role => outranks(request.authUser, roleLevel(role.name))), total: counts[0].total, page, pageSize: 50 })
   } catch (error) {
     console.error('Error de consulta de usuarios:', error.code || 'USERS_ERROR')
     response.status(503).json({ error: 'No pudimos cargar los usuarios.' })

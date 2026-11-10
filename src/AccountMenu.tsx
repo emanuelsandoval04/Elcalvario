@@ -152,7 +152,7 @@ export default function AccountMenu({ user, onUpdate, disabled = false }: { user
   return <div ref={container} className="panel-account-menu">
     <button ref={trigger} type="button" className="panel-account" aria-label="Mi cuenta" title={user.email} aria-haspopup="menu" aria-expanded={open} aria-controls="account-menu" disabled={disabled || busy} onClick={() => setOpen(!open)} onKeyDown={event => { if (['ArrowDown','ArrowUp'].includes(event.key)) { event.preventDefault(); setOpen(true) } }}><ProfileAvatar photoUrl={user.photoUrl} name={user.name || user.email}/><span className="panel-account-label">{user.name || 'Mi cuenta'}<small>{user.email}</small></span></button>
     {open && <div ref={dropdown} className="account-dropdown" id="account-menu" role="menu" aria-label="Opciones de la cuenta">
-      <div className="account-menu-summary" role="presentation"><strong>{user.name || 'Mi cuenta'}</strong><span>{user.email}</span></div>
+      <div className="account-menu-summary" role="presentation"><strong>{user.name || 'Mi cuenta'}</strong><span>{user.email}</span>{(user.code || user.roles.length > 0) && <span className="account-code">{[user.code, user.roles.join(', ')].filter(Boolean).join(' · ')}</span>}</div>
       <button type="button" role="menuitem" onClick={() => edit('profile')}>Actualizar nombre y correo</button>
       <button type="button" role="menuitem" onClick={() => edit('photo')}>Actualizar foto de perfil</button>
       <button type="button" role="menuitem" onClick={() => edit('password')}>Cambiar contraseña</button>

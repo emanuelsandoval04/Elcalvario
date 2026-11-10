@@ -1,10 +1,11 @@
 import { createExportWorkbook, addExportTable, addDiscipleProfile } from './export-presentation.js'
 import { createReportPdf } from './report-pdf.js'
+import { memberCode } from './public-codes.js'
 
 const titles={asistencia:'Asistencia',cumpleanos:'Listado de cumpleaños',grupos:'Grupos de Comunión Familiar'}
 const columns={asistencia:['Actividad','Fecha','Tipo','Discípulo','Estado','Metodo'],cumpleanos:['Nombre','Cumpleanos'],grupos:['Codigo','Grupo','Direccion','Barrio','Dia','Hora','Estado']}
 const discipleFields = {
-  'ID': 'id_miembro', 'Nombres': 'nombres', 'Apellidos': 'apellidos', 'Tipo de identificación': 'tipo_identificacion',
+  'ID': 'codigo_miembro', 'Nombres': 'nombres', 'Apellidos': 'apellidos', 'Tipo de identificación': 'tipo_identificacion',
   'Identificación': 'numero_identificacion', 'Celular': 'celular', 'Correo': 'correo', 'Fecha de nacimiento': 'fecha_nacimiento',
   'Grupo sanguíneo / RH': 'grupo_sanguineo_rh', 'EPS': 'eps', 'Contacto de emergencia': 'contacto_emergencia_nombre', 'Celular de emergencia': 'contacto_emergencia_celular',
   'Función en la iglesia': 'funcion_iglesia', 'Sede': 'sede_nombre', 'Rol eclesiástico': 'rol_nombre', 'Grupo de Comunión': 'grupo_nombre',
@@ -13,7 +14,7 @@ const discipleFields = {
 }
 const privateColumns = new Set(['Grupo sanguíneo / RH','EPS','Contacto de emergencia','Celular de emergencia'])
 export const discipleColumns = sensitive => Object.keys(discipleFields).filter(key => sensitive || !privateColumns.has(key))
-export const discipleReportRows = rows => rows.map(row => Object.fromEntries(Object.entries(discipleFields).map(([label,key]) => [label, row[key] instanceof Date ? row[key].toISOString().replace('T',' ').replace('.000Z',' UTC') : row[key] ?? ''])))
+export const discipleReportRows = rows => rows.map(row => Object.fromEntries(Object.entries(discipleFields).map(([label,key]) => [label, key === 'codigo_miembro' ? memberCode(row[key]) ?? '' : row[key] instanceof Date ? row[key].toISOString().replace('T',' ').replace('.000Z',' UTC') : row[key] ?? ''])))
 
 export async function sendReport(response,type,format,rows,configuration={}) {
   const headers=configuration.columns || columns[type]

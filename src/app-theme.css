@@ -299,3 +299,7 @@
   .account-overlay .account-form input { font-size:16px; }
 }
 @media(prefers-reduced-motion:reduce) { .admin-workspace *, .admin-workspace *::before, .admin-workspace *::after { scroll-behavior:auto !important; transition:none !important; animation:none !important; } }
+
+/* Visible IDs: disciples 0101… and accounts ADM-0001… */
+.member-code, .account-code { display:inline-block; width:fit-content; padding:2px 8px; border:1px solid #f3d5c2; border-radius:7px; background:#fff6f0; color:#c2530f !important; font-size:10px !important; font-weight:700 !important; letter-spacing:.04em; font-variant-numeric:tabular-nums; line-height:1.6 !important; }
+.manage-section-heading h3 .member-code { margin-left:10px; vertical-align:middle; }

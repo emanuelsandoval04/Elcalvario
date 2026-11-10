@@ -9,6 +9,7 @@ import { hasPastoralAuthority } from './pastoral-policy.js'
 import importFields from '../shared/member-import-fields.json' with { type: 'json' }
 import { databaseRateLimit } from './rate-limit.js'
 import { validateTrainingBook } from './training.js'
+import { reserveCodes } from './public-codes.js'
 import { createExportWorkbook, setupExportSheet, addExportTable, styleExportRows, exportColors } from './export-presentation.js'
 
 export const importColumns=Object.fromEntries(Object.entries(importFields).map(([key,field])=>[key,field.label]))
@@ -216,9 +217,9 @@ export function memberImportRouter({transaction,currentActor,registrationPermiss
       const available=await catalogs(req,connection,req.body?.bookId)
       const rows=await validateImportRows(req.body?.rows,available,connection)
       if(rows.some(row=>!row.valid))throw Object.assign(invalid('Hay errores o datos que cambiaron después de la vista previa. Vuelve a validar antes de importar.'),{rows})
-      const codes=rows.map(()=>randomUUID())
-      const columns=['nombres','apellidos','tipo_identificacion','numero_identificacion','celular','correo','fecha_nacimiento',...sensitiveMemberFields,'funcion_iglesia','id_sede','id_rol_eclesiastico','id_grupo','id_cobertura_pastoral','id_libro','estado_miembro','codigo_qr','id_usuario_creacion','id_usuario_actualizacion']
-      const values=rows.map((row,index)=>columns.map(key=>key==='codigo_qr'?codes[index]:key.startsWith('id_usuario')?req.authUser.id:row.data[key] || null))
+      const codes=rows.map(()=>randomUUID()),numbers=await reserveCodes(connection,'miembro',rows.length)
+      const columns=['codigo_miembro','nombres','apellidos','tipo_identificacion','numero_identificacion','celular','correo','fecha_nacimiento',...sensitiveMemberFields,'funcion_iglesia','id_sede','id_rol_eclesiastico','id_grupo','id_cobertura_pastoral','id_libro','estado_miembro','codigo_qr','id_usuario_creacion','id_usuario_actualizacion']
+      const values=rows.map((row,index)=>columns.map(key=>key==='codigo_miembro'?numbers[index]:key==='codigo_qr'?codes[index]:key.startsWith('id_usuario')?req.authUser.id:row.data[key] || null))
       await connection.query(`INSERT INTO miembro (${columns.join(',')}) VALUES ?`,[values])
       const [created]=await connection.execute(`SELECT id_miembro,codigo_qr,estado_miembro FROM miembro WHERE codigo_qr IN (${codes.map(()=>'?').join(',')})`,codes)
       await connection.query('INSERT INTO historial_estado_miembro(id_miembro,estado,id_usuario) VALUES ?',[created.map(member=>[member.id_miembro,member.estado_miembro,req.authUser.id])])

@@ -22,6 +22,7 @@ import { memberImportRouter } from './member-import.js'
 import { discipleConsentRouter } from './disciple-consent.js'
 import { attendanceToolsRouter, attendanceRoster } from './attendance-tools.js'
 import { transmissionRouter } from './transmission-settings.js'
+import { reserveCode, memberCode, parseMemberCode } from './public-codes.js'
 
 export const managementRouter = Router()
 export const publicRouter = Router()
@@ -215,7 +216,7 @@ managementRouter.get('/members',requirePermission('miembros.ver'),async (req,res
   const filter=memberFilter(req,'miembros.ver')
   const search=text(req.query.q,100) || ''
   const [rows]=await pool.execute(`SELECT m.*,l.nombre AS libro_actual,CAST(m.fecha_nacimiento AS CHAR) AS fecha_nacimiento FROM miembro m LEFT JOIN libro_adiestramiento l ON l.id_libro=m.id_libro WHERE m.archivado=0 ${filter.sql}
-    AND (CONCAT_WS(' ',m.nombres,m.apellidos) LIKE ? OR m.numero_identificacion LIKE ?) ORDER BY m.nombres LIMIT 500`,[...filter.params,`%${search}%`,`%${search}%`])
+    AND (CONCAT_WS(' ',m.nombres,m.apellidos) LIKE ? OR m.numero_identificacion LIKE ? OR m.codigo_miembro=?) ORDER BY m.nombres LIMIT 500`,[...filter.params,`%${search}%`,`%${search}%`,parseMemberCode(search) ?? -1])
   res.json({items:rows.map(row=>cleanMember(req,row))})
 })
 managementRouter.post('/members',(req,res,next)=>can(req,'miembros.registrar') || can(req,'miembros.editar') ? next() : res.status(403).json({error:'No tienes permiso para registrar discípulos.'}),async (req,res) => {
@@ -265,11 +266,12 @@ managementRouter.post('/members',(req,res,next)=>can(req,'miembros.registrar') |
       if(existing.length) throw invalid('Ya existe una cuenta con ese correo de acceso.',409)
     }
     await memberRelations(req,values,connection,null,null,true)
-    const id=await insert(connection,'miembro',{...values,codigo_qr:randomUUID(),id_usuario_creacion:actor.id,id_usuario_actualizacion:actor.id})
+    const memberNumber=await reserveCode(connection,'miembro')
+    const id=await insert(connection,'miembro',{...values,codigo_miembro:memberNumber,codigo_qr:randomUUID(),id_usuario_creacion:actor.id,id_usuario_actualizacion:actor.id})
     await recordMemberState(connection,id,'activo',actor.id)
     let accountId=null
     if(account) {
-      accountId=await insert(connection,'usuario',{id_miembro:id,correo_login:account.email,password_hash:passwordHash,estado_usuario:'activo'})
+      accountId=await insert(connection,'usuario',{id_miembro:id,codigo_usuario:await reserveCode(connection,'usuario'),correo_login:account.email,password_hash:passwordHash,estado_usuario:'activo'})
       await insert(connection,'perfil_usuario',{id_usuario:accountId,nombre:`${values.nombres} ${values.apellidos || ''}`.trim().slice(0,100)})
       if(accountPhoto) await saveProfilePhoto(connection,accountId,accountPhoto)
       await insert(connection,'usuario_rol',{id_usuario:accountId,id_rol:systemRole})
@@ -278,7 +280,7 @@ managementRouter.post('/members',(req,res,next)=>can(req,'miembros.registrar') |
     if(leadsGroup) await update(connection,'grupo_comunion','id_grupo',values.id_grupo,{id_discipulador:id})
     const welcomeUser=accountId ? await readUser(accountId,connection) : null
     const context=welcomeUser ? await welcomeContext(connection,welcomeUser,actor) : null
-    return {id,accountCreated:Boolean(accountId),welcomeUser,context}
+    return {id,code:memberCode(memberNumber),accountCreated:Boolean(accountId),welcomeUser,context}
   })
   const {welcomeUser,context,...created}=result
   const emailDelivery=welcomeUser ? await sendAccountWelcome(welcomeUser,account.password,context) : undefined
