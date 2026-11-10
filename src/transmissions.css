@@ -27,3 +27,4 @@ html body .transmissions-page .transmission-video-actions button { min-height:36
 .transmissions-page .transmission-guide code { padding:1px 6px; border-radius:6px; background:#f3f6fa; font-size:12px; overflow-wrap:anywhere; }
 @media (max-width: 900px) { .transmissions-page .transmission-layout { grid-template-columns:minmax(0,1fr); } }
 @media (max-width: 600px) { .transmissions-page fieldset { grid-template-columns:minmax(0,1fr); } .transmissions-page :is(.transmission-card,.transmission-form,.transmission-guide) { padding:16px; } }
+.transmissions-page .transmission-layout.is-single { grid-template-columns:minmax(0,720px); }

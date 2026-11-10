@@ -10,7 +10,9 @@ type Video = { id: string; live: boolean; title: string | null; createdAt: strin
 type Response = { settings: Settings; current: Current }
 
 const embed = (url: string) => `https://www.facebook.com/plugins/video.php?height=314&href=${encodeURIComponent(url)}&show_text=false&width=560`
-const when = (value: string | null) => value ? new Intl.DateTimeFormat('es-CO', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'America/Bogota' }).format(new Date(value)) : ''
+// The server stores the canonical link; the form shows it again as Facebook's embed code.
+const embedCode = (url: string) => url ? `<iframe src="${embed(url).replace('&show_text=false&width=560', '&show_text=false&width=560&t=0')}" width="560" height="314" style="border:none;overflow:hidden" scrolling="no" frameborder="0" allowfullscreen="true" allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share" allowFullScreen="true"></iframe>` : ''
+const when =(value: string | null) => value ? new Intl.DateTimeFormat('es-CO', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'America/Bogota' }).format(new Date(value)) : ''
 const message = (cause: unknown, fallback: string) => cause instanceof Error ? cause.message : fallback
 
 export default function Transmissions({ notify }: { notify: (message: string) => void }) {
@@ -22,7 +24,7 @@ export default function Transmissions({ notify }: { notify: (message: string) =>
 
   function apply(result: Response) {
     setData(result); setMode(result.settings.mode); setPageId(result.settings.pageId); setVersion(result.settings.graphVersion)
-    setManualVideo(result.settings.manualVideo); setToken(''); setRemoveToken(false)
+    setManualVideo(embedCode(result.settings.manualVideo)); setToken(''); setRemoveToken(false)
   }
   useEffect(() => {
     let active = true
@@ -34,7 +36,7 @@ export default function Transmissions({ notify }: { notify: (message: string) =>
     if (busy) return
     setBusy(true); setError('')
     try {
-      apply(await api<Response>('transmission/settings', { mode, pageId, graphVersion: version, manualVideo, ...(token ? { token } : {}), ...(removeToken ? { removeToken: true } : {}) }, 'PUT'))
+      apply(await api<Response>('transmission/settings', { mode, pageId, graphVersion: version, manualVideo, ...(mode === 'automatico' && token ? { token } : {}), ...(mode === 'automatico' && removeToken ? { removeToken: true } : {}) }, 'PUT'))
       notify('Configuración de transmisiones guardada. La página pública se actualiza en menos de un minuto.')
     } catch (cause) { setError(message(cause, 'No pudimos guardar la configuración.')) }
     finally { setBusy(false) }
@@ -61,7 +63,7 @@ export default function Transmissions({ notify }: { notify: (message: string) =>
 
     {error && <div className="tool-error" role="alert"><p>{error}</p></div>}
 
-    <div className="transmission-layout">
+    <div className={`transmission-layout${mode === 'manual' ? ' is-single' : ''}`}>
       <section className="transmission-card" aria-labelledby="transmission-now">
         <div className="transmission-card-head"><h3 id="transmission-now">Lo que ve el público ahora</h3>
           <span className={`tool-status ${current.live ? 'is-live' : current.automatic ? '' : 'is-pendiente'}`}>{current.live ? '● En vivo' : current.automatic ? 'Automático (API de Meta)' : 'Video manual'}</span></div>
@@ -70,16 +72,16 @@ export default function Transmissions({ notify }: { notify: (message: string) =>
         {current.videoUrl && <a className="transmission-external" href={current.videoUrl} target="_blank" rel="noopener noreferrer">Abrir en Facebook ↗</a>}
       </section>
 
-      <section className="transmission-card" aria-labelledby="transmission-connection">
+      {mode === 'automatico' && <section className="transmission-card" aria-labelledby="transmission-connection">
         <div className="transmission-card-head"><h3 id="transmission-connection">Conexión con Meta</h3><span className={`tool-status ${settings.hasToken || settings.environmentToken ? '' : 'is-pendiente'}`}>{tokenLabel}</span></div>
         {settings.lastStatus && <p className="tool-caption">Última prueba: {settings.lastStatus}{settings.checkedAt ? ` · ${when(settings.checkedAt)}` : ''}</p>}
         <button type="button" className="secondary" disabled={testing || !(settings.hasToken || settings.environmentToken)} onClick={() => void test()}>{testing ? 'Consultando a Meta…' : 'Probar conexión y ver últimas transmisiones'}</button>
         {testResult && <div className={testResult.ok ? 'transmission-ok' : 'tool-error'} role="status"><p>{testResult.message}</p></div>}
         {testResult?.videos.length ? <ul className="transmission-videos">{testResult.videos.map(video => <li key={video.id}>
           <div><strong>{video.title || 'Transmisión sin título'}</strong><small>{video.live ? '● En vivo ahora' : 'Grabada'}{video.createdAt ? ` · ${when(video.createdAt)}` : ''}</small></div>
-          <div className="transmission-video-actions"><a href={video.url} target="_blank" rel="noopener noreferrer">Ver ↗</a><button type="button" className="secondary" onClick={() => { setManualVideo(video.url); setMode('manual') }}>Fijar este</button></div>
+          <div className="transmission-video-actions"><a href={video.url} target="_blank" rel="noopener noreferrer">Ver ↗</a><button type="button" className="secondary" onClick={() => { setManualVideo(embedCode(video.url)); setMode('manual') }}>Fijar este</button></div>
         </li>)}</ul> : null}
-      </section>
+      </section>}
     </div>
 
     <ValidatedForm className="transmission-form" onSubmit={event => { event.preventDefault(); void save() }}>
@@ -90,16 +92,18 @@ export default function Transmissions({ notify }: { notify: (message: string) =>
       </div>
       <p className="tool-caption">{mode === 'automatico' ? 'La web consulta a Meta cada minuto: si hay un en vivo lo muestra; si no, la última transmisión grabada. Si Meta falla, se muestra el video de respaldo.' : 'La web siempre muestra el video que pegues abajo, aunque haya un en vivo.'}</p>
       <fieldset disabled={busy}>
-        <label>ID de la página de Facebook<input inputMode="numeric" value={pageId} maxLength={30} placeholder="61556906195984" onChange={event => setPageId(event.target.value.replace(/\D/g, ''))}/></label>
-        <label>Versión de la API Graph<input value={version} maxLength={10} placeholder="v23.0" onChange={event => setVersion(event.target.value.trim())}/></label>
-        <label className="tool-wide">Token de acceso de la página (Page Access Token)
-          <input type="password" autoComplete="off" spellCheck={false} value={token} maxLength={1000} disabled={removeToken || !settings.encryptionReady} placeholder={settings.hasToken ? `Guardado …${settings.tokenEnding}. Escribe uno nuevo solo para reemplazarlo` : 'Pega aquí el token que empieza por EAA…'} onChange={event => setToken(event.target.value.trim())}/>
-        </label>
-        {!settings.encryptionReady && <p className="tool-error tool-wide">El servidor aún no tiene la variable TRANSMISSION_SECRET_KEY, que se usa para cifrar el token. Pide al administrador que la agregue en Vercel (paso 6 de la guía). Mientras tanto puedes usar el modo de video fijo.</p>}
-        {settings.hasToken && <label className="tool-check tool-wide"><input type="checkbox" checked={removeToken} onChange={event => { setRemoveToken(event.target.checked); setToken('') }}/>Borrar el token guardado</label>}
-        <label className="tool-wide">{mode === 'manual' ? 'Video que se muestra' : 'Video de respaldo (si Meta no responde)'}
-          <textarea rows={3} value={manualVideo} maxLength={3000} placeholder="Pega el enlace del video o el código de «Insertar» completo (<iframe …>)" onChange={event => setManualVideo(event.target.value)}/>
-          <small className="transmission-hint">En Facebook: abre el video → ⋯ → «Insertar» → copia el código. Sirve tal cual, también con enlaces web.facebook.com.</small>
+        {mode === 'automatico' && <>
+          <label>ID de la página de Facebook<input inputMode="numeric" value={pageId} maxLength={30} placeholder="61556906195984" onChange={event => setPageId(event.target.value.replace(/\D/g, ''))}/></label>
+          <label>Versión de la API Graph<input value={version} maxLength={10} placeholder="v23.0" onChange={event => setVersion(event.target.value.trim())}/></label>
+          <label className="tool-wide">Token de acceso de la página (Page Access Token)
+            <input type="password" autoComplete="off" spellCheck={false} value={token} maxLength={1000} disabled={removeToken || !settings.encryptionReady} placeholder={settings.hasToken ? `Guardado …${settings.tokenEnding}. Escribe uno nuevo solo para reemplazarlo` : 'Pega aquí el token que empieza por EAA…'} onChange={event => setToken(event.target.value.trim())}/>
+          </label>
+          {!settings.encryptionReady && <p className="tool-error tool-wide">El servidor aún no tiene la variable TRANSMISSION_SECRET_KEY, que se usa para cifrar el token. Pide al administrador que la agregue en Vercel (paso 6 de la guía). Mientras tanto puedes usar el modo de video fijo.</p>}
+          {settings.hasToken && <label className="tool-check tool-wide"><input type="checkbox" checked={removeToken} onChange={event => { setRemoveToken(event.target.checked); setToken('') }}/>Borrar el token guardado</label>}
+        </>}
+        <label className="tool-wide">{mode === 'manual' ? 'Código de «Insertar» del video' : 'Video de respaldo (si Meta no responde)'}
+          <textarea rows={mode === 'manual' ? 5 : 3} value={manualVideo} maxLength={3000} placeholder={'<iframe src="https://www.facebook.com/plugins/video.php?…"></iframe>'} onChange={event => setManualVideo(event.target.value)}/>
+          <small className="transmission-hint">En Facebook: abre el video → ⋯ → «Insertar» → copia el código completo y pégalo aquí tal cual.</small>
         </label>
       </fieldset>
       <div className="tool-actions"><button type="submit" disabled={busy || mode === 'manual' && !manualVideo.trim()}>{busy ? 'Guardando…' : 'Guardar configuración'}</button></div>
