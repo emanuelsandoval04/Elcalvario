@@ -22,7 +22,7 @@ import { memberImportRouter } from './member-import.js'
 import { discipleConsentRouter } from './disciple-consent.js'
 import { attendanceToolsRouter, attendanceRoster } from './attendance-tools.js'
 import { transmissionRouter } from './transmission-settings.js'
-import { reserveCode, memberCode, parseMemberCode } from './public-codes.js'
+import { reserveCode, memberCode, memberCodeSql, parseMemberCode } from './public-codes.js'
 
 export const managementRouter = Router()
 export const publicRouter = Router()
@@ -596,7 +596,7 @@ managementRouter.get('/attendance/roster',requirePermission('asistencia.registra
 })
 managementRouter.get('/attendance',requirePermission('asistencia.ver'),async(req,res)=>{
   const activity=await getActivity(req,req.query.activityId,'asistencia.ver')
-  const [items]=await pool.execute(`SELECT a.*,CONCAT_WS(' ',m.nombres,m.apellidos) AS nombre FROM asistencia a LEFT JOIN miembro m ON m.id_miembro=a.id_miembro WHERE a.id_actividad=? AND a.archivado=0 ORDER BY a.fecha_registro`,[activity.id_actividad])
+  const [items]=await pool.execute(`SELECT a.*,CONCAT_WS(' ',m.nombres,m.apellidos) AS nombre,m.codigo_miembro FROM asistencia a LEFT JOIN miembro m ON m.id_miembro=a.id_miembro WHERE a.id_actividad=? AND a.archivado=0 ORDER BY a.fecha_registro`,[activity.id_actividad])
   res.json({items,activity})
 })
 managementRouter.post('/attendance',requirePermission('asistencia.registrar'),async(req,res)=>{
@@ -651,7 +651,7 @@ managementRouter.get('/alerts',requirePermission('alertas.ver'),async(req,res)=>
     for(const row of members) { await connection.execute('SELECT id_miembro FROM miembro WHERE id_miembro=? FOR UPDATE',[row.id_miembro]); await recalculateAlerts(connection,row.id_miembro) }
   })
   const filter=memberFilter(req,'alertas.ver')
-  const [items]=await pool.execute(`SELECT al.*,CONCAT_WS(' ',m.nombres,m.apellidos) AS nombre,ac.titulo FROM alerta_ausencia al
+  const [items]=await pool.execute(`SELECT al.*,CONCAT_WS(' ',m.nombres,m.apellidos) AS nombre,m.codigo_miembro,ac.titulo FROM alerta_ausencia al
     JOIN miembro m ON m.id_miembro=al.id_miembro JOIN actividad ac ON ac.id_actividad=al.id_actividad
     WHERE al.vigente=1 AND m.archivado=0 ${filter.sql} ORDER BY al.fecha_creacion DESC`,filter.params)
   res.json({items})
@@ -763,7 +763,7 @@ managementRouter.get('/reports/:type',async(req,res)=>{
   let rows
   if(type==='cumpleanos') {
     const filter=memberFilter(req,code)
-    ;[rows]=await pool.execute(`SELECT CONCAT_WS(' ',m.nombres,m.apellidos) AS Nombre,DATE_FORMAT(m.fecha_nacimiento,'%m-%d') AS Cumpleanos FROM miembro m WHERE m.archivado=0 ${filter.sql} ORDER BY MONTH(m.fecha_nacimiento),DAY(m.fecha_nacimiento),m.nombres`,filter.params)
+    ;[rows]=await pool.execute(`SELECT ${memberCodeSql('m')} AS ID,CONCAT_WS(' ',m.nombres,m.apellidos) AS Nombre,DATE_FORMAT(m.fecha_nacimiento,'%m-%d') AS Cumpleanos FROM miembro m WHERE m.archivado=0 ${filter.sql} ORDER BY MONTH(m.fecha_nacimiento),DAY(m.fecha_nacimiento),m.nombres`,filter.params)
   } else if(type==='grupos') {
     const filter=groupFilter(req,code)
     ;[rows]=await pool.execute(`SELECT g.codigo_grupo AS Codigo,g.nombre AS Grupo,g.direccion AS Direccion,g.barrio AS Barrio,g.dia_reunion AS Dia,g.hora_reunion AS Hora,g.estado_grupo AS Estado FROM grupo_comunion g WHERE g.archivado=0 ${filter.sql} ORDER BY g.nombre`,filter.params)
@@ -778,14 +778,14 @@ managementRouter.get('/reports/:type',async(req,res)=>{
     if(req.query.from && req.query.to && req.query.from>req.query.to)throw invalid('La fecha inicial no puede ser posterior a la final.')
     // Multimedia receives operational attendance, with no personal names in exports.
     const memberScope=memberFilter(req,'miembros.ver')
-    const name=can(req,'miembros.ver')?`CASE WHEN m.id_miembro IS NULL THEN COALESCE(a.nombre_visitante,'Visitante') WHEN 1=1 ${memberScope.sql} THEN CONCAT_WS(' ',m.nombres,m.apellidos) ELSE CONCAT('Discípulo #',a.id_miembro) END`:"COALESCE(CONCAT('Discípulo #',a.id_miembro),'Visitante')"
-    ;[rows]=await pool.execute(`SELECT ac.titulo AS Actividad,CAST(ac.fecha AS CHAR) AS Fecha,ac.tipo_actividad AS Tipo,${name} AS Discípulo,a.estado_asistencia AS Estado,a.metodo_registro AS Metodo
+    const name=can(req,'miembros.ver')?`CASE WHEN m.id_miembro IS NULL THEN COALESCE(a.nombre_visitante,'Visitante') WHEN 1=1 ${memberScope.sql} THEN CONCAT_WS(' ',m.nombres,m.apellidos) ELSE CONCAT('Discípulo ',${memberCodeSql('m')}) END`:`IF(m.id_miembro IS NULL,'Visitante',CONCAT('Discípulo ',${memberCodeSql('m')}))`
+    ;[rows]=await pool.execute(`SELECT ac.titulo AS Actividad,CAST(ac.fecha AS CHAR) AS Fecha,ac.tipo_actividad AS Tipo,${memberCodeSql('m')} AS ID,${name} AS Discípulo,a.estado_asistencia AS Estado,a.metodo_registro AS Metodo
       FROM asistencia a JOIN actividad ac ON ac.id_actividad=a.id_actividad LEFT JOIN miembro m ON m.id_miembro=a.id_miembro
       WHERE a.archivado=0 AND ac.archivado=0 ${filter.sql} ${clauses.length?'AND '+clauses.join(' AND '):''} ORDER BY ac.fecha,ac.hora,a.id_asistencia`,[...(can(req,'miembros.ver')?memberScope.params:[]),...params])
     if(activity) {
       const labels={presente:'Presente',ausente:'Ausente sin justificación',justificado:'Justificado',visitante:'Visitante'}
       return sendReport(res,type,format,rows.map(row=>({...row,Estado:labels[row.Estado]||row.Estado,'Método':row.Metodo})),{
-        title:'Registro de asistencia',columns:['Discípulo','Estado','Método'],metadata:[['Evento',activity.titulo],['Fecha',activity.fecha],['Hora (Colombia)',String(activity.hora).slice(0,5)],['Lugar',activity.lugar],['ID de actividad',activity.id_actividad],['Registros guardados',rows.length]]
+        title:'Registro de asistencia',columns:['ID','Discípulo','Estado','Método'],metadata:[['Evento',activity.titulo],['Fecha',activity.fecha],['Hora (Colombia)',String(activity.hora).slice(0,5)],['Lugar',activity.lugar],['ID de actividad',activity.id_actividad],['Registros guardados',rows.length]]
       })
     }
   }

@@ -62,7 +62,7 @@ export function pastoralCalendarRouter({transaction,currentActor,memberFilter,ac
     const state=req.query.state ? choice(req.query.state,['pendiente','en_seguimiento','atendido']) : null
     const page=identifier(req.query.page||1),search=text(req.query.q,120)||''
     if(page>10000)throw invalid('Selecciona una página válida.')
-    const [items]=await pool.execute(`SELECT al.id_alerta,al.id_miembro,al.vigente,CONCAT_WS(' ',m.nombres,m.apellidos) AS nombre,m.celular,
+    const [items]=await pool.execute(`SELECT al.id_alerta,al.id_miembro,m.codigo_miembro,al.vigente,CONCAT_WS(' ',m.nombres,m.apellidos) AS nombre,m.celular,
       ac.titulo,CAST(ac.fecha AS CHAR) AS fecha_actividad,g.nombre AS grupo,
       COALESCE(s.estado,'pendiente') AS estado,s.id_responsable,COALESCE(s.revision,0) AS revision,CAST(s.proximo_contacto AS CHAR) AS proximo_contacto,
       COALESCE(p.nombre,u.correo_login) AS responsable,(SELECT COUNT(*) FROM nota_seguimiento n WHERE n.id_alerta=al.id_alerta) AS contactos

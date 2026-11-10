@@ -101,6 +101,26 @@ try {
   assert.ok(text.includes('"0107"'), 'La ficha en Excel debe mostrar el ID 0107')
   pass('ficha en Excel muestra el ID con ceros (0107)')
 
+  const profile = workbook.getWorksheet('Ficha del discípulo')
+  assert.ok(JSON.stringify(profile.getSheetValues()).includes('ID 0107'), 'El encabezado de la ficha en Excel empieza por el ID')
+  const pdf = (await request(`management/members/${forced.data.id - 1}/consent.pdf`, { cookie: owner.cookie, raw: true })).data
+  assert.match(pdf.headers.get('content-disposition'), /ficha-discipulo-0107\.pdf/)
+  pass('ficha en Excel y PDF: el ID va primero y en el nombre del archivo (ficha-discipulo-0107.pdf)')
+
+  // Attendance and birthday reports carry the ID
+  const [ana] = (await db.query("SELECT id_miembro FROM miembro WHERE nombres='Ana'"))[0]
+  const [activity] = await db.execute("INSERT INTO actividad(tipo_actividad,titulo,fecha,hora,lugar,id_usuario_creacion) VALUES ('culto','Culto de prueba','2026-11-01','09:00','Templo',?)", [me.id])
+  await db.execute("INSERT INTO asistencia(id_actividad,id_miembro,id_usuario_registro,estado_asistencia) VALUES (?,?,?,'presente')", [activity.insertId, ana.id_miembro, me.id])
+  await db.execute("INSERT INTO asistencia(id_actividad,nombre_visitante,id_usuario_registro,estado_asistencia) VALUES (?,'Visitante X',?,'visitante')", [activity.insertId, me.id])
+  const sheetRows = async path => { const file = (await request(path, { cookie: owner.cookie, raw: true })).data; const book = new ExcelJS.Workbook(); await book.xlsx.load(Buffer.from(await file.arrayBuffer())); return JSON.stringify(book.worksheets[0].getSheetValues()) }
+  const attendance = await sheetRows('management/reports/asistencia?format=xlsx')
+  assert.ok(attendance.includes('"ID"') && attendance.includes('"0101"') && attendance.includes('Visitante X'))
+  const eventSheet = await sheetRows(`management/reports/asistencia?format=xlsx&activityId=${activity.insertId}`)
+  assert.ok(eventSheet.includes('"ID"') && eventSheet.includes('"0101"'))
+  const birthdays = await sheetRows('management/reports/cumpleanos?format=xlsx')
+  assert.ok(birthdays.indexOf('"ID"') < birthdays.indexOf('"Nombre"') && birthdays.includes('"0101"'))
+  pass('reportes de asistencia (general y por evento) y cumpleaños incluyen la columna ID')
+
   // Records created outside the app (old data) are numbered by the migration
   const hash = await hashPassword(password)
   await db.execute("INSERT INTO usuario(correo_login,password_hash,estado_usuario) VALUES ('legacy@example.invalid',?,'activo')", [hash])

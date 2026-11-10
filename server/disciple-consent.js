@@ -2,6 +2,7 @@ import { Router } from 'express'
 import { pool } from './db.js'
 import { hasPermission, requirePermission } from './auth.js'
 import { identifier, invalid } from './entities.js'
+import { memberCode } from './public-codes.js'
 import { authorizationText, consentVersion, discipleConsentPdf, parseConsentFiles } from './disciple-consent-document.js'
 
 export function discipleConsentRouter({transaction,currentActor,getMember,cleanMember}) {
@@ -50,7 +51,7 @@ export function discipleConsentRouter({transaction,currentActor,getMember,cleanM
       LEFT JOIN sede s ON s.id_sede=m.id_sede LEFT JOIN miembro c ON c.id_miembro=m.id_cobertura_pastoral WHERE m.id_miembro=?`,[member.id_miembro])
     const [institutions]=await pool.execute('SELECT nombre,direccion,ciudad FROM institucion WHERE id=1')
     const bytes=await discipleConsentPdf(cleanMember(req,{...member,...rows[0]}),institutions[0],can(req,'miembros.sensibles'))
-    res.set('Content-Disposition',`attachment; filename="ficha-discipulo-${member.id_miembro}.pdf"`).type('application/pdf').send(bytes)
+    res.set('Content-Disposition',`attachment; filename="ficha-discipulo-${memberCode(member.codigo_miembro) || member.id_miembro}.pdf"`).type('application/pdf').send(bytes)
   })
   router.post('/members/:id/consents',requirePermission('miembros.ver'),requirePermission('consentimientos.gestionar'),async(req,res)=>{
     // Check scope before spending time decoding an upload.

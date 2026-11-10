@@ -1,6 +1,7 @@
 // Visible identifiers: disciples 0101, 0102... and accounts ADM-0001, ADM-0002...
 // Numbers come from secuencia_codigo (migration 024) and are never reused.
 export const memberCode = value => value == null ? null : String(value).padStart(4, '0')
+export const memberCodeSql = alias => `IF(${alias}.codigo_miembro IS NULL,'',IF(${alias}.codigo_miembro<10000,LPAD(${alias}.codigo_miembro,4,'0'),CAST(${alias}.codigo_miembro AS CHAR)))`
 export const accountCode = value => value == null ? null : `ADM-${String(value).padStart(4, '0')}`
 
 // Must run inside the caller's transaction: the row lock serializes concurrent registrations.

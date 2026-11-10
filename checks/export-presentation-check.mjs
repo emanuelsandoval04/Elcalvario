@@ -29,15 +29,16 @@ async function generate(type, format, rows, configuration = {}, filename = `${ty
 
 function headersLength(sheet) { return sheet.getTables()[0].table.columns.length }
 
-const attendees = Array.from({ length: 75 }, (_, index) => ({ Actividad: 'Encuentro de ejemplo · El Calvario', Fecha: '2026-11-08', Tipo: 'culto', Discípulo: `Persona de ejemplo ${String(index + 1).padStart(3, '0')}`, Estado: ['presente', 'ausente', 'justificado', 'visitante'][index % 4], Metodo: 'manual' }))
-const birthday = [{ Nombre: 'María José · Ejemplo', Cumpleanos: '02-29' }]
+const attendees = Array.from({ length: 75 }, (_, index) => ({ Actividad: 'Encuentro de ejemplo · El Calvario', Fecha: '2026-11-08', Tipo: 'culto', ID: String(101 + index).padStart(4, '0'), Discípulo: `Persona de ejemplo ${String(index + 1).padStart(3, '0')}`, Estado: ['presente', 'ausente', 'justificado', 'visitante'][index % 4], Metodo: 'manual' }))
+const birthday = [{ ID: '0101', Nombre: 'María José · Ejemplo', Cumpleanos: '02-29' }]
 const groups = [{ Codigo: '00007', Grupo: 'Grupo de ejemplo', Direccion: 'Dirección de ejemplo para verificar el ajuste de texto sin recortes', Barrio: 'Barrio de ejemplo', Dia: 'Miércoles', Hora: '19:30', Estado: 'activo' }]
 const member = { id_miembro: 7, nombres: 'Ana María', apellidos: 'Ejemplo', tipo_identificacion: 'CC', numero_identificacion: '00012345', celular: '03001234567', correo: 'ejemplo@example.invalid', fecha_nacimiento: '1990-03-05', grupo_sanguineo_rh: 'O+', eps: 'EPS de ejemplo', contacto_emergencia_nombre: 'Contacto de ejemplo', contacto_emergencia_celular: '03007654321', funcion_iglesia: 'Servicio de ejemplo', sede_nombre: 'El Calvario Villavicencio', rol_nombre: 'Discípulo', grupo_nombre: 'Grupo de ejemplo', cobertura_nombre: 'Responsable de ejemplo', libro_actual: 'Fundamentos', ministerios: 'Servidores, Multimedia', estado_miembro: 'activo', codigo_qr: 'QR-EJEMPLO-00007' }
 for (const [type, rows] of [['asistencia', attendees], ['cumpleanos', birthday], ['grupos', groups]]) {
   const workbook = await generate(type, 'xlsx', rows)
   const table = reportTable(workbook.worksheets[0])
   if (type === 'grupos') assert.equal(table.rows[0].getCell(1).value, '00007')
-  if (type === 'cumpleanos') assert.equal(table.rows[0].getCell(2).value, '02-29')
+  if (type === 'cumpleanos') { assert.equal(table.rows[0].getCell(1).value, '0101'); assert.equal(table.rows[0].getCell(3).value, '02-29') }
+  if (type === 'asistencia') assert.equal(table.rows[0].getCell(4).value, '0101')
   const pdf = await generate(type, 'pdf', rows)
   assert.ok(pdf.getPageCount() >= 1)
   if (type === 'asistencia') assert.ok(pdf.getPageCount() >= 2, 'Attendance table continues across pages')

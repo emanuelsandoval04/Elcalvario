@@ -5,6 +5,7 @@ import { createHash } from 'node:crypto'
 import { fileURLToPath } from 'node:url'
 import { invalid } from './entities.js'
 import { discipleColumns, discipleReportRows } from './reports.js'
+import { memberCode } from './public-codes.js'
 import { reportLogoPath } from './export-presentation.js'
 
 export const consentVersion = 'base-2026-11-08'
@@ -34,6 +35,7 @@ export async function discipleConsentPdf(member,institution,sensitive,now=new Da
     document.fillColor('#42556b').font('Helvetica').fontSize(9).text(institution.nombre,{width}).moveDown(.5)
   }
   heading('Ficha del discípulo')
+  if(member.codigo_miembro!=null)document.fillColor('#c2530f').font('Helvetica-Bold').fontSize(13).text(`ID del discípulo: ${memberCode(member.codigo_miembro)}`,{width}).moveDown(.3).fillColor('#42556b').font('Helvetica')
   document.fontSize(9).text(`Datos registrados al ${colombiaTime(now)} (Colombia).`).moveDown()
   const row=discipleReportRows([member])[0]
   for(const label of discipleColumns(sensitive).filter(label=>!['Código QR','Fecha de creación','Fecha de actualización'].includes(label))) {
@@ -42,7 +44,7 @@ export async function discipleConsentPdf(member,institution,sensitive,now=new Da
     const height=Math.max(23,document.heightOfString(value,{width:width-170})+12)
     if(document.y+height>735){document.addPage();heading('Ficha del discípulo · continuación')}
     const y=document.y
-    document.rect(42,y,width,height).fill(label==='Nombres'||label==='Apellidos'?'#eef4f9':'#f6f8fa')
+    document.rect(42,y,width,height).fill(label==='ID'?'#fff3ea':label==='Nombres'||label==='Apellidos'?'#eef4f9':'#f6f8fa')
     document.fillColor('#42556b').font('Helvetica-Bold').fontSize(9).text(label,50,y+6,{width:154})
     document.fillColor('#172c40').font('Helvetica').fontSize(10).text(value,212,y+6,{width:width-178})
     document.y=y+height+2
@@ -50,7 +52,7 @@ export async function discipleConsentPdf(member,institution,sensitive,now=new Da
   if(!sensitive)document.moveDown().fontSize(9).text('Los campos de salud y contacto de emergencia no se incluyen en esta copia por el permiso de acceso.')
   document.addPage();heading('Autorización de datos y firma')
   document.fillColor('#526174').font('Helvetica').fontSize(8).text(`Texto base para revisión institucional · ${consentVersion}`).moveDown(.8)
-  document.fillColor('#172c40').fontSize(9).text(`Titular: ${fullName} · ${member.tipo_identificacion || ''} ${member.numero_identificacion || ''}`,{width}).moveDown(.8)
+  document.fillColor('#172c40').fontSize(9).text(`Titular: ${member.codigo_miembro!=null?`ID ${memberCode(member.codigo_miembro)} · `:''}${fullName} · ${member.tipo_identificacion || ''} ${member.numero_identificacion || ''}`,{width}).moveDown(.8)
   document.fontSize(9).text(authorizationText(institution),{width,lineGap:2,paragraphGap:7}).moveDown(.8)
   document.font('Helvetica-Bold').fontSize(10).text('Decisiones sobre datos sensibles')
   document.font('Helvetica').fontSize(9).text('Datos religiosos para vinculación y acompañamiento:  [  ] Sí autorizo   [  ] No autorizo',{paragraphGap:6})

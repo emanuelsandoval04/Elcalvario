@@ -42,7 +42,7 @@ export async function prepareConsentFiles(files: File[]): Promise<PreparedFile[]
   return prepared
 }
 
-export default function DiscipleConsent({ memberId, sensitive, notify }: { memberId: number; sensitive: boolean; notify: (message: string) => void }) {
+export default function DiscipleConsent({ memberId, code, sensitive, notify }: { memberId: number; code?: string | null; sensitive: boolean; notify: (message: string) => void }) {
   const id = useId(), input = useRef<HTMLInputElement>(null), request = useRef(0)
   const [consent, setConsent] = useState<Consent | null>(null)
   const [files, setFiles] = useState<PreparedFile[]>([])
@@ -86,7 +86,7 @@ export default function DiscipleConsent({ memberId, sensitive, notify }: { membe
     {loadError ? <div role="alert" className="consent-error">{loadError} <button type="button" className="secondary" onClick={() => void load()}>Reintentar</button></div> : !consent && <p role="status">Consultando documento…</p>}
     {consent && <>
       <p className="consent-date"><strong>Fecha de subida (Colombia):</strong> {consent.uploadedAt ? colombiaDate(consent.uploadedAt) : 'Pendiente de subir el documento firmado.'}</p>
-      {consent.canPrepare && <div className="consent-download"><button type="button" disabled={Boolean(busy)} onClick={() => void download(`members/${memberId}/consent.pdf`, `ficha-discipulo-${memberId}.pdf`)}>Descargar ficha en PDF para firmar</button><p>Incluye los datos actuales, autorización y espacio de firma. El texto base de privacidad está pendiente de revisión por la iglesia.</p></div>}
+      {consent.canPrepare && <div className="consent-download"><button type="button" disabled={Boolean(busy)} onClick={() => void download(`members/${memberId}/consent.pdf`, `ficha-discipulo-${code || memberId}.pdf`)}>Descargar ficha en PDF para firmar</button><p>Incluye los datos actuales, autorización y espacio de firma. El texto base de privacidad está pendiente de revisión por la iglesia.</p></div>}
       {consent.canManage && <ValidatedForm className="consent-upload" onSubmit={event => { event.preventDefault(); void upload() }}>
         <fieldset disabled={Boolean(busy)}><legend>{consent.signed ? 'Subir una nueva ficha firmada' : 'Subir ficha firmada'}</legend>
           <label htmlFor={`${id}-files`}>Documento firmado (PDF o fotos de todas las páginas) *</label>

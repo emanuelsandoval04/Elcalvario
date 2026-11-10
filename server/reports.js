@@ -3,7 +3,7 @@ import { createReportPdf } from './report-pdf.js'
 import { memberCode } from './public-codes.js'
 
 const titles={asistencia:'Asistencia',cumpleanos:'Listado de cumpleaños',grupos:'Grupos de Comunión Familiar'}
-const columns={asistencia:['Actividad','Fecha','Tipo','Discípulo','Estado','Metodo'],cumpleanos:['Nombre','Cumpleanos'],grupos:['Codigo','Grupo','Direccion','Barrio','Dia','Hora','Estado']}
+const columns={asistencia:['Actividad','Fecha','Tipo','ID','Discípulo','Estado','Metodo'],cumpleanos:['ID','Nombre','Cumpleanos'],grupos:['Codigo','Grupo','Direccion','Barrio','Dia','Hora','Estado']}
 const discipleFields = {
   'ID': 'codigo_miembro', 'Nombres': 'nombres', 'Apellidos': 'apellidos', 'Tipo de identificación': 'tipo_identificacion',
   'Identificación': 'numero_identificacion', 'Celular': 'celular', 'Correo': 'correo', 'Fecha de nacimiento': 'fecha_nacimiento',

@@ -116,7 +116,7 @@ export function addDiscipleProfile(workbook, row, headers, now) {
   setupExportSheet(sheet, ['Campo', 'Detalle'], { freezeColumns: 0 })
   sheet.getColumn(1).width = 31
   sheet.getColumn(2).width = 72
-  addExportHeading(workbook, sheet, { title: 'Ficha del discípulo', subtitle: `${row.Nombres || ''} ${row.Apellidos || ''}`.trim(), now })
+  addExportHeading(workbook, sheet, { title: 'Ficha del discípulo', subtitle: `${row.ID ? `ID ${row.ID} · ` : ''}${row.Nombres || ''} ${row.Apellidos || ''}`.trim(), now })
   const sections = [
     ['Identificación y datos personales', ['ID', 'Nombres', 'Apellidos', 'Tipo de identificación', 'Identificación', 'Fecha de nacimiento']],
     ['Contacto y emergencia', ['Celular', 'Correo', 'Grupo sanguíneo / RH', 'EPS', 'Contacto de emergencia', 'Celular de emergencia']],

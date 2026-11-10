@@ -6,7 +6,7 @@ import { invalid, identifier, choice, text } from './entities.js'
 import { refreshAlerts } from './alerts.js'
 
 export async function attendanceRoster(connection,activity) {
-  const [items]=await connection.execute(`SELECT m.id_miembro,CONCAT_WS(' ',m.nombres,m.apellidos) AS nombre,
+  const [items]=await connection.execute(`SELECT m.id_miembro,m.codigo_miembro,CONCAT_WS(' ',m.nombres,m.apellidos) AS nombre,
     EXISTS(SELECT 1 FROM asistencia saved WHERE saved.id_actividad=? AND saved.id_miembro=m.id_miembro AND saved.archivado=0) AS registrado FROM miembro m
     WHERE m.archivado=0 AND m.estado_miembro='activo' ${activity.id_grupo?'AND m.id_grupo=?':''}
     AND NOT EXISTS(SELECT 1 FROM asistencia a WHERE a.id_actividad=? AND a.id_miembro=m.id_miembro AND a.archivado=1)
