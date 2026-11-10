@@ -77,6 +77,14 @@ Si se cambia o se pierde esta clave, el token guardado deja de servir y hay que 
 | *Meta no encontró la página* | Revisar el ID (paso 5, `me/accounts`) |
 | *Falta configurar TRANSMISSION_SECRET_KEY* | Paso 6 |
 | *Falta aplicar la migración 023* | El administrador ejecuta `npm run db:migrate` (local) o `npm run db:migrate:aiven` (producción) |
+| *No pudimos completar la operación* (en el registro de Vercel: `ER_TABLEACCESS_DENIED_ERROR`) | La cuenta web de MySQL no tiene permiso sobre la tabla nueva. Con la cuenta administrativa de Aiven: `GRANT SELECT, UPDATE ON defaultdb.configuracion_transmision TO 'calvario_app_…'@'%';` |
+
+## Instalación en producción (una sola vez)
+
+1. Respaldar la base de Aiven.
+2. `npm run db:migrate:aiven`.
+3. Dar permiso a la cuenta web (Vercel usa una cuenta MySQL con permisos por tabla): `GRANT SELECT, UPDATE ON defaultdb.configuracion_transmision TO '<cuenta de la app>'@'%';`
+4. Agregar `TRANSMISSION_SECRET_KEY` en Vercel y volver a publicar.
 
 ## Seguridad
 
