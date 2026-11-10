@@ -49,3 +49,8 @@ test('Page tokens are encrypted and cannot be read without the server key',async
   delete process.env.TRANSMISSION_SECRET_KEY
   assert.throws(()=>encryptToken(token),/TRANSMISSION_SECRET_KEY/)
 })
+test('Without panel or environment video, the public section keeps a default video',async()=>{
+  delete process.env.FACEBOOK_FALLBACK_VIDEO;delete process.env.FACEBOOK_PAGE_ACCESS_TOKEN
+  const {effectiveSettings}=await import('../server/facebook.js?default-test')
+  assert.match(effectiveSettings(null).manual,/^https:\/\/www\.facebook\.com\/61556906195984\/videos\/\d+\/$/)
+})

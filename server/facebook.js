@@ -3,6 +3,8 @@ import { pool } from './db.js'
 
 // Public page of Misión Cristiana El Calvario. The panel or the environment can replace it.
 const defaultPage = '61556906195984'
+// Shown when neither the panel nor the environment define a video.
+const defaultVideo = 'https://www.facebook.com/61556906195984/videos/1840145000648542/'
 export const defaultGraphVersion = 'v23.0'
 const facebookHosts = new Set(['facebook.com', 'www.facebook.com', 'web.facebook.com', 'm.facebook.com', 'mbasic.facebook.com'])
 const cacheMilliseconds = 60000
@@ -81,7 +83,7 @@ function effectiveSettings(row) {
   let manual = null
   try { manual = normalizeVideoUrl(row?.video_manual) } catch { /* invalid values are ignored */ }
   let fallbackVideo = null
-  try { fallbackVideo = normalizeVideoUrl(env.FACEBOOK_FALLBACK_VIDEO) } catch { /* ignored */ }
+  try { fallbackVideo = normalizeVideoUrl(env.FACEBOOK_FALLBACK_VIDEO) || defaultVideo } catch { fallbackVideo = defaultVideo }
   return { mode: row?.modo === 'manual' ? 'manual' : 'automatico', page, token, version, manual: manual || fallbackVideo, pageUrl: `https://www.facebook.com/${page}` }
 }
 
