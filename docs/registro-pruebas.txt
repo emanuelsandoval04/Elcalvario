@@ -1,0 +1,84 @@
+=====================================================================
+ REGISTRO DE PRUEBAS - Plataforma El Calvario (Nexus Corp)
+ Fuente: carpeta checks/ del proyecto  |  Fecha del registro: 2026-11-10
+=====================================================================
+
+RESUMEN
+  Archivos de prueba ............. 36 (+ 7 archivos auxiliares)
+  Verificaciones (assert) ........ 1.155 aprox.
+  Tipo ........................... API (servidor), interfaz (Edge/Playwright),
+                                   unitarias (node --test), produccion (humo)
+  Entorno ........................ Cada prueba crea una base MySQL TEMPORAL,
+                                   la usa y la borra al final. Nunca toca los
+                                   datos reales ni envia correos reales.
+
+---------------------------------------------------------------------
+ 1. SEGURIDAD E INYECCION DE DATOS
+---------------------------------------------------------------------
+ [SQL]  Inyeccion SQL
+        Proteccion: las ~270 consultas usan parametros (?) de mysql2;
+        el dato del usuario nunca se pega dentro del SQL.
+ [XSS]  Inyeccion de scripts (HTML/JS)
+        Proteccion: React escapa todo el texto; 0 usos de innerHTML.
+        Prueba: CSP de produccion verificada (script-src-attr 'none',
+        object-src 'none', sin 'unsafe-inline')            -> PASS
+ [CSRF] Peticiones desde otro sitio (Origin: untrusted.invalid)
+        crear cuenta / editar perfil / subir foto / borrar  -> 403 PASS
+ [AUTH] Sin sesion                                         -> 401 PASS
+        Rol sin permiso                                    -> 403 PASS
+        Crear rol igual o superior al propio               -> 403 PASS
+        Registro publico deshabilitado                     -> 403 PASS
+ [FUERZA BRUTA] 16 intentos de login desde 16 IP distintas
+        intento 16 bloqueado por cuenta                    -> 429 PASS
+        Limite general por IP / exportaciones              -> 429 PASS
+ [PAYLOAD] Foto de 350 KB falsa (base64 basura)            -> 413 PASS
+        Cuerpo comprimido gzip no permitido                -> 415 PASS
+        JSON mal formado                                   -> 400 PASS
+ [SESION] Inactiva 31 min                                  -> 401 PASS
+        Sesion revocada desde otro dispositivo             -> 401 PASS
+        Cambio de contrasena invalida sesiones viejas      -> 401 PASS
+ [DATOS] Auditoria no guarda contrasenas                   -> PASS
+        Listado de sesiones no expone el token             -> PASS
+        Recuperacion: responde igual exista o no el correo -> PASS
+        Enlace de recuperacion de un solo uso, 15 min      -> PASS
+
+---------------------------------------------------------------------
+ 1b. MODULO TRANSMISIONES (ejecutada el 2026-11-10, base temporal)
+---------------------------------------------------------------------
+ npm run test:transmissions                     RESULTADO: 7/7 PASS
+ [AUTH]  sin sesion 401 / Discipulador 403 / Multimedia 200   PASS
+ [INY]   enlace a otro sitio, javascript:, ' OR 1=1 --,
+         "v1'; DROP TABLE usuario; --"            -> 400      PASS
+ [CSRF]  guardar desde otro origen                -> 403      PASS
+ [TOKEN] guardado cifrado AES-256-GCM, nunca se devuelve     PASS
+ [META]  token vencido -> mensaje claro + video de respaldo  PASS
+
+---------------------------------------------------------------------
+ 2. FUNCIONALES (por modulo)
+---------------------------------------------------------------------
+ Cuentas y roles ....... creacion, bienvenida, permisos, borrado   PASS
+ Recuperacion de clave . correo Gmail/Resend simulado              PASS
+ Discipulos e iglesia .. fichas, grupos, consentimiento firmado    PASS
+ Pastoral .............. seguimiento, calendario, adiestramiento   PASS
+ Asistencia ............ registros, eventos recurrentes, Excel/PDF PASS
+ Mapa .................. barrios, cobertura de grupos              PASS
+ Notificaciones ........ pendientes, descartes                     PASS
+ Concurrencia .......... dos ediciones a la vez -> una rechazada   PASS
+ Transacciones ......... fallo a mitad -> se revierte todo         PASS
+
+---------------------------------------------------------------------
+ 3. INTERFAZ Y DESPLIEGUE
+---------------------------------------------------------------------
+ Pantallas 320 / 390 / 768 / 1440 px sin desbordamiento      PASS
+ Teclado, foco y tecla Escape en menus                       PASS
+ PWA (instalable / pagina sin conexion)                      PASS
+ Rendimiento (imagenes WebP, carga)                          PASS
+ Despliegue Vercel + Aiven, prueba de humo en produccion     PASS
+
+---------------------------------------------------------------------
+ COMO EJECUTARLAS
+   npm run test:security        (seguridad)
+   npm run test:accounts        (cuentas)
+   npm run test:unit            (unitarias)
+   ... lista completa en package.json -> "test:*"
+=====================================================================

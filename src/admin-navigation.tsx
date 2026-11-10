@@ -11,6 +11,7 @@ const modules = [
   { key: 'training', label: 'Adiestramiento', permissions: ['adiestramiento.gestionar'] },
   { key: 'activities', label: 'Eventos y Cultos', permissions: ['eventos.editar', 'eventos.publicar', 'grupos.editar', 'asistencia.registrar', 'asistencia.ver'] },
   { key: 'falls', label: 'Asistencia y alertas', permissions: ['asistencia.registrar', 'asistencia.ver', 'alertas.ver'] },
+  { key: 'transmisiones', label: 'Transmisiones', permissions: ['transmisiones.gestionar'] },
   { key: 'reports', label: 'Reportes', permissions: ['reportes.asistencia', 'reportes.cumpleanos', 'reportes.grupos', 'reportes.discipulos'] },
   { key: 'users', label: 'Usuarios, roles y permisos', permissions: ['usuarios.gestionar', 'permisos.gestionar'] },
 ]

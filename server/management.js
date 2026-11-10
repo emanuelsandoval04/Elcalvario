@@ -21,6 +21,7 @@ import { pastoralCalendarRouter, publicCalendar } from './pastoral-calendar.js'
 import { memberImportRouter } from './member-import.js'
 import { discipleConsentRouter } from './disciple-consent.js'
 import { attendanceToolsRouter, attendanceRoster } from './attendance-tools.js'
+import { transmissionRouter } from './transmission-settings.js'
 
 export const managementRouter = Router()
 export const publicRouter = Router()
@@ -151,6 +152,7 @@ managementRouter.use(pastoralCalendarRouter({transaction,currentActor,memberFilt
 managementRouter.use(memberImportRouter({transaction,currentActor,registrationPermission,groupFilter,memberFilter}))
 managementRouter.use(discipleConsentRouter({transaction,currentActor,getMember,cleanMember}))
 managementRouter.use(attendanceToolsRouter({transaction,currentActor,getActivity,getMember,activityFilter}))
+managementRouter.use(transmissionRouter({transaction,currentActor}))
 managementRouter.get('/training/books', requireTraining, async (_req,res) => res.json({items:await trainingBooks()}))
 managementRouter.post('/training/books', requireTraining, async (req,res) => {
   const name=text(req.body?.nombre,150,true), description=text(req.body?.descripcion,2000)

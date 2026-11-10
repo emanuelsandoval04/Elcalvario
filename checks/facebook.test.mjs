@@ -29,3 +29,23 @@ test('Facebook failures and untrusted permalink URLs use a safe fallback',async(
     assert.equal((await untrusted.facebookTransmission()).videoUrl,process.env.FACEBOOK_FALLBACK_VIDEO)
   } finally {globalThis.fetch=original}
 })
+test('Embed codes and Facebook links become canonical video URLs; other sites are rejected',async()=>{
+  const {normalizeVideoUrl}=await import('../server/facebook.js?links-test')
+  const embed='<iframe src="https://www.facebook.com/plugins/video.php?height=314&href=https%3A%2F%2Fweb.facebook.com%2F61556906195984%2Fvideos%2F1840145000648542%2F&show_text=false&width=560&t=0" width="560" height="314" style="border:none;overflow:hidden" scrolling="no" frameborder="0" allowfullscreen="true" allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share" allowFullScreen="true"></iframe>'
+  assert.equal(normalizeVideoUrl(embed),'https://www.facebook.com/61556906195984/videos/1840145000648542/')
+  assert.equal(normalizeVideoUrl('https://m.facebook.com/watch/?v=123&ref=x'),'https://www.facebook.com/watch/?v=123')
+  assert.equal(normalizeVideoUrl(''),null)
+  for(const bad of ['https://evil.example/61556906195984/videos/1/','http://www.facebook.com/1/videos/2/','https://www.facebook.com/profile.php','javascript:alert(1)','<iframe src="https://evil.example/plugins/video.php?href=x"></iframe>'])
+    assert.throws(()=>normalizeVideoUrl(bad),bad)
+})
+test('Page tokens are encrypted and cannot be read without the server key',async()=>{
+  process.env.TRANSMISSION_SECRET_KEY='k'.repeat(40)
+  const {encryptToken,effectiveSettings}=await import('../server/facebook.js?crypto-test')
+  const token='EAA'+'x'.repeat(60),stored=encryptToken(token)
+  assert.ok(!stored.includes(token));assert.notEqual(encryptToken(token),stored)
+  assert.equal(effectiveSettings({token_cifrado:stored,id_pagina:'61556906195984'}).token,token)
+  process.env.TRANSMISSION_SECRET_KEY='z'.repeat(40);delete process.env.FACEBOOK_PAGE_ACCESS_TOKEN
+  assert.equal(effectiveSettings({token_cifrado:stored}).token,null)
+  delete process.env.TRANSMISSION_SECRET_KEY
+  assert.throws(()=>encryptToken(token),/TRANSMISSION_SECRET_KEY/)
+})

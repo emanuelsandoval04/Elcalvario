@@ -59,6 +59,7 @@
     "test:training": "node checks/training-check.mjs",
     "test:training:ui": "node checks/training-check.mjs --ui",
     "test:security": "node checks/security-check.mjs",
+    "test:transmissions": "node checks/transmissions-check.mjs",
     "test:security:ui": "npm run build:vercel && node checks/security-check.mjs --ui",
     "security:maintenance": "node scripts/security-maintenance.mjs",
     "db:import:barrios": "node scripts/import-neighborhood-catalog.mjs",

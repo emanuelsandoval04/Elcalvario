@@ -26,6 +26,7 @@ const CoverageMap = lazy(() => import('./CoverageMap'))
 const EventCalendar = lazy(() => import('./EventCalendar'))
 const PastoralFollowup = lazy(() => import('./PastoralFollowup'))
 const MemberImport = lazy(() => import('./MemberImport'))
+const Transmissions = lazy(() => import('./Transmissions'))
 
 type Row = Record<string, string | number | null>
 type Catalogs = { roles: Row[]; ministerios: Row[]; grupos: Row[]; registrationGroups?: Row[]; barrios?: Barrio[]; libros?: TrainingBook[] }
@@ -468,6 +469,7 @@ function Dashboard({ user }: { user: AuthUser }) {
     { key: 'activities', label: 'Eventos y Cultos', icon: 'activities', description: 'Crear / Consultar', href: '#gestion/activities', allowed: available.has('activities') },
     { key: 'alerts', label: 'Alertas', icon: 'alerts', description: 'Acompañamiento pastoral', href: '#gestion/falls/alertas', allowed: has(user, 'alertas.ver') },
     { key: 'reports', label: 'Reportes', icon: 'reports', description: 'Asistencia, cumpleaños y grupos', href: '#gestion/reports', allowed: available.has('reports') },
+    ...(available.has('transmisiones') ? [{ key: 'transmisiones', label: 'Transmisiones', icon: 'transmisiones', description: 'Facebook en vivo', href: '#gestion/transmisiones', allowed: true }] : []),
   ]
   const widgetIcons: Record<string, string> = { miembros: 'members', grupos: 'groups', alertas: 'alerts', cumpleanos: 'birthday', eventos: 'activities' }
   const widgetLinks: Record<string, string> = { miembros: '#gestion/members', grupos: '#gestion/groups', alertas: '#gestion/falls/alertas', cumpleanos: '#gestion/reports', eventos: '#gestion/activities' }
@@ -572,6 +574,7 @@ export default function Management() {
       {tab === 'mapa' && <Suspense fallback={<p>Cargando mapa de zonas…</p>}><CoverageMap key={accessKey} user={user}/></Suspense>}
       {(['members', 'groups', 'activities'] as const).map(resource => tab === resource && <Records key={`${resource}-${accessKey}`} resource={resource} user={user} catalogs={catalogs} reloadCatalogs={reloadCatalogs} notify={setMessage} />)}
       {tab === 'falls' && <Falls key={accessKey} user={user} notify={setMessage} />}{tab === 'reports' && <Reports user={user} notify={setMessage} />}
+      {tab === 'transmisiones' && <Suspense fallback={<p>Cargando transmisiones…</p>}><Transmissions key={accessKey} notify={setMessage}/></Suspense>}
     </>}
     </div>
   </AdminFrame>

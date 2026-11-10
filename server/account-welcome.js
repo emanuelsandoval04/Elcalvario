@@ -22,6 +22,7 @@ export function accountCapabilities(user) {
     'eventos.editar': 'Crear y editar eventos y cultos',
     'eventos.publicar': 'Publicar eventos y cultos',
     'eventos.eliminar': 'Archivar actividades',
+    'transmisiones.gestionar': 'Configurar las transmisiones de Facebook',
     'asistencia.registrar': 'Registrar asistencia',
     'asistencia.ver': 'Consultar asistencia',
     'asistencia.corregir': 'Corregir registros de asistencia',
