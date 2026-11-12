@@ -10,6 +10,7 @@ import { jsonBody } from '../server/body-parser.js'
 const testDatabase = `calvario_pastoral_test_${randomUUID().replaceAll('-', '')}`
 assert.match(testDatabase, /^calvario_pastoral_test_[a-f0-9]{32}$/)
 process.env.DB_NAME = testDatabase
+process.env.MAIL_PROVIDER='disabled' // registration emails below use real provider domains: never send mail from this check
 const { databaseConfig } = await import('../server/config.js')
 const { database, ...config } = databaseConfig
 const connection = await mysql.createConnection(config)
@@ -37,7 +38,7 @@ try {
   const catalogs = (await api('management/catalogs', undefined, owner.cookie)).data
   // Reproduce the local bootstrap: no groups and a Superadmin linked to rank 6.
   assert.deepEqual(catalogs.grupos,[])
-  const bootstrapInput={nombres:'Primer discipulador',apellidos:'Prueba',tipo_identificacion:'CC',numero_identificacion:'BOOTSTRAP',celular:'3001234567',fecha_nacimiento:'1990-03-05',tipo_registro:'administrativo',id_rol_eclesiastico:catalogs.roles.find(role=>role.nivel_jerarquico===6).id_rol_eclesiastico,account_email:'bootstrap-leader@example.invalid',account_password:password,account_confirmation:password}
+  const bootstrapInput={nombres:'Primer discipulador',apellidos:'Prueba',tipo_identificacion:'CC',numero_identificacion:'BOOTSTRAP',celular:'3001234567',fecha_nacimiento:'1990-03-05',tipo_registro:'administrativo',id_rol_eclesiastico:catalogs.roles.find(role=>role.nivel_jerarquico===6).id_rol_eclesiastico,account_email:'bootstrap-leader@gmail.com',account_password:password,account_confirmation:password}
   const bootstrap=(await api('management/members',bootstrapInput,owner.cookie,201)).data.id
   const [[bootstrapStored]]=await pool.execute('SELECT id_grupo FROM miembro WHERE id_miembro=?',[bootstrap])
   assert.equal(bootstrapStored.id_grupo,null)
@@ -188,33 +189,16 @@ try {
     }
     await login('owner@example.invalid')
     await startRegistration()
-    await pickOption(page.getByLabel('Tipo de registro', { exact: true }), 'administrativo')
-    await basic('Discipulador de interfaz', 'UI-ADMIN')
-    await pickOption(page.getByLabel('Cargo pastoral *', { exact: true }), String(catalogs.roles.find(role => role.nivel_jerarquico === 6).id_rol_eclesiastico))
-    assert.equal(await page.locator('select[name=id_grupo]').evaluate(node=>node.required),false)
-    await page.getByRole('button', { name: 'Continuar', exact: true }).click()
-    await page.getByLabel('Correo de acceso *', { exact: true }).fill('ui-leader@example.invalid')
-    const photo = await page.evaluate(() => { const canvas = document.createElement('canvas'); canvas.width = canvas.height = 32; const ctx = canvas.getContext('2d'); ctx.fillStyle = '#ff650b'; ctx.fillRect(0, 0, 32, 32); return canvas.toDataURL('image/png') })
-    await page.getByLabel('Foto de perfil', { exact: true }).setInputFiles({ name: 'perfil.png', mimeType: 'image/png', buffer: Buffer.from(photo.split(',')[1], 'base64') })
-    await page.getByLabel('Contraseña de acceso *', { exact: true }).fill(password)
-    await page.getByLabel('Confirmar contraseña de acceso *', { exact: true }).fill('incorrect-password')
-    await page.getByRole('button', { name: 'Crear administrativo y cuenta', exact: true }).click()
-    await page.getByRole('alert').filter({ hasText: 'Las contraseñas de la cuenta no coinciden.' }).waitFor()
-    await page.getByLabel('Confirmar contraseña de acceso *', { exact: true }).fill(password)
-    for (const width of [390, 320]) {
-      await page.setViewportSize({ width, height: 844 })
-      await page.evaluate(() => new Promise(resolve => { window.scrollTo({ top: 0, behavior: 'instant' }); requestAnimationFrame(() => requestAnimationFrame(resolve)) }))
-      assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false)
-      await page.screenshot({ path: `checks/pastoral-admin-${width}.png`, fullPage: true, animations: 'disabled' })
-    }
-    await page.getByRole('button', { name: 'Crear administrativo y cuenta', exact: true }).click()
-    await page.getByRole('status').filter({ hasText: 'Administrativo y cuenta de acceso creados.' }).waitFor()
+    // Disciple registration has no "Tipo de registro": administrative accounts come from Usuarios y roles.
+    assert.equal(await page.getByLabel('Tipo de registro', { exact: true }).count(), 0)
+    assert.equal(await page.locator('select[name=id_rol_eclesiastico],input[name=account_email]').count(), 0)
+    await api('management/members', { nombres: 'Discipulador de interfaz', apellidos: 'Prueba', tipo_identificacion: 'CC', numero_identificacion: 'UI-ADMIN', celular: '3001234567', fecha_nacimiento: '1990-03-05', tipo_registro: 'administrativo', id_rol_eclesiastico: catalogs.roles.find(role => role.nivel_jerarquico === 6).id_rol_eclesiastico, account_email: 'ui-leader@gmail.com', account_password: password, account_confirmation: password }, owner.cookie, 201)
     assert.equal((await page.evaluate(async () => (await (await fetch('/api/auth/me')).json()).user.email)), 'owner@example.invalid')
     const [uiLeaders]=await pool.execute("SELECT id_miembro,id_grupo FROM miembro WHERE numero_identificacion='UI-ADMIN'")
     assert.equal(uiLeaders[0].id_grupo,null)
     await page.goto(`${ui}/#gestion/groups`)
     await page.getByRole('button',{name:'Nuevo grupo',exact:true}).click()
-    await page.getByLabel('Código del grupo *',{exact:true}).fill('UI-PRIMERO')
+    await page.getByText('Se asigna automáticamente al guardar',{exact:false}).waitFor()
     await page.getByLabel('Nombre *',{exact:true}).fill('Grupo después del discipulador')
     await pickOption(page.getByRole('combobox',{name:'Discipulador',exact:true}),String(uiLeaders[0].id_miembro))
     await page.getByRole('button',{name:'Guardar grupo',exact:true}).click()
@@ -222,7 +206,7 @@ try {
     await page.getByRole('button', { name: 'Mi cuenta', exact: true }).click()
     await page.getByRole('menuitem', { name: 'Cerrar sesión', exact: true }).click()
     await page.waitForURL(`${ui}/#login`)
-    await login('ui-leader@example.invalid')
+    await login('ui-leader@gmail.com')
     await page.waitForFunction(() => document.querySelector('.panel-avatar img')?.naturalWidth === 512)
     await startRegistration()
     assert.equal(await page.getByLabel('Tipo de registro', { exact: true }).count(), 0)

@@ -27,7 +27,8 @@ export function attendanceToolsRouter({transaction,currentActor,getActivity,getM
       const activity=await getActivity(req,activityId,'asistencia.registrar',connection)
       await connection.execute('SELECT id_actividad FROM actividad WHERE id_actividad=? FOR UPDATE',[activityId])
       if(activity.estado_actividad==='cancelada')throw invalid('No se registra asistencia en una actividad cancelada.',409)
-      if(new Date(`${activity.fecha}T${activity.hora}-05:00`).getTime()>Date.now())throw invalid('La asistencia completa se guarda una vez iniciado el evento. Puedes registrar llegadas individuales por adelantado.',409)
+      // Any date is allowed (late records of past events, or early ones). Absence alerts only count
+      // events that already happened, so an early save does not raise alerts before the date.
       const roster=await attendanceRoster(connection,activity)
       if(req.body.rosterVersion!==roster.version)throw invalid('El listado de discípulos cambió. Revisa el listado actualizado antes de guardar.',409)
       if(!roster.items.length)throw invalid('No hay discípulos activos en este listado.')

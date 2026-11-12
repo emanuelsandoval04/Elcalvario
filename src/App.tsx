@@ -12,6 +12,9 @@ const Login = lazy(() => import('./Login'))
 const PasswordRecovery = lazy(() => import('./PasswordRecovery'))
 const AdminUsers = lazy(() => import('./AdminUsers'))
 const Management = lazy(() => import('./Management'))
+const CheckIn = lazy(() => import('./CheckIn'))
+// Opened from an event's attendance QR: #asistencia/<token>.
+const checkinToken = (hash: string) => /^#asistencia\/([A-Za-z0-9_-]{32})$/.exec(hash)?.[1] || null
 const isAccessRoute = () => window.location.hash === '#usuarios' || window.location.hash.startsWith('#usuarios/') || /^#gestion\/(permissions|users)(\/|$)/.test(window.location.hash)
 
 const churchMapsUrl = 'https://www.google.com/maps/search/?api=1&query=Carrera%2016%20%2322-28%2C%20Barrio%20Ol%C3%ADmpico%2C%20Villavicencio%2C%20Meta'
@@ -20,7 +23,7 @@ export default function App() {
   useEffect(() => {
     // Private screens and login already check their session when they mount.
     const route = window.location.hash
-    if (!isAccessRoute() && route !== '#gestion' && !route.startsWith('#gestion/') && !['#login', '#registro'].includes(route)) void authRequest('me').catch(() => {})
+    if (!isAccessRoute() && route !== '#gestion' && !route.startsWith('#gestion/') && !['#login', '#registro'].includes(route) && !checkinToken(route)) void authRequest('me').catch(() => {})
   }, [])
   const [selected, setSelected] = useState('Inicio')
   const [recoveryRoute, setRecoveryRoute] = useState(() => window.location.hash)
@@ -49,12 +52,13 @@ export default function App() {
     updatePage()
     return () => window.removeEventListener('hashchange', updatePage)
   }, [])
+  const checkin = !managementOpen && !adminOpen ? checkinToken(recoveryRoute) : null
   return (
     <>
-    {!managementOpen && !adminOpen && <Navbar onNavigate={setSelected} />}
-    <ScreenBoundary key={managementOpen ? 'management' : adminOpen ? 'users' : loginOpen ? 'login' : ['#recuperar', '#restablecer'].includes(recoveryRoute.split('?')[0]) ? recoveryRoute : 'public'}>
+    {!managementOpen && !adminOpen && !checkin && <Navbar onNavigate={setSelected} />}
+    <ScreenBoundary key={managementOpen ? 'management' : adminOpen ? 'users' : checkin ? `checkin-${checkin}` : loginOpen ? 'login' : ['#recuperar', '#restablecer'].includes(recoveryRoute.split('?')[0]) ? recoveryRoute : 'public'}>
     <Suspense fallback={<ScreenLoading />}>
-    {managementOpen ? <Management /> : adminOpen ? <AdminUsers /> : ['#recuperar', '#restablecer'].includes(recoveryRoute.split('?')[0]) ? <PasswordRecovery key={recoveryRoute} reset={recoveryRoute.split('?')[0] === '#restablecer'} /> : loginOpen ? <Login /> : (
+    {managementOpen ? <Management /> : adminOpen ? <AdminUsers /> : checkin ? <CheckIn token={checkin} /> : ['#recuperar', '#restablecer'].includes(recoveryRoute.split('?')[0]) ? <PasswordRecovery key={recoveryRoute} reset={recoveryRoute.split('?')[0] === '#restablecer'} /> : loginOpen ? <Login /> : (
     <main>
     <section className="welcome" id="inicio" aria-label="Bienvenidos a El Calvario">
       <div className="hero-copy">

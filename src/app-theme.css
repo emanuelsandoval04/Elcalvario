@@ -61,9 +61,6 @@
 .manage-form-fields[hidden] { display:none !important; }
 .admin-workspace .manage-form { gap:18px; margin-top:8px; }
 .field-required { color:#ff5a0a; }
-.registration-choice { max-width:650px; margin:0 auto 24px; padding:16px; border:1px solid #ffddc7; border-radius:13px; background:#fff6ef; }
-.registration-choice > label { display:block; margin-bottom:9px; }
-.admin-workspace .registration-choice > p { margin:9px 0 0; font-size:11px; }
 .form-footer { justify-content:flex-end; margin-bottom:0; }
 .member-wizard { max-width:650px; margin:auto; }
 .wizard-progress { display:grid; grid-template-columns:1fr 1fr; gap:12px; color:#ee580b; font-size:11px; }

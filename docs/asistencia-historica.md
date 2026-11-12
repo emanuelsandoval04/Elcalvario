@@ -4,7 +4,7 @@ Los cambios se preparan localmente. No requieren migraciones nuevas ni se public
 
 ## Registrar asistencia
 
-En **Asistencia**, selecciona un evento de **Hoy y próximos** o **Eventos anteriores**. Se puede buscar por nombre y cargar más resultados. Cada opción incluye su fecha y hora para distinguir celebraciones del mismo nombre o del mismo día. La lista histórica se pagina independientemente de las fechas futuras de eventos fijos.
+En **Asistencia**, los eventos aparecen como cuadritos con su nombre, día, fecha y hora; se toca uno para abrir el listado (con **Cambiar evento** se vuelve a la cuadrícula). Hay dos pestañas: **Hoy y próximos** muestra todos los eventos programados, pero cada evento fijo solo con su fecha de esta semana (la de hoy sigue disponible hasta que termina el día, aunque ya haya comenzado); **Eventos anteriores** muestra cada fecha realizada, una por semana en los fijos. Se puede buscar por nombre y cargar más resultados. Para que cada persona registre su propia asistencia con la cédula, ver [Registro con código QR](registro-asistencia-qr.md). Las etiquetas *Hoy*, *Fijo* y *Cancelada* ayudan a distinguir celebraciones del mismo nombre o del mismo día. La lista histórica se pagina independientemente de las fechas futuras de eventos fijos.
 
 El listado para tomar asistencia incluye discípulos activos del grupo del encuentro, o los activos de la iglesia si el encuentro es general. Los registros de asistencia archivados no se vuelven a crear automáticamente. Los datos históricos de personas inactivas se conservan en los registros guardados.
 
@@ -24,7 +24,7 @@ En **Discípulos → Ver ficha → Historial de asistencia** se ven evento, día
 
 ## API y validación
 
-- `GET /api/management/activities?view=attendance&period=past|upcoming&q=...&page=1`: selector con páginas de 100 eventos.
+- `GET /api/management/activities?view=attendance&period=past|upcoming&q=...&page=1`: cuadritos con páginas de 100 eventos. En `upcoming`, cada serie fija devuelve solo su fecha pendiente más cercana desde hoy (`nearestAttendanceDate`).
 - `GET /api/management/attendance/roster?activityId=...`: listado activo, indicador de registro previo, versión y datos del evento.
 - `POST /api/management/attendance/save`: `{activityId,rosterVersion,states:{"id_miembro":"presente|ausente|justificado"}}`. Los participantes sin selección se guardan como ausentes. Máximo 2000 discípulos por lote.
 - `GET /api/management/reports/asistencia?activityId=...&format=pdf|xlsx`: descarga de una sesión concreta.

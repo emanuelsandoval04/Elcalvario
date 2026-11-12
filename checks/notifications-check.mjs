@@ -124,87 +124,20 @@ try {
     assert.ok(ready,'No inició la vista previa.')
     const {chromium} = await import('../.secrets/browser-tools/node_modules/playwright-core/index.mjs')
     browser = await chromium.launch({channel:'msedge',headless:true})
+    // Notifications were removed from the panel: no bell for any profile (the API above remains).
     const errors=[]
-    let failNextDismiss=false
-    async function openAccount(account, mobile=false) {
+    for (const [name, mobile] of [['Apóstol General', false], ['Multimedia', true]]) {
       const context = await browser.newContext({viewport:{width:mobile?390:1440,height:900},isMobile:mobile,hasTouch:mobile,serviceWorkers:'block'})
-      await context.addCookies([{name:'calvario_session',value:account.cookie.split('=')[1],url:ui+'/api',httpOnly:true,sameSite:'Strict'}])
-      await context.route('**/api/**',async route=>{
-        const url=new URL(route.request().url())
-        if (url.pathname.endsWith('/notifications/dismiss') && failNextDismiss) { failNextDismiss=false;return route.fulfill({status:503,contentType:'application/json',body:JSON.stringify({error:'No pudimos descartar la notificación. Inténtalo nuevamente.'})}) }
-        const response=await route.fetch({url:origin+url.pathname+url.search})
-        await route.fulfill({response})
-      })
+      await context.addCookies([{name:'calvario_session',value:accounts[name].cookie.split('=')[1],url:ui+'/api',httpOnly:true,sameSite:'Strict'}])
+      await context.route('**/api/**',async route=>{const url=new URL(route.request().url());const response=await route.fetch({url:origin+url.pathname+url.search});await route.fulfill({response})})
       const page=await context.newPage();page.on('pageerror',error=>errors.push(error.message))
-      await page.goto(ui+'/#gestion',{waitUntil:'domcontentloaded'})
-      await page.getByRole('button',{name:/^Notificaciones: /}).waitFor()
-      return {context,page}
+      await page.goto(ui+'/#gestion',{waitUntil:'domcontentloaded'});await page.locator('#dashboard-title').waitFor()
+      assert.equal(await page.getByRole('button',{name:/Notificaciones/}).count(),0)
+      assert.equal(await page.locator('#account-notifications-panel').count(),0)
+      await context.close()
     }
-    const manager=await openAccount(accounts['Apóstol General'])
-    await manager.page.getByRole('button',{name:/^Notificaciones: /}).click()
-    const panel=manager.page.locator('#account-notifications-panel')
-    await panel.getByText(pending.data.user.email,{exact:true}).waitFor()
-    await panel.getByRole('link',{name:'Revisar usuarios y solicitudes'}).waitFor()
-    const accountDismiss=panel.getByRole('button',{name:`Descartar notificación: ${pending.data.user.email}`,exact:true})
-    await accountDismiss.focus();await manager.page.keyboard.press('Enter')
-    await accountDismiss.waitFor({state:'detached'})
-    assert.equal((await request('me',{cookie:pending.cookie})).data.user.state,'pendiente')
-    await manager.page.reload({waitUntil:'domcontentloaded'})
-    await manager.page.getByRole('button',{name:'Notificaciones: 4',exact:true}).click()
-    assert.equal(await panel.getByText(pending.data.user.email,{exact:true}).count(),0)
-    const desktopCard=panel.locator('.notification-card').first(), desktopTitle=await desktopCard.locator('strong').innerText()
-    const box=await desktopCard.boundingBox()
-    await manager.page.mouse.move(box.x+box.width/2,box.y+30)
-    await manager.page.mouse.down();await manager.page.mouse.move(box.x+box.width/2-110,box.y+30,{steps:8});await manager.page.mouse.up()
-    await panel.getByRole('button',{name:`Descartar notificación: ${desktopTitle}`,exact:true}).waitFor({state:'detached'})
-    const member=await openAccount(accounts.Multimedia,true),page=member.page
-    await page.getByRole('button',{name:'Notificaciones: 4',exact:true}).tap()
-    const memberPanel=page.locator('#account-notifications-panel')
-    assert.equal(await memberPanel.getByRole('link',{name:'Revisar usuarios y solicitudes'}).count(),0)
-    assert.equal(await memberPanel.getByText('Solicitud de cuenta',{exact:true}).count(),0)
-    const client=await member.context.newCDPSession(page)
-    async function swipe(card,dx,dy=0) {
-      await card.scrollIntoViewIfNeeded()
-      const bounds=await card.boundingBox(),x=bounds.x+bounds.width/2,y=bounds.y+30
-      await client.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x,y,id:1}]})
-      for(let step=1;step<=8;step++) await client.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x:x+dx*step/8,y:y+dy*step/8,id:1}]})
-      await client.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]})
-    }
-    for (const width of [390,320]) {
-      await page.setViewportSize({width,height:900})
-      const first=memberPanel.locator('.notification-card').first()
-      await swipe(first,25)
-      assert.equal((await feed(accounts.Multimedia)).total,width===390?4:3)
-      const title=await first.locator('strong').innerText()
-      await swipe(first,width===390?-110:110)
-      await memberPanel.getByRole('button',{name:`Descartar notificación: ${title}`,exact:true}).waitFor({state:'detached'})
-      assert.equal(await page.getByRole('button',{name:/^Notificaciones: /}).getAttribute('aria-expanded'),'true')
-      assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false)
-      await page.screenshot({path:`checks/notifications-${width}.png`,fullPage:false})
-    }
-    assert.equal((await feed(accounts.Multimedia)).total,2)
-    // A vertical gesture must keep all notices and allow native list scrolling.
-    const beforeVertical=(await feed(accounts.Multimedia)).total
-    await swipe(memberPanel.locator('.notification-card').first(),0,-70)
-    assert.equal((await feed(accounts.Multimedia)).total,beforeVertical)
-    // Reload also verifies persistence and starts the failure case without a
-    // touch fling still in progress from the independent scrolling scenario.
-    await page.reload({waitUntil:'domcontentloaded'})
-    await page.getByRole('button',{name:'Notificaciones: 2',exact:true}).tap()
-    failNextDismiss=true
-    const failedButton=memberPanel.getByRole('button',{name:/Descartar notificación:/}).first()
-    const failedLabel=await failedButton.getAttribute('aria-label')
-    await failedButton.tap()
-    await memberPanel.getByText('No pudimos descartar la notificación. Inténtalo nuevamente.',{exact:true}).waitFor()
-    await memberPanel.getByRole('button',{name:failedLabel,exact:true}).waitFor()
-    await page.reload({waitUntil:'domcontentloaded'})
-    await page.getByRole('button',{name:'Notificaciones: 2',exact:true}).tap()
-    assert.equal(await memberPanel.locator('.notification-card').count(),2)
-    await memberPanel.getByRole('link',{name:'Ver eventos y cultos',exact:true}).tap()
-    await page.waitForURL(ui+'/#eventos')
     assert.deepEqual(errors,[])
-    await manager.context.close();await member.context.close()
-    console.log('PASS UI: admin-only account requests, remaining-profile events, keyboard dismissal, mouse swipe, real touch left/right swipes at 390/320px, short/vertical gestures, persistence, failure recovery and event navigation')
+    console.log('PASS UI: the panel no longer shows notifications for administrative or remaining profiles')
   }
   await db.execute('DELETE FROM usuario WHERE id_usuario=?',[accounts.Usuario.data.user.id])
   const [orphaned]=await db.query('SELECT d.* FROM notificacion_descartada d LEFT JOIN usuario u ON u.id_usuario=d.id_usuario WHERE u.id_usuario IS NULL')

@@ -1,5 +1,7 @@
 # Fichas de discípulos y consentimiento
 
+> **Reemplazado (noviembre de 2026):** la autorización ahora se confirma con un código por SMS. Ver [autorizacion-datos-sms.md](autorizacion-datos-sms.md). Las fichas firmadas ya subidas se conservan en el historial; este documento queda como referencia del flujo anterior.
+
 En **Discípulos → Ver ficha → Autorización y ficha firmada**, un responsable autorizado puede descargar los datos actuales en PDF, imprimirlos y subir todas las páginas firmadas. El PDF incluye ambos logos, identificación del titular en cada página, texto base de autorización, decisiones separadas sobre datos religiosos y de salud, y espacio para firma del titular o representante.
 
 La iglesia indicó que aún no tiene una política oficial. El texto incluido se identifica como **base para revisión institucional**. Deben revisar el responsable, la dirección de atención, las finalidades y el procedimiento antes de adoptarlo como su política. No se presenta como una política aprobada ni como certificación de cumplimiento jurídico. Se consultaron la [Ley 1581 de 2012](https://www.cancilleria.gov.co/normograma/compilacion/docs/ley_1581_2012.htm) y la [orientación de la SIC sobre datos sensibles de salud](https://sedeelectronica.sic.gov.co/publicaciones/boletin-juridico/concepto/tratamiento-de-datos-sensibles-relativos-la-salud). El texto y su identificador interno están en `server/disciple-consent-document.js`.

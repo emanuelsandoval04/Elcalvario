@@ -41,8 +41,8 @@ export default function Events() {
           <div className="events-column">
             <div className="events-column-heading"><span className="events-heading-icon"><CommunityIcon name="calendar" /></span><h3>Próximos eventos</h3></div>
             {events.length ? events.map(event => <article className={`event-card public-${event.tipo_actividad}`} key={event.id_actividad}>
-              {event.imagen && <div className="event-image-wrap"><img src={event.imagen} alt={event.titulo} loading="lazy" /><span className="event-image-label">{event.tipo_actividad === 'culto' ? 'Culto' : 'Evento especial'}</span></div>}
-              <div className="event-information"><span className="events-eyebrow">{event.tipo_actividad === 'culto' ? 'CULTO' : 'EVENTO ESPECIAL'}</span>
+              {event.imagen && <div className="event-image-wrap"><img src={event.imagen} alt={event.titulo} loading="lazy" /></div>}
+              <div className="event-information">
                 <div className="event-schedule">{new Intl.DateTimeFormat('es-CO', { dateStyle: 'long', timeZone: 'America/Bogota' }).format(new Date(`${event.fecha}T12:00:00-05:00`))} · {event.hora.slice(0, 5)}</div>
                 {event.id_serie && event.dia_semana != null && <p className="event-repeat-note">{weeklySchedule(event.dia_semana, event.repeticion_hora || event.hora, Boolean(event.repeticion_activa))}{event.repeticion_activa && (event.fecha_programada !== event.fecha || (event.repeticion_hora || event.hora).slice(0, 5) !== event.hora.slice(0, 5)) ? ' · Horario especial para esta fecha' : ''}</p>}
                 <h4>{event.titulo}</h4><p>{event.descripcion}</p><div className="event-location"><CommunityIcon name="location" /><span>{event.lugar}</span></div>

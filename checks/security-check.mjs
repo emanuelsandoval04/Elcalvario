@@ -124,14 +124,10 @@ try{
   await dialog.locator('.security-audit').waitFor()
   for(const width of [320,390,768,1440]){await page.setViewportSize({width,height:900});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false,`Desbordamiento en ${width}px`)}
   await page.getByRole('button',{name:'Cerrar opciones de la cuenta',exact:true}).click()
-  await page.goto(ui+'/#gestion/mapa')
-  await Promise.race([page.locator('.coverage-map .gm-style').waitFor({timeout:25000}),page.getByText('No fue posible cargar el mapa.',{exact:true}).waitFor({timeout:25000})])
-  if(await page.getByText('No fue posible cargar el mapa.',{exact:true}).count()) {
-    assert.ok(consoleErrors.some(message=>message.includes('RefererNotAllowedMapError')),'El fallo de mapa debe corresponder únicamente al dominio local no autorizado.')
-    console.log('Mapa local: Google exige autorizar este puerto; CSP sin infracciones. Se comprobará el mapa en el dominio de producción.')
-  }
+  // Removed modules fall back to the dashboard.
+  for(const path of ['#gestion/mapa','#gestion/transmisiones','#gestion/falls/alertas']){await page.goto(ui+'/'+path);await page.locator('#dashboard-title,.attendance-picker').first().waitFor();assert.equal(await page.locator('.coverage-map,.pastoral-page,.transmissions-page').count(),0)}
   assert.deepEqual(errors,[]);assert.deepEqual(violations,[])
-  console.log('PASS interfaz con CSP de producción: acceso administrativo solo con correo y contraseña, revocación de otro dispositivo, auditoría, mapa y 320/390/768/1440px.')
+  console.log('PASS interfaz con CSP de producción: acceso administrativo solo con correo y contraseña, revocación de otro dispositivo, auditoría, módulos retirados y 320/390/768/1440px.')
  }
  console.log('PASS seguridad: acceso sin doble factor incluso con configuración antigua, rutas retiradas, sesiones por dispositivo, revocación, expiración, auditoría, permisos y límites por cuenta/IP/exportaciones; cuerpos comprimidos rechazados.')
 }catch(error){

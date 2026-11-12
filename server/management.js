@@ -3,26 +3,28 @@ import { randomUUID } from 'node:crypto'
 import { pool } from './db.js'
 import { requireSession, requirePermission, hasPermission, protectMutation, readUser, hashPassword, credentials, targetLevel, memberLevel } from './auth.js'
 import { hasPastoralAuthority, pastoralRoles, canAdministerAccounts, rolePermissionPolicy, outranks } from './pastoral-policy.js'
-import { invalid, identifier, text, choice, boolean, date, url, fields, memberFields, sensitiveMemberFields, groupFields, activityFields, bogotaToday } from './entities.js'
+import { invalid, identifier, text, choice, boolean, date, url, fields, memberFields, registrationEmail, sensitiveMemberFields, groupFields, activityFields, bogotaToday } from './entities.js'
 import { recalculateAlerts } from './alerts.js'
 import { facebookTransmission } from './facebook.js'
 import { sendReport, discipleReportRows, discipleColumns } from './reports.js'
 import { databaseRateLimit } from './rate-limit.js'
-import { canManageTraining, requireTraining, trainingBooks, trainingBook, checkBookVersion, validateTrainingBook } from './training.js'
+import { canManageTraining, requireTraining, trainingBooks, trainingBook, checkBookVersion, validateTrainingBook, bookAssignmentsSql, additionalBooksSql, allBookNamesSql, memberBookIds, bookList, saveMemberBooks, tidyMemberBooks } from './training.js'
 import { parseProfilePhoto, saveProfilePhoto } from './profile-photo.js'
 import { mapRouter } from './map.js'
 import { applyGroupCoverage } from './group-coverage.js'
 import { readNeighborhoodCatalog } from './neighborhood-catalog.js'
 import { welcomeContext, sendAccountWelcome } from './account-welcome.js'
 import { parseRecurrence, fixedStart } from './recurrence-dates.js'
-import { recurrenceColumns, recurrenceJoins, nearestPublicDate, nearestManagedDate, seriesTemplate, createRecurringActivity, ensureRecurringActivities, reviseFixedActivity, retireFutureDates } from './recurring-activities.js'
+import { recurrenceColumns, recurrenceJoins, nearestPublicDate, nearestManagedDate, nearestAttendanceDate, seriesTemplate, createRecurringActivity, ensureRecurringActivities, reviseFixedActivity, retireFutureDates } from './recurring-activities.js'
 import { recordMemberState } from './member-state-history.js'
 import { pastoralCalendarRouter, publicCalendar } from './pastoral-calendar.js'
 import { memberImportRouter } from './member-import.js'
 import { discipleConsentRouter } from './disciple-consent.js'
 import { attendanceToolsRouter, attendanceRoster } from './attendance-tools.js'
 import { transmissionRouter } from './transmission-settings.js'
-import { reserveCode, memberCode, memberCodeSql, parseMemberCode } from './public-codes.js'
+import { reserveCode, memberCode, memberCodeSql, parseMemberCode, groupCode } from './public-codes.js'
+import { activityImagesRouter, publicActivityImages } from './activity-images.js'
+import { checkinManagementRouter, publicCheckinRouter } from './attendance-checkin.js'
 
 export const managementRouter = Router()
 export const publicRouter = Router()
@@ -115,7 +117,7 @@ async function exportDisciples(req,res,id=null) {
   if(req.query.sin_libro==='1') clauses.push('m.id_libro IS NULL')
   if(req.query.id_grupo) { clauses.push('m.id_grupo=?'); params.push(identifier(req.query.id_grupo)) }
   const [rows]=await pool.execute(`SELECT m.*,CAST(m.fecha_nacimiento AS CHAR) AS fecha_nacimiento,
-    l.nombre AS libro_actual,g.nombre AS grupo_nombre,r.nombre AS rol_nombre,s.nombre AS sede_nombre,
+    ${allBookNamesSql('m')} AS libro_actual,g.nombre AS grupo_nombre,r.nombre AS rol_nombre,s.nombre AS sede_nombre,
     CONCAT_WS(' ',c.nombres,c.apellidos) AS cobertura_nombre,
     (SELECT GROUP_CONCAT(mt.nombre ORDER BY mt.nombre SEPARATOR ', ') FROM miembro_ministerio mm JOIN ministerio mt ON mt.id_ministerio=mm.id_ministerio WHERE mm.id_miembro=m.id_miembro AND mm.activo=1) AS ministerios
     FROM miembro m LEFT JOIN libro_adiestramiento l ON l.id_libro=m.id_libro
@@ -144,16 +146,20 @@ publicRouter.get('/ministries',async (_req,res) => {
 })
 publicRouter.get('/transmission',async (_req,res) => res.json(await facebookTransmission()))
 publicCalendar(publicRouter)
+publicActivityImages(publicRouter)
+publicRouter.use('/checkin',publicCheckinRouter())
 
 managementRouter.use(protectMutation,requireSession,requirePermission('gestion.acceder'))
 const exportLimit=databaseRateLimit({prefix:'exports',maximum:12,key:req=>String(req.authUser.id),message:'Has solicitado varios reportes. Espera unos minutos antes de descargar más.'})
-managementRouter.use((req,res,next)=>req.path.startsWith('/reports/') || /^\/members\/\d+\/(excel|consent\.pdf)$/.test(req.path) ? exportLimit(req,res,next) : next())
+managementRouter.use((req,res,next)=>req.path.startsWith('/reports/') || /^\/members\/\d+\/excel$/.test(req.path) ? exportLimit(req,res,next) : next())
 managementRouter.use('/mapa',mapRouter)
 managementRouter.use(pastoralCalendarRouter({transaction,currentActor,memberFilter,activityFilter,getMember}))
 managementRouter.use(memberImportRouter({transaction,currentActor,registrationPermission,groupFilter,memberFilter}))
-managementRouter.use(discipleConsentRouter({transaction,currentActor,getMember,cleanMember}))
+managementRouter.use(discipleConsentRouter({transaction,currentActor,getMember}))
 managementRouter.use(attendanceToolsRouter({transaction,currentActor,getActivity,getMember,activityFilter}))
 managementRouter.use(transmissionRouter({transaction,currentActor}))
+managementRouter.use(activityImagesRouter())
+managementRouter.use(checkinManagementRouter({getActivity}))
 managementRouter.get('/training/books', requireTraining, async (_req,res) => res.json({items:await trainingBooks()}))
 managementRouter.post('/training/books', requireTraining, async (req,res) => {
   const name=text(req.body?.nombre,150,true), description=text(req.body?.descripcion,2000)
@@ -168,7 +174,7 @@ managementRouter.post('/training/books', requireTraining, async (req,res) => {
 })
 managementRouter.get('/training/books/:id',requireTraining,async(req,res)=>{
   const book=await trainingBook(pool,req.params.id)
-  const [counts]=await pool.execute('SELECT COUNT(*) AS total FROM miembro WHERE id_libro=?',[book.id_libro])
+  const [counts]=await pool.execute(`SELECT ${bookAssignmentsSql('l')} AS total FROM libro_adiestramiento l WHERE l.id_libro=?`,[book.id_libro])
   res.json({...book,asignaciones:counts[0].total})
 })
 managementRouter.patch('/training/books/:id',requireTraining,async(req,res)=>{
@@ -193,7 +199,7 @@ managementRouter.delete('/training/books/:id',requireTraining,async(req,res)=>{
     if(!canManageTraining(actor)) throw invalid('Ya no tienes permiso para eliminar libros.',403)
     const book=await trainingBook(connection,req.params.id,true)
     checkBookVersion(req.body,book)
-    const [counts]=await connection.execute('SELECT COUNT(*) AS total FROM miembro WHERE id_libro=?',[book.id_libro])
+    const [counts]=await connection.execute(`SELECT ${bookAssignmentsSql('l')} AS total FROM libro_adiestramiento l WHERE l.id_libro=?`,[book.id_libro])
     if(counts[0].total) throw invalid(`Este libro está asignado a ${counts[0].total} discípulo(s). Reasigna sus libros antes de eliminarlo.`,409)
     await connection.execute('DELETE FROM libro_adiestramiento WHERE id_libro=?',[book.id_libro])
   })
@@ -205,9 +211,9 @@ managementRouter.get('/catalogs',async (req,res) => {
   const [zonas]=await pool.execute('SELECT * FROM zona ORDER BY nombre')
   const [ministerios]=await pool.execute('SELECT * FROM ministerio ORDER BY nombre')
   const filter=groupFilter(req,'grupos.ver')
-  const [grupos]= can(req,'grupos.ver') ? await pool.execute(`SELECT g.id_grupo,g.nombre FROM grupo_comunion g WHERE g.archivado=0 ${filter.sql}`,[...filter.params]) : [[]]
+  const [grupos]= can(req,'grupos.ver') ? await pool.execute(`SELECT g.id_grupo,g.codigo_grupo,g.nombre FROM grupo_comunion g WHERE g.archivado=0 ${filter.sql}`,[...filter.params]) : [[]]
   const registrationFilter=groupFilter(req,registrationPermission(req))
-  const [registrationGroups]=can(req,'miembros.editar') || can(req,'miembros.registrar') ? await pool.execute(`SELECT g.id_grupo,g.nombre FROM grupo_comunion g WHERE g.archivado=0 ${registrationFilter.sql}`,[...registrationFilter.params]) : [[]]
+  const [registrationGroups]=can(req,'miembros.editar') || can(req,'miembros.registrar') ? await pool.execute(`SELECT g.id_grupo,g.codigo_grupo,g.nombre FROM grupo_comunion g WHERE g.archivado=0 ${registrationFilter.sql}`,[...registrationFilter.params]) : [[]]
   const barrios=can(req,'grupos.ver') ? await readNeighborhoodCatalog() : []
   const libros=(can(req,'miembros.ver') || can(req,'miembros.editar') || can(req,'miembros.registrar') || canManageTraining(req.authUser)) ? await trainingBooks() : []
   res.json({roles,sedes,zonas,ministerios,grupos,registrationGroups,barrios,libros})
@@ -215,7 +221,11 @@ managementRouter.get('/catalogs',async (req,res) => {
 managementRouter.get('/members',requirePermission('miembros.ver'),async (req,res) => {
   const filter=memberFilter(req,'miembros.ver')
   const search=text(req.query.q,100) || ''
-  const [rows]=await pool.execute(`SELECT m.*,l.nombre AS libro_actual,CAST(m.fecha_nacimiento AS CHAR) AS fecha_nacimiento FROM miembro m LEFT JOIN libro_adiestramiento l ON l.id_libro=m.id_libro WHERE m.archivado=0 ${filter.sql}
+  // A disciple leader (discipulador) has the "Discipuladores" pastoral role (level 6) or leads an active group.
+  const [rows]=await pool.execute(`SELECT m.*,l.nombre AS libro_actual,${additionalBooksSql('m')} AS libros_adicionales,CAST(m.fecha_nacimiento AS CHAR) AS fecha_nacimiento,
+    (SELECT GROUP_CONCAT(g.nombre ORDER BY g.nombre SEPARATOR ', ') FROM grupo_comunion g WHERE g.id_discipulador=m.id_miembro AND g.archivado=0) AS grupos_a_cargo,
+    (COALESCE(r.nivel_jerarquico=6,0) OR EXISTS(SELECT 1 FROM grupo_comunion g WHERE g.id_discipulador=m.id_miembro AND g.archivado=0)) AS es_discipulador
+    FROM miembro m LEFT JOIN libro_adiestramiento l ON l.id_libro=m.id_libro LEFT JOIN rol_eclesiastico r ON r.id_rol_eclesiastico=m.id_rol_eclesiastico WHERE m.archivado=0 ${filter.sql}
     AND (CONCAT_WS(' ',m.nombres,m.apellidos) LIKE ? OR m.numero_identificacion LIKE ? OR m.codigo_miembro=?) ORDER BY m.nombres LIMIT 500`,[...filter.params,`%${search}%`,`%${search}%`,parseMemberCode(search) ?? -1])
   res.json({items:rows.map(row=>cleanMember(req,row))})
 })
@@ -235,6 +245,7 @@ managementRouter.post('/members',(req,res,next)=>can(req,'miembros.registrar') |
     if(!values.id_rol_eclesiastico) throw invalid('Selecciona el cargo pastoral del administrativo.')
     account=credentials({email:req.body.account_email,password:req.body.account_password},true)
     if(account.error) throw invalid(account.error)
+    account.email=registrationEmail(account.email,true)
     if(req.body.account_confirmation!==account.password) throw invalid('Las contraseñas de la cuenta no coinciden.')
     accountPhoto=parseProfilePhoto(req.body.account_photo)
     passwordHash=await hashPassword(account.password)
@@ -269,6 +280,8 @@ managementRouter.post('/members',(req,res,next)=>can(req,'miembros.registrar') |
     const memberNumber=await reserveCode(connection,'miembro')
     const id=await insert(connection,'miembro',{...values,codigo_miembro:memberNumber,codigo_qr:randomUUID(),id_usuario_creacion:actor.id,id_usuario_actualizacion:actor.id})
     await recordMemberState(connection,id,'activo',actor.id)
+    // A group chosen at registration is also an assignment for the disciple's group history.
+    await recordRelations(connection,{id_miembro:id,id_grupo:null,id_cobertura_pastoral:null},{id_grupo:values.id_grupo ?? null},actor.id)
     let accountId=null
     if(account) {
       accountId=await insert(connection,'usuario',{id_miembro:id,codigo_usuario:await reserveCode(connection,'usuario'),correo_login:account.email,password_hash:passwordHash,estado_usuario:'activo'})
@@ -297,6 +310,7 @@ managementRouter.patch('/members/:id',requirePermission('miembros.editar'),async
     if(Object.hasOwn(values,'id_libro')) {
       if(values.id_libro!==old.id_libro && !canManageTraining(actor)) throw invalid('Sin permiso para asignar libros.',403)
       values.id_libro=await validateTrainingBook(connection,values.id_libro,values.id_libro!==old.id_libro)
+      if(values.id_libro!==old.id_libro) values.id_libro=await tidyMemberBooks(connection,id,values.id_libro)
     }
     checkMemberServices(actor,values,old)
     if(Object.hasOwn(values,'id_rol_eclesiastico') && values.id_rol_eclesiastico!==old.id_rol_eclesiastico) {
@@ -310,16 +324,22 @@ managementRouter.patch('/members/:id',requirePermission('miembros.editar'),async
   })
   res.json({ok:true})
 })
+// Books of a disciple: {ids:[main, ...others], expectedIds} or the older {id_libro, expectedId} (main book only).
 managementRouter.put('/members/:id/book',requirePermission('miembros.ver'),requireTraining,async(req,res)=>{
-  const id=identifier(req.params.id)
-  if(!Object.hasOwn(req.body || {},'id_libro')) throw invalid('Selecciona un libro.')
+  const id=identifier(req.params.id), body=req.body || {}
+  const list=Object.hasOwn(body,'ids') ? bookList(body.ids) : null
+  if(!list && !Object.hasOwn(body,'id_libro')) throw invalid('Selecciona un libro.')
   await transaction(async connection=>{
     const actor=await currentActor(req,connection)
     if(!hasPermission(actor,'miembros.ver') || !canManageTraining(actor)) throw invalid('Tus permisos para asignar libros han cambiado.',403)
     const member=await getMember(req,id,'miembros.ver',connection,true)
-    if(Object.hasOwn(req.body,'expectedId') && identifier(req.body.expectedId,true)!==member.id_libro) throw invalid('Otro usuario cambió el libro. Actualiza la ficha antes de guardar.',409)
-    const book=await validateTrainingBook(connection,req.body.id_libro,true)
-    await update(connection,'miembro','id_miembro',id,{id_libro:book,id_usuario_actualizacion:actor.id})
+    const current=await memberBookIds(connection,member)
+    const changed=Object.hasOwn(body,'expectedIds') ? JSON.stringify(bookList(body.expectedIds || []))!==JSON.stringify(current) : Object.hasOwn(body,'expectedId') && identifier(body.expectedId,true)!==member.id_libro
+    if(changed) throw invalid('Otro usuario cambió los libros. Actualiza la ficha antes de guardar.',409)
+    let main
+    if(list) main=await saveMemberBooks(connection,id,list)
+    else main=await tidyMemberBooks(connection,id,await validateTrainingBook(connection,body.id_libro,true))
+    await update(connection,'miembro','id_miembro',id,{id_libro:main,id_usuario_actualizacion:actor.id})
   })
   res.json({ok:true})
 })
@@ -362,7 +382,14 @@ managementRouter.delete('/members/:id',requirePermission('miembros.eliminar'),as
 })
 managementRouter.get('/members/:id/history',requirePermission('miembros.ver'),async (req,res) => {
   const row=await getMember(req,req.params.id,'miembros.ver')
-  const [items]=await pool.execute('SELECT * FROM historial_miembro WHERE id_miembro=? ORDER BY fecha_cambio DESC',[row.id_miembro])
+  // Group names and who made the change, so the record reads "Grupo X · asignado por Y".
+  const [items]=await pool.execute(`SELECT h.*,
+      IF(h.concepto='grupo',ga.nombre,NULL) AS grupo_anterior,IF(h.concepto='grupo',gn.nombre,NULL) AS grupo_nuevo,
+      COALESCE(NULLIF(TRIM(p.nombre),''),NULLIF(TRIM(CONCAT_WS(' ',am.nombres,am.apellidos)),'')) AS asignado_por
+    FROM historial_miembro h
+    LEFT JOIN grupo_comunion ga ON ga.id_grupo=h.id_anterior LEFT JOIN grupo_comunion gn ON gn.id_grupo=h.id_nuevo
+    LEFT JOIN usuario u ON u.id_usuario=h.id_usuario LEFT JOIN perfil_usuario p ON p.id_usuario=u.id_usuario LEFT JOIN miembro am ON am.id_miembro=u.id_miembro
+    WHERE h.id_miembro=? ORDER BY h.fecha_cambio DESC,h.id_historial DESC`,[row.id_miembro])
   res.json({items})
 })
 managementRouter.get('/members/:id/ministries',requirePermission('miembros.ver'),async (req,res) => {
@@ -410,6 +437,7 @@ async function saveGroup(req,res,create) {
     const [rows]=await connection.execute('SELECT id_miembro FROM miembro WHERE id_miembro=? AND archivado=0',[values.id_discipulador])
     if(!rows.length) throw invalid('Discipulador no disponible.')
   }
+  if(create) values.codigo_grupo=groupCode(await reserveCode(connection,'grupo'))
   const groupId=create ? await insert(connection,'grupo_comunion',values) : (await update(connection,'grupo_comunion','id_grupo',id,values),id)
   if(Object.hasOwn(req.body,'barrios')) {
     const selection=req.body.barrios
@@ -418,10 +446,48 @@ async function saveGroup(req,res,create) {
   }
   return groupId
   })
-  res.status(create?201:200).json({id:result})
+  res.status(create?201:200).json({id:result,...(create?{codigo_grupo:values.codigo_grupo}:{})})
 }
 managementRouter.post('/groups',requirePermission('grupos.editar'),(req,res)=>saveGroup(req,res,true))
 managementRouter.patch('/groups/:id',requirePermission('grupos.editar'),(req,res)=>saveGroup(req,res,false))
+// Removes a disciple from a group (they stay without group; the change enters their history).
+// Like editing the record, a role limited to its groups cannot take disciples out of its scope.
+managementRouter.delete('/groups/:id/members/:memberId',requirePermission('grupos.editar'),requirePermission('miembros.editar'),async(req,res)=>{
+  if(scoped(req,'miembros.editar')) throw invalid('No puedes sacar discípulos de tu alcance.',403)
+  await transaction(async connection=>{
+    const actor=await currentActor(req,connection)
+    if(!hasPermission(actor,'grupos.editar') || !hasPermission(actor,'miembros.editar')) throw invalid('Ya no tienes permiso para quitar discípulos de grupos.',403)
+    const group=await getGroup(req,req.params.id,'grupos.editar',connection)
+    const old=await getMember(req,req.params.memberId,'miembros.editar',connection,true)
+    if(old.id_grupo!==group.id_grupo) throw invalid('Este discípulo ya no pertenece al grupo. Actualiza la lista.',409)
+    await recordRelations(connection,old,{id_grupo:null},req.authUser.id)
+    await update(connection,'miembro','id_miembro',old.id_miembro,{id_grupo:null,id_usuario_actualizacion:req.authUser.id})
+  })
+  res.json({ok:true})
+})
+// Adds disciples to a group from its record. A disciple belongs to one group, so someone in another
+// group is moved, and every change enters the disciple's group history. Both scopes apply.
+managementRouter.post('/groups/:id/members',requirePermission('grupos.editar'),requirePermission('miembros.editar'),async(req,res)=>{
+  const ids=Array.isArray(req.body?.ids)?[...new Set(req.body.ids.map(id=>identifier(id)))].sort((a,b)=>a-b):[]
+  if(!ids.length || ids.length>500) throw invalid('Selecciona entre 1 y 500 discípulos.')
+  const result=await transaction(async connection=>{
+    const actor=await currentActor(req,connection)
+    if(!hasPermission(actor,'grupos.editar') || !hasPermission(actor,'miembros.editar')) throw invalid('Ya no tienes permiso para asignar discípulos a grupos.',403)
+    const group=await getGroup(req,req.params.id,'grupos.editar',connection)
+    await connection.execute('SELECT id_grupo FROM grupo_comunion WHERE id_grupo=? FOR UPDATE',[group.id_grupo])
+    let added=0,moved=0
+    for(const id of ids) {
+      const old=await getMember(req,id,'miembros.editar',connection,true)
+      if(old.id_grupo===group.id_grupo) continue
+      if(old.id_grupo) moved++
+      await recordRelations(connection,old,{id_grupo:group.id_grupo},req.authUser.id)
+      await update(connection,'miembro','id_miembro',id,{id_grupo:group.id_grupo,id_usuario_actualizacion:req.authUser.id})
+      added++
+    }
+    return {added,moved}
+  })
+  res.json(result)
+})
 managementRouter.delete('/groups/:id',requirePermission('grupos.eliminar'),async(req,res)=>{
   const row=await getGroup(req,req.params.id,'grupos.eliminar')
   await update(pool,'grupo_comunion','id_grupo',row.id_grupo,{archivado:1})
@@ -457,7 +523,7 @@ managementRouter.get('/activities',async(req,res)=>{
     LEFT JOIN reunion_grupo rg ON rg.id_actividad=ac.id_actividad LEFT JOIN evento e ON e.id_actividad=ac.id_actividad
     ${recurrenceJoins}
     WHERE ac.archivado=0 ${agenda?`AND TIMESTAMP(ac.fecha,ac.hora)>=DATE_SUB(UTC_TIMESTAMP(),INTERVAL 5 HOUR) ${nearestManagedDate}`:''}
-    ${period?`AND ac.fecha${period==='past'?'<':'>='}DATE(DATE_SUB(UTC_TIMESTAMP(),INTERVAL 5 HOUR)) AND ac.titulo LIKE ?`:''}
+    ${period?`AND ac.fecha${period==='past'?'<':'>='}DATE(DATE_SUB(UTC_TIMESTAMP(),INTERVAL 5 HOUR)) AND ac.titulo LIKE ? ${period==='upcoming'?nearestAttendanceDate:''}`:''}
     ${filter.sql} ORDER BY ac.fecha ${agenda||period==='upcoming'?'ASC':'DESC'},ac.hora ${agenda||period==='upcoming'?'ASC':'DESC'},ac.id_actividad ${agenda||period==='upcoming'?'ASC':'DESC'}
     LIMIT ${period?`101 OFFSET ${(page-1)*100}`:'500'}`,[...(period?[`%${search}%`]:[]),...filter.params])
   res.json(period?{items:items.slice(0,100),hasMore:items.length>100,page}:{items})
@@ -766,7 +832,7 @@ managementRouter.get('/reports/:type',async(req,res)=>{
     ;[rows]=await pool.execute(`SELECT ${memberCodeSql('m')} AS ID,CONCAT_WS(' ',m.nombres,m.apellidos) AS Nombre,DATE_FORMAT(m.fecha_nacimiento,'%m-%d') AS Cumpleanos FROM miembro m WHERE m.archivado=0 ${filter.sql} ORDER BY MONTH(m.fecha_nacimiento),DAY(m.fecha_nacimiento),m.nombres`,filter.params)
   } else if(type==='grupos') {
     const filter=groupFilter(req,code)
-    ;[rows]=await pool.execute(`SELECT g.codigo_grupo AS Codigo,g.nombre AS Grupo,g.direccion AS Direccion,g.barrio AS Barrio,g.dia_reunion AS Dia,g.hora_reunion AS Hora,g.estado_grupo AS Estado FROM grupo_comunion g WHERE g.archivado=0 ${filter.sql} ORDER BY g.nombre`,filter.params)
+    ;[rows]=await pool.execute(`SELECT g.nombre AS Grupo,g.direccion AS Direccion,g.barrio AS Barrio,g.dia_reunion AS Dia,g.hora_reunion AS Hora,g.estado_grupo AS Estado FROM grupo_comunion g WHERE g.archivado=0 ${filter.sql} ORDER BY g.nombre`,filter.params)
   } else {
     const filter=activityFilter(req,code)
     const clauses=[],params=[...filter.params]

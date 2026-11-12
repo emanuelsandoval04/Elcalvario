@@ -13,6 +13,7 @@ import {pickOption} from './select-helper.mjs'
 const database=`calvario_tools_test_${randomUUID().replaceAll('-','')}`
 // Set before importing anything which configures the connection pool.
 process.env.DB_NAME=database
+process.env.MAIL_PROVIDER='disabled' // registration emails below use real provider domains: never send mail from this check
 const {databaseConfig}=await import('../server/config.js')
 assert.ok(['localhost','127.0.0.1','::1'].includes(databaseConfig.host),'Only a temporary local database is allowed.')
 const {importColumns,spreadsheetRows,inspectSpreadsheet}=await import('../server/member-import.js')
@@ -109,13 +110,13 @@ try {
   assert.equal(sample.getWorksheet('Discipulos').getRow(1).cellCount,20)
   assert.ok(sample.getWorksheet('Referencias'))
   await spreadsheetRows(Buffer.from(await sample.xlsx.writeBuffer()).toString('base64'))
-  const data={nombres:'Importado con ceros',apellidos:'Prueba',tipo_identificacion:'CC',numero_identificacion:'00001',celular:'03001234567',correo:'import@example.invalid',fecha_nacimiento:'1990-01-01',codigo_grupo:'G-A'}
+  const data={nombres:'Importado con ceros',apellidos:'Prueba',tipo_identificacion:'CC',numero_identificacion:'00001',celular:'0300123456',correo:'import@gmail.com',fecha_nacimiento:'1990-01-01',codigo_grupo:'G-A'}
   const workbook=new ExcelJS.Workbook(),sheet=workbook.addWorksheet('Discipulos')
   sheet.columns=Object.entries(importColumns).map(([key,label])=>({key,header:label,width:24}))
   sheet.addRow(data);sheet.addRow({...data,numero_identificacion:'A-1'});sheet.addRow({...data,nombres:'Duplicado en el archivo'});sheet.addRow({...data,numero_identificacion:'ERROR',celular:'123',fecha_nacimiento:'2099-01-01'});sheet.addRow({...data,numero_identificacion:'FORMULA',apellidos:{formula:'1+1'}})
   const file=Buffer.from(await workbook.xlsx.writeBuffer()).toString('base64')
   const initialPreview=(await request('management/members/import/preview',{cookie:owner.cookie,body:{file,bookId:book.insertId}})).data
-  assert.equal(initialPreview.valid,1);assert.equal(initialPreview.rows[0].data.numero_identificacion,'00001');assert.equal(initialPreview.rows[0].data.celular,'03001234567')
+  assert.equal(initialPreview.valid,1);assert.equal(initialPreview.rows[0].data.numero_identificacion,'00001');assert.equal(initialPreview.rows[0].data.celular,'0300123456')
   assert.ok(initialPreview.rows[1].errors.numero_identificacion);assert.ok(initialPreview.rows[2].errors.numero_identificacion);assert.ok(initialPreview.rows[3].errors.celular&&initialPreview.rows[3].errors.fecha_nacimiento);assert.ok(initialPreview.rows[4].errors.apellidos)
   assert.throws(()=>inspectSpreadsheet(Buffer.alloc(513*1024)),{status:400})
   await assert.rejects(()=>spreadsheetRows(Buffer.from('not a zip').toString('base64')),{status:400})
@@ -147,7 +148,7 @@ try {
   const [ministry1]=await db.execute("INSERT INTO ministerio(nombre) VALUES ('Ministerio Excel A')")
   const [ministry2]=await db.execute("INSERT INTO ministerio(nombre) VALUES ('Ministerio Excel B')")
   const [pastoralRank]=await db.execute("SELECT id_rol_eclesiastico FROM rol_eclesiastico WHERE nombre='Pastor Local'")
-  const fullData={nombres:'Andrés Felipe',apellidos:'Castro Romero',tipo_identificacion:'CC',numero_identificacion:'9999000104',celular:'3000000104',correo:'andres.castro104@example.com',fecha_nacimiento:'1987-06-19',grupo_sanguineo_rh:'O+',eps:'EPS de prueba',contacto_emergencia_nombre:'Persona de emergencia',contacto_emergencia_celular:'3001112233',funcion_iglesia:'Servicio de enseñanza',sede:'Sede importada',rol_eclesiastico:'Pastor Local',grupo_comunion:'Grupo A',cobertura_pastoral:'CC L-A',libro_adiestramiento:'Libro de dios',ministerios:'Ministerio Excel A; Ministerio Excel B',estado_miembro:'inactivo'}
+  const fullData={nombres:'Andrés Felipe',apellidos:'Castro Romero',tipo_identificacion:'CC',numero_identificacion:'9999000104',celular:'3000000104',correo:'andres.castro104@gmail.com',fecha_nacimiento:'1987-06-19',grupo_sanguineo_rh:'O+',eps:'EPS de prueba',contacto_emergencia_nombre:'Persona de emergencia',contacto_emergencia_celular:'3001112233',funcion_iglesia:'Servicio de enseñanza',sede:'Sede importada',rol_eclesiastico:'Pastor Local',grupo_comunion:'Grupo A',cobertura_pastoral:'CC L-A',libro_adiestramiento:'Libro de dios',ministerios:'Ministerio Excel A; Ministerio Excel B',estado_miembro:'inactivo'}
   const fullBook=new ExcelJS.Workbook(),fullSheet=fullBook.addWorksheet('Discipulos')
   fullSheet.columns=Object.entries(importColumns).map(([key,label])=>({key,header:label,width:24}));fullSheet.addRow(fullData)
   const fullFile=Buffer.from(await fullBook.xlsx.writeBuffer()).toString('base64')
@@ -207,7 +208,6 @@ try {
     await page.goto(ui+'/#usuarios');await page.getByRole('heading',{name:'Administración de cuentas',exact:true}).waitFor();await page.waitForFunction(()=>document.querySelector('.admin-workspace')?.getAttribute('data-navigation-compact')==='true')
     await page.reload();await page.getByRole('heading',{name:'Administración de cuentas',exact:true}).waitFor();await page.waitForFunction(()=>document.querySelector('.admin-workspace')?.getAttribute('data-navigation-compact')==='true')
     await page.getByRole('button',{name:'Expandir menú lateral',exact:true}).click();await page.goto(ui+'/#gestion');await page.locator('#dashboard-title').waitFor();await page.waitForFunction(()=>document.querySelector('.admin-workspace')?.getAttribute('data-navigation-open')==='true')
-    await page.goto(ui+'/#gestion/falls/alertas');await page.getByRole('button').filter({hasText:'Persona B'}).click();await page.getByLabel('Registrar una llamada, visita o nota').check();await page.getByLabel('Resultado y observaciones').fill('Visita registrada desde el navegador.');await page.getByRole('button',{name:'Guardar seguimiento',exact:true}).click();await page.getByRole('status').filter({hasText:'Seguimiento guardado.'}).waitFor();await page.getByText('Visita registrada desde el navegador.',{exact:true}).waitFor()
     await page.goto(ui+'/#gestion/activities');await page.getByRole('button',{name:'Calendario',exact:true}).click();await page.locator('.calendar-event').filter({hasText:'Encuentro visual'}).click();await page.getByRole('heading',{name:'Encuentro visual',exact:true}).waitFor()
     await page.goto(ui+'/#gestion/members');await page.getByRole('button',{name:'Registrar discípulo',exact:true}).click();await page.getByRole('button',{name:/Continuar/}).click();await page.locator('.form-error-summary').waitFor();await page.waitForFunction(()=>document.querySelector('.form-error-summary')===document.activeElement);assert.equal(await page.locator('.form-error-summary').evaluate(node=>node===document.activeElement),true)
     await page.locator('.form-error-summary a').first().click();assert.equal(await page.locator('input[name=nombres]').evaluate(node=>node===document.activeElement),true)
@@ -227,9 +227,8 @@ try {
     const [uiMembers]=await db.execute("SELECT numero_identificacion,eps,grupo_sanguineo_rh,id_libro,id_sede FROM miembro WHERE numero_identificacion IN ('UI-001','UI-002') ORDER BY numero_identificacion")
     assert.equal(uiMembers[0].id_libro,secondBook.insertId);assert.equal(uiMembers[0].id_sede,site.insertId)
     assert.equal(uiMembers[1].id_libro,book.insertId);assert.equal(uiMembers[1].eps,'EPS corregida en navegador');assert.equal(uiMembers[1].grupo_sanguineo_rh,'AB+')
-    for(const [path,ready,name] of [['#gestion','.dashboard-home','dashboard'],['#gestion/falls/alertas','.pastoral-case','pastoral'],['#gestion/members','.record-create','members']]) {
+    for(const [path,ready,name] of [['#gestion','.dashboard-home','dashboard'],['#gestion/members','.record-create','members']]) {
       await page.goto(ui+'/'+path);await page.locator(ready).first().waitFor()
-      if(name==='pastoral'){await page.getByRole('button').filter({hasText:'Persona B'}).click();await page.getByRole('button',{name:'Guardar seguimiento',exact:true}).waitFor()}
       for(const width of [1440,1024,768,390,320]){await page.setViewportSize({width,height:1000});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false,`${name} at ${width}`);if([1440,390,320].includes(width))await page.screenshot({path:`checks/tools-${name}-${width}.png`,fullPage:true})}
     }
     await page.goto(ui+'/#gestion/activities');await page.getByRole('button',{name:'Calendario',exact:true}).click();await page.locator('.calendar-grid').waitFor()

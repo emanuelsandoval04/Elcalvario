@@ -70,8 +70,11 @@ try {
   await save(first,initial.version,{[personSaved]:'ausente'},leader.cookie,409)
   await save(first,initial.version,{[outside]:'presente'},leader.cookie,404)
   const futureRoster=await roster(future)
-  await save(future,futureRoster.version,{},leader.cookie,409)
-  assert.equal((await db.execute('SELECT COUNT(*) AS total FROM asistencia WHERE id_actividad=?',[future]))[0][0].total,0)
+  // Future dates can be saved too; their absences do not raise alerts before the date.
+  await save(future,futureRoster.version,{},leader.cookie,201)
+  assert.ok((await db.execute('SELECT COUNT(*) AS total FROM asistencia WHERE id_actividad=?',[future]))[0][0].total>0)
+  assert.equal((await db.execute('SELECT COUNT(*) AS total FROM alerta_ausencia WHERE id_actividad=? AND vigente=1',[future]))[0][0].total,0)
+  await db.execute('DELETE FROM asistencia WHERE id_actividad=?',[future])
   await db.query('CREATE TRIGGER fail_attendance_batch BEFORE INSERT ON asistencia FOR EACH ROW SET NEW.estado_asistencia=NULL')
   await save(second,(await roster(second)).version,{},leader.cookie,503)
   await db.query('DROP TRIGGER fail_attendance_batch')
@@ -135,7 +138,7 @@ try {
   assert.equal(firstPage.items.length,100);assert.equal(firstPage.hasMore,true);assert.equal(nextPage.items.length,25);assert.equal(nextPage.hasMore,false)
   assert.equal(new Set([...firstPage.items,...nextPage.items].map(item=>item.id_actividad)).size,125)
   assert.ok((await request('management/activities?view=attendance&period=past',{cookie:leader.cookie})).data.items.every(item=>item.id_grupo===gA.insertId))
-  console.log('PASS automatic unmarked absences, explicit justification, preserved existing/archived records, future guard, atomic rollback, concurrent retry, profile history, scoped access, alerts/corrections, event-specific PDF/XLSX and paginated historical events.')
+  console.log('PASS automatic unmarked absences, explicit justification, preserved existing/archived records, future-date saves without early alerts, atomic rollback, concurrent retry, profile history, scoped access, alerts/corrections, event-specific PDF/XLSX and paginated historical events.')
 
   if(process.argv.includes('--ui')) {
     const uiActivity=await activity('Encuentro para guardar UI',addDays(today,-2));await attend(uiActivity,personSaved);await attend(uiActivity,archived,'presente',1)
@@ -150,8 +153,8 @@ try {
     await page.goto(ui+'/#login');await page.getByLabel('Correo electrónico',{exact:true}).fill('owner@example.invalid');await page.getByLabel('Contraseña',{exact:true}).fill(password);await page.getByRole('button',{name:'Iniciar sesión',exact:true}).click();await page.locator('#dashboard-title').waitFor()
     await page.goto(ui+'/#gestion/falls/registro');await page.getByRole('button',{name:'Eventos anteriores',exact:true}).click()
     await page.getByLabel('Buscar evento para asistencia',{exact:true}).fill('Encuentro para guardar UI')
-    await page.locator(`.attendance-picker select option[value="${uiActivity}"]`).waitFor({state:'attached'})
-    await pickOption(page.getByRole('combobox',{name:'Actividad',exact:true}),String(uiActivity))
+    await page.locator('.attendance-card',{hasText:'Encuentro para guardar UI'}).click()
+    await page.getByRole('button',{name:'Cambiar evento',exact:true}).waitFor()
     await pickOption(page.getByRole('combobox',{name:'Asistencia de Presente prueba',exact:true}),'presente')
     await pickOption(page.getByRole('combobox',{name:'Asistencia de Justificado prueba',exact:true}),'justificado')
     assert.equal(await page.getByRole('combobox',{name:'Asistencia de Ausente prueba',exact:true}).innerText(),'Ausente sin justificación (sin marcar)')

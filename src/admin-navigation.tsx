@@ -7,11 +7,9 @@ const modules = [
   { key: 'dashboard', label: 'Inicio', permissions: ['gestion.acceder'] },
   { key: 'members', label: 'Discípulos', permissions: ['miembros.ver', 'miembros.editar', 'miembros.registrar'] },
   { key: 'groups', label: 'Grupos de Comunión', permissions: ['grupos.ver'] },
-  { key: 'mapa', label: 'Mapa', permissions: ['grupos.ver'] },
   { key: 'training', label: 'Adiestramiento', permissions: ['adiestramiento.gestionar'] },
   { key: 'activities', label: 'Eventos y Cultos', permissions: ['eventos.editar', 'eventos.publicar', 'grupos.editar', 'asistencia.registrar', 'asistencia.ver'] },
-  { key: 'falls', label: 'Asistencia y alertas', permissions: ['asistencia.registrar', 'asistencia.ver', 'alertas.ver'] },
-  { key: 'transmisiones', label: 'Transmisiones', permissions: ['transmisiones.gestionar'] },
+  { key: 'falls', label: 'Asistencia', permissions: ['asistencia.registrar', 'asistencia.ver'] },
   { key: 'reports', label: 'Reportes', permissions: ['reportes.asistencia', 'reportes.cumpleanos', 'reportes.grupos', 'reportes.discipulos'] },
   { key: 'users', label: 'Usuarios, roles y permisos', permissions: ['usuarios.gestionar', 'permisos.gestionar'] },
 ]

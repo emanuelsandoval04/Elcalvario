@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import { gsap, useGSAP, useAdminMotion, useMediaQuery } from './admin-motion'
 import AccountMenu from './AccountMenu'
-import AccountNotifications from './AccountNotifications'
 import type { AuthUser } from './auth'
 import { hasPermission } from './auth'
 import { InstallApp, ConnectionStatus } from './pwa'
@@ -126,7 +125,7 @@ export default function AdminFrame({ title, sectionName, navigation, children, v
     { key: 'members', label: 'Discípulos', icon: 'members', href: '#gestion/members', allowed: canUse(['miembros.ver', 'miembros.editar', 'miembros.registrar']) },
     { key: 'falls', label: 'Asistencia', icon: 'attendance', href: '#gestion/falls/registro', allowed: canUse(['asistencia.registrar', 'asistencia.ver']) },
     { key: 'activities', label: 'Eventos', icon: 'activities', href: '#gestion/activities', allowed: canUse(['eventos.editar', 'eventos.publicar', 'grupos.editar', 'asistencia.registrar', 'asistencia.ver']) },
-    { key: 'mapa', label: 'Mapa', icon: 'mapa', href: '#gestion/mapa', allowed: canUse(['grupos.ver']) },
+    { key: 'groups', label: 'Grupos', icon: 'groups', href: '#gestion/groups', allowed: canUse(['grupos.ver']) },
   ]
   const moreActive = !bottomItems.some(item => item.key === viewKey) || alertPage
   return <div className="admin-workspace" ref={root} data-navigation-open={open} data-navigation-compact={compact} data-view={viewKey}>
@@ -136,7 +135,6 @@ export default function AdminFrame({ title, sectionName, navigation, children, v
       </button>
       {!home && <a href="#gestion" className="panel-mobile-back" aria-label="Volver al inicio"><AdminIcon name="back"/></a>}
       <a className={`panel-brand${!home ? ' panel-brand-section' : ''}`} href="#gestion" aria-label="El Calvario, panel de gestión"><img src="/media/logo-compact.webp" alt=""/><span><span className="panel-brand-name">El Calvario</span><span className="panel-mobile-title">{sectionName}</span><small>MI COMUNIDAD · VILLAVICENCIO</small></span></a>
-      <AccountNotifications user={user} disabled={mobile && open}/>
       <AccountMenu user={user} onUpdate={onUserChange} disabled={mobile && open}/>
     </header>
     <div className="panel-body">

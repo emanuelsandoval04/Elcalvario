@@ -63,3 +63,45 @@
 .event-repeat-fields p { grid-column:1 / -1; margin:0; font-size:12px; line-height:1.6; color:#737b85; }
 .event-repeat-note { font-size:12px; line-height:1.6; color:#82502f; }
 .event-edit-scope { margin-top:16px; }
+.group-members { display:grid; gap:12px; margin:18px 0; padding:18px; border:1px solid #ece6df; border-radius:14px; background:#fffdfb; min-width:0; }
+.group-members-heading { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:10px; }
+.group-members-heading h4 { margin:0; font-size:15px; }
+.group-members-heading h4 span { margin-left:6px; padding:2px 8px; border-radius:999px; background:#fff1e7; color:#c2530f; font-size:12px; }
+html body .group-members-heading button { margin:0; }
+.group-members-list,.group-members-options { display:grid; gap:6px; margin:0; padding:0; list-style:none; min-width:0; }
+.group-members-list li { display:flex; flex-wrap:wrap; align-items:center; gap:8px; padding:8px 10px; border-radius:9px; background:#f7f5f2; font-size:13px; overflow-wrap:anywhere; }
+.group-members-list small,.group-members-options small { color:#7c8593; font-size:11px; }
+.group-members-empty,.group-members-hint { margin:0; color:#67768b; font-size:13px; line-height:1.6; }
+.group-members-picker { display:grid; gap:10px; padding-top:12px; border-top:1px solid #ece6df; min-width:0; }
+.group-members-picker > label { display:grid; gap:6px; font-size:13px; color:#59697c; }
+.group-members-options { max-height:340px; overflow:auto; padding-right:4px; }
+.group-members-options label { display:flex; align-items:center; gap:10px; min-height:44px; padding:6px 10px; border:1px solid #e9e4dd; border-radius:10px; background:#fff; cursor:pointer; }
+.group-members-options label:has(input:checked) { border-color:#ffb68a; background:#fff7f1; }
+.group-members-options input { width:18px; height:18px; min-height:18px; flex-shrink:0; accent-color:#ff6209; }
+.group-members-name { display:flex; flex-wrap:wrap; align-items:center; gap:6px; flex:1; min-width:0; font-size:13px; overflow-wrap:anywhere; }
+.group-members-warning { margin:0; padding:8px 10px; border-radius:9px; background:#fff3d6; color:#7a5a12; font-size:12px; }
+.group-members-error { margin:0; color:#b63437; font-size:13px; }
+.group-members-actions { display:flex; flex-wrap:wrap; gap:10px; }
+html body .group-members-actions button { margin:0; }
+.group-members-name .member-code,.group-members-list .member-code { flex-shrink:0; white-space:nowrap; }
+.group-members-options small { margin-left:auto; text-align:right; }
+@media(max-width:480px) { .group-members { padding:14px; } .group-members-options label { flex-wrap:wrap; row-gap:2px; } .group-members-name { flex:1 1 calc(100% - 40px); } .group-members-options small { flex-basis:100%; margin-left:28px; text-align:left; } }
+.member-kind-toggle { margin:4px 0 14px; }
+.member-kind-toggle button span { opacity:.75; font-weight:500; }
+.record-copy .member-leader { width:fit-content; padding:2px 8px; border-radius:6px; background:#eef6ff; color:#2f5f9e; font-size:11px; font-weight:650; }
+.member-leader-note { margin:4px 0 14px; padding:10px 12px; border-radius:10px; background:#eef6ff; color:#2f5f9e; font-size:13px; line-height:1.5; }
+.leader-sections { margin:0 0 18px; }
+.leader-groups { display:grid; gap:18px; }
+.leader-group { display:grid; gap:12px; padding:18px; border:1px solid #e4e8d8; border-radius:14px; background:#fff; min-width:0; }
+.leader-group-heading { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:10px; }
+.leader-group-heading h4 { margin:0; font-size:17px; overflow-wrap:anywhere; }
+html body .leader-group-heading .app-action { margin:0; }
+.leader-group-barrios { margin:0; color:#59606d; font-size:13px; line-height:1.6; white-space:pre-line; overflow-wrap:anywhere; }
+.leader-group .group-members { margin:0; }
+.leader-groups-empty p { margin:0 0 8px; color:#59606d; font-size:14px; line-height:1.6; }
+html body .group-members-list .group-members-remove { margin:0 0 0 auto; min-height:32px; padding:4px 12px; border:1px solid #f0d0d0; border-radius:8px; background:#fff; color:#b63437; font-size:12px; font-weight:650; box-shadow:none; cursor:pointer; }
+html body .group-members-list .group-members-remove:hover:not(:disabled) { background:#fff1f1; }
+@media(max-width:480px) { .leader-group { padding:14px; } }
+.member-group-history ul { list-style: none; margin: 0 0 16px; padding: 0; display: grid; gap: 8px; }
+.member-group-history li { display: grid; gap: 2px; padding: 10px 12px; border: 1px solid #eadfd5; border-radius: 10px; background: #fffaf6; min-width: 0; overflow-wrap: anywhere; }
+.member-group-history li span, .member-group-history li time { font-size: 0.92em; color: #6b6259; }

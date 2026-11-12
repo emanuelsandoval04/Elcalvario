@@ -151,7 +151,7 @@ try {
   assert.equal(catalogsResponse.status, 200)
   const catalogs = await catalogsResponse.json()
   const [welcomeGroup] = await db.execute("INSERT INTO grupo_comunion(codigo_grupo,nombre) VALUES ('WELCOME','Grupo de bienvenida')")
-  const memberInput = { nombres: 'Nuevo administrativo', apellidos: 'Prueba', tipo_identificacion: 'CC', numero_identificacion: 'WELCOME-01', celular: '3000000000', fecha_nacimiento: '1990-01-01', tipo_registro: 'administrativo', id_rol_eclesiastico: catalogs.roles.find(role => role.nivel_jerarquico === 6).id_rol_eclesiastico, id_grupo: welcomeGroup.insertId, responsable_grupo: 1, id_ministerio: catalogs.ministerios[0].id_ministerio, funcion_iglesia: 'Discipulador de prueba', account_email: 'member-welcome@example.invalid', account_password: password, account_confirmation: password }
+  const memberInput = { nombres: 'Nuevo administrativo', apellidos: 'Prueba', tipo_identificacion: 'CC', numero_identificacion: 'WELCOME-01', celular: '3000000000', fecha_nacimiento: '1990-01-01', tipo_registro: 'administrativo', id_rol_eclesiastico: catalogs.roles.find(role => role.nivel_jerarquico === 6).id_rol_eclesiastico, id_grupo: welcomeGroup.insertId, responsable_grupo: 1, id_ministerio: catalogs.ministerios[0].id_ministerio, funcion_iglesia: 'Discipulador de prueba', account_email: 'member-welcome@gmail.com', account_password: password, account_confirmation: password }
   const administrative = await fetch(`${origin}/api/management/members`, { method: 'POST', headers: { Origin: origin, Cookie: owner.cookie, 'Content-Type': 'application/json' }, body: JSON.stringify(memberInput) })
   const administrativeData = await administrative.json()
   assert.equal(administrative.status, 201, JSON.stringify(administrativeData))
@@ -159,7 +159,8 @@ try {
   assert.equal(administrativeData.emailDelivery, 'sent')
   assert.ok(!JSON.stringify(administrativeData).includes(password))
   const administrativeMail = welcomeEmails.at(-1)
-  for (const expected of ['member-welcome@example.invalid', 'Discipulador', 'Grupo de bienvenida', 'WELCOME', catalogs.ministerios[0].nombre, password]) assert.ok(administrativeMail.text.includes(expected), 'El correo debe incluir las credenciales y vinculaciones asignadas.')
+  for (const expected of ['member-welcome@gmail.com', 'Discipulador', 'Grupo de bienvenida', catalogs.ministerios[0].nombre, password]) assert.ok(administrativeMail.text.includes(expected), `El correo debe incluir las credenciales y vinculaciones asignadas: ${expected}`)
+  assert.ok(!administrativeMail.text.includes('WELCOME'), 'El código del grupo ya no se muestra en el correo.')
   assert.ok(administrativeMail.text.includes('solo dentro del alcance de los grupos a tu cargo'))
   const beforeNormalMember = welcomeEmails.length
   const normal = await fetch(`${origin}/api/management/members`, { method: 'POST', headers: { Origin: origin, Cookie: owner.cookie, 'Content-Type': 'application/json' }, body: JSON.stringify({ nombres: 'Discípulo sin cuenta', tipo_identificacion: 'CC', numero_identificacion: 'WELCOME-02', celular: '3000000000', fecha_nacimiento: '1990-01-01', tipo_registro: 'discipulo' }) })

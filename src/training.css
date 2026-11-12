@@ -17,3 +17,19 @@
 .training-assignment-note { margin-top: 24px; }
 .training-member-current { padding: 16px; border: 1px solid #efd9c9; border-radius: 12px; background: #fff8f1; margin: 18px 0; }
 .training-member-current h4 { margin: 0 0 8px; }
+.member-books-list { margin: 0 0 12px; padding: 0; list-style: none; display: grid; gap: 6px; }
+.member-books-list li { overflow-wrap: anywhere; color: #4a4038; }
+.member-books-list li:first-child { font-weight: 700; font-size: 1.05em; color: #2d241d; }
+.member-books-editor { display: grid; gap: 12px; min-width: 0; }
+.member-books-rows { margin: 0; padding: 0; list-style: none; display: grid; gap: 10px; }
+.member-books-row { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.member-books-row > :first-child { flex: 1 1 auto; min-width: 0; }
+.member-books-row-actions { display: flex; gap: 6px; flex: 0 0 auto; }
+.member-books-row-actions button { min-width: 44px; padding-inline: 12px; }
+.member-books-tools { display: flex; flex-wrap: wrap; gap: 8px; }
+.member-books-tools .training-add { display: flex; align-items: center; gap: 7px; }
+.member-books-editor .manage-actions { margin: 0; }
+@media (max-width: 420px) {
+  .member-books-row { flex-wrap: wrap; }
+  .member-books-row > :first-child { flex-basis: 100%; }
+}

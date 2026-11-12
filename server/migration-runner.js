@@ -1,6 +1,6 @@
 import { readFile } from 'node:fs/promises'
 
-export const migrationFiles = ['001-auth.sql', '002-superadmin.sql', '003-participation.sql', '004-church-management.sql', '005-pending-users.sql', '006-account-profile.sql', '007-pastoral-registration.sql', '008-profile-photo.sql', '009-display-preference.sql', '010-map-coverage.sql', '011-group-neighborhoods.sql', '012-group-neighborhood-text.sql', '013-shared-rate-limits.sql', '014-training-books.sql', '015-account-security.sql', '016-account-deletion.sql', '017-notification-dismissals.sql', '018-password-recovery.sql', '019-recurring-activities.sql', '020-pastoral-followup.sql', '021-signed-consent.sql', '022-unify-admin-role.sql', '023-facebook-transmissions.sql', '024-public-codes.sql']
+export const migrationFiles = ['001-auth.sql', '002-superadmin.sql', '003-participation.sql', '004-church-management.sql', '005-pending-users.sql', '006-account-profile.sql', '007-pastoral-registration.sql', '008-profile-photo.sql', '009-display-preference.sql', '010-map-coverage.sql', '011-group-neighborhoods.sql', '012-group-neighborhood-text.sql', '013-shared-rate-limits.sql', '014-training-books.sql', '015-account-security.sql', '016-account-deletion.sql', '017-notification-dismissals.sql', '018-password-recovery.sql', '019-recurring-activities.sql', '020-pastoral-followup.sql', '021-signed-consent.sql', '022-unify-admin-role.sql', '023-facebook-transmissions.sql', '024-public-codes.sql', '025-activity-images.sql', '026-attendance-checkin.sql', '027-group-codes.sql', '028-member-books.sql', '029-phone-consent.sql']
 
 export async function applyMigrations(connection) {
   const files = await Promise.all(migrationFiles.map(file => readFile(new URL(`./migrations/${file}`, import.meta.url), 'utf8')))
@@ -15,7 +15,9 @@ export async function applyMigrations(connection) {
         // Migration 005 accepts both the original enum and the already upgraded enum.
         const pendingUpgrade = match[1] === 'usuario' && column[1] === 'estado_usuario' && found?.type === "enum('activo','inactivo','bloqueado','pendiente')"
         const neighborhoodTextUpgrade = match[1] === 'grupo_comunion' && column[1] === 'barrio' && found?.type === 'text'
-        if (!found || !pendingUpgrade && !neighborhoodTextUpgrade && found.type.toLowerCase().replaceAll(' ', '') !== column[2].toLowerCase().replaceAll(' ', '')) {
+        // Migration 029 adds 'sms' to the consent method.
+        const smsConsentUpgrade = match[1] === 'consentimiento_datos' && column[1] === 'medio' && found?.type === "enum('papel','digital','sms')"
+        if (!found || !pendingUpgrade && !neighborhoodTextUpgrade && !smsConsentUpgrade && found.type.toLowerCase().replaceAll(' ', '') !== column[2].toLowerCase().replaceAll(' ', '')) {
           throw new Error(`Esquema incompatible: ${match[1]}.${column[1]}. Revisar antes de migrar; no se renombra ni duplica automáticamente.`)
         }
       }

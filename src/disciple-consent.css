@@ -30,3 +30,14 @@ html body .disciple-consent input[type=checkbox] { flex:0 0 18px; width:18px; he
 html body .disciple-consent button { min-height:44px; max-width:100%; white-space:normal; overflow-wrap:anywhere; line-height:1.6; }
 .disciple-consent .consent-error { padding:14px; border-radius:10px; background:#fff0f2; color:#a02638; }
 @media(max-width:600px) { .disciple-consent { padding:16px; } .disciple-consent .consent-upload { padding:14px; } .disciple-consent .consent-download button,.disciple-consent fieldset>button { width:100%; } }
+.disciple-consent .consent-sms { display:grid; gap:12px; padding:18px; border-radius:12px; background:#f6f8fb; }
+.disciple-consent .consent-code { display:grid; gap:10px; margin:0; }
+.disciple-consent .consent-code p { margin:0; }
+.disciple-consent .consent-code-row { display:flex; flex-wrap:wrap; gap:10px; }
+.disciple-consent .consent-code-row input { flex:0 1 180px; min-width:0; font-size:22px; letter-spacing:6px; text-align:center; font-variant-numeric:tabular-nums; }
+.disciple-consent .consent-code > .secondary { justify-self:start; }
+.disciple-consent .consent-note { margin:0; padding:12px; border-radius:10px; background:#fff7e6; color:#7a5300; }
+.disciple-consent .consent-preview { margin:0; padding:10px 12px; border-left:3px solid #c5cfdd; background:#fff; font-size:12px; }
+.disciple-consent .consent-preview span { font-weight:700; color:#263145; }
+@media(max-width:600px) { .disciple-consent .consent-sms { padding:14px; } .disciple-consent .consent-code-row > * { flex:1 1 100%; } .disciple-consent .consent-sms > button { width:100%; } }
+.disciple-consent .consent-recaptcha:empty { display:none; }

@@ -64,7 +64,7 @@ export default function Participation() {
           <p className="participation-intro">Cuéntanos un poco de ti y del área en la que te gustaría servir.</p>
           <ValidatedForm className="participation-form" onSubmit={submit}>
             <label htmlFor="participation-name">Nombre<input id="participation-name" name="name" autoComplete="name" required maxLength={120} disabled={busy} /></label>
-            <label htmlFor="participation-phone">Teléfono<input id="participation-phone" name="phone" type="tel" autoComplete="tel" required minLength={7} maxLength={30} pattern="[+0-9 ()\-]{7,30}" title="Ingresa un teléfono de 7 a 30 caracteres, con números, espacios, paréntesis o +." disabled={busy} /></label>
+            <label htmlFor="participation-phone">Teléfono<input id="participation-phone" name="phone" type="tel" inputMode="numeric" autoComplete="tel-national" data-rule="phone" placeholder="10 dígitos" required maxLength={20} disabled={busy} /></label>
             <label htmlFor="participation-ministry">Ministerio de interés<AppSelect id="participation-ministry" name="ministry" required defaultValue="" disabled={busy}><option value="" disabled>Selecciona un ministerio</option>{ministries.map(name => <option key={name}>{name}</option>)}</AppSelect></label>
             <label htmlFor="participation-message">Mensaje <span>(opcional)</span><textarea id="participation-message" name="message" rows={3} maxLength={2000} disabled={busy} /></label>
             {message && <p className="participation-error" role="alert">{message}</p>}

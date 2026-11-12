@@ -8,19 +8,30 @@ Cada libro tiene **Editar** y **Eliminar**. Editar su nombre o descripción cons
 
 En **Discípulos → Registrar discípulo**, el paso de información adicional incluye **Libro de adiestramiento** y **Crear libro aquí**. El editor está dentro del mismo formulario: conserva el borrador de la persona y selecciona el libro recién creado. Si el catálogo está vacío, se puede registrar al discípulo sin libro; cuando ya hay libros, el registro normal requiere elegir uno. El registro administrativo conserva su libro opcional.
 
-Para personas existentes, utiliza **Discípulos → Sin libro → Ver ficha**. El bloque **Libro actual** permite seleccionar y guardar el libro correspondiente. Las asignaciones existentes se conservan y pueden actualizarse expresamente. No se elige un libro automáticamente ni se modifica el de otras personas. El servidor rechaza cambios que sobrescribirían una asignación modificada por otro usuario.
+Para personas existentes, abre su ficha (el filtro **Sin libro** muestra quién no tiene ninguno). El bloque **Libro de adiestramiento** muestra:
 
-La ficha y el listado muestran el libro actual. Una cuenta vinculada a la persona también lo ve en **Opciones de la cuenta → Nombre y correo**. Ese bloque es informativo; la cuenta básica no puede cambiarse el libro a sí misma.
+- **Agregar libro** si la persona no tiene libro.
+- **Actualizar libros** si ya tiene uno o más.
+
+Al editar se pueden elegir **uno o más libros al tiempo** (*Libro 1*, *Libro 2*… con **Agregar otro libro**, **↑** para subir uno y **Quitar**). El primero de la lista es el libro principal: es el que usan el listado, el filtro *Sin libro*, el perfil de la cuenta y el consentimiento. Los demás se guardan en orden después de él. La plataforma no los etiqueta como principal o secundario; la ficha simplemente los lista con el primero resaltado.
+
+No se elige un libro automáticamente ni se modifica el de otras personas. El servidor rechaza cambios que sobrescribirían libros modificados por otro usuario (compara la lista completa y su orden).
+
+El listado muestra el libro principal. Una cuenta vinculada a la persona también lo ve en **Opciones de la cuenta → Nombre y correo**. Ese bloque es informativo; la cuenta básica no puede cambiarse el libro a sí misma.
 
 ## Excel
 
-Se puede descargar una ficha desde **Descargar ficha en Excel**, el listado filtrado mediante **Descargar discípulos en Excel**, o el listado completo autorizado en **Reportes → Ficha completa de discípulos**. El archivo `.xlsx` incluye identificación, contacto, nacimiento, grupo, rol, cobertura, libro actual, ministerios, estado, QR y fechas. Salud y emergencia solo se incluyen con `miembros.sensibles`.
+Se puede descargar una ficha desde **Descargar ficha en Excel**, el listado filtrado mediante **Descargar discípulos en Excel**, o el listado completo autorizado en **Reportes → Ficha completa de discípulos**. El archivo `.xlsx` incluye identificación, contacto, nacimiento, grupo, rol, cobertura, libros (el principal primero, separados por comas), ministerios, estado, QR y fechas. Salud y emergencia solo se incluyen con `miembros.sensibles`.
 
 El permiso `reportes.discipulos` conserva el alcance del permiso de consulta de personas. Los discipuladores solo exportan las personas de su alcance; la API aplica también el alcance actual de `miembros.ver`, incluso si se amplía el permiso de reportes. No se exportan contraseñas ni credenciales técnicas.
 
 ## Persistencia y API
 
 La migración `014-training-books.sql` crea `libro_adiestramiento`, añade `miembro.id_libro` como referencia opcional y registra los permisos. No asigna libros a fichas existentes ni altera los datos personales. Sus permisos iniciales se aplican una sola vez; repetir la migración conserva personalizaciones y revocaciones posteriores.
+
+La migración `028-member-books.sql` crea `miembro_libro_adicional(id_miembro, id_libro, posicion)` para los libros que siguen al principal. `miembro.id_libro` sigue siendo el principal, así que las fichas existentes no cambian. Un libro cuenta como asignado (y no se puede eliminar) si es el principal o uno de los demás de alguna ficha. Si el libro principal se cambia desde la edición general de la ficha, se quita de los demás para que no se repita; si se deja vacío, el siguiente pasa a ser el principal.
+
+**Producción (una sola vez):** respaldar Aiven, ejecutar `npm run db:migrate:aiven`, conceder a la cuenta web `GRANT SELECT, INSERT, UPDATE, DELETE ON defaultdb.miembro_libro_adicional TO '<cuenta de la app>'@'%';` y **después** publicar el código.
 
 | Método | Ruta bajo `/api/management` | Uso |
 | --- | --- | --- |
@@ -31,7 +42,8 @@ La migración `014-training-books.sql` crea `libro_adiestramiento`, añade `miem
 | DELETE | `/training/books/:id` | Eliminar un libro sin asignaciones; 409 si está en uso o desactualizado. |
 | POST | `/members` | Incluye `id_libro`; obligatorio en registro normal cuando hay libros. |
 | PATCH | `/members/:id` | Conserva el libro si no se envía un cambio. |
-| PUT | `/members/:id/book` | Asigna `{id_libro,expectedId}` dentro del alcance actual. |
+| PUT | `/members/:id/book` | Asigna `{ids:[principal, ...demás], expectedIds}` (hasta 20, sin repetir) dentro del alcance actual. También acepta el formato anterior `{id_libro,expectedId}`, que solo cambia el principal. |
+| GET | `/members` | Incluye `libro_actual` (principal) y `libros_adicionales` (ids en orden, separados por comas). |
 | GET | `/members/:id/excel` | Descarga una ficha autorizada. |
 | GET | `/reports/discipulos?format=xlsx` | Descarga las fichas; admite `q`, `estado`, `sin_libro=1` e `id_grupo`. |
 

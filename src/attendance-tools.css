@@ -16,3 +16,54 @@
 .attendance-history-state[data-state=ausente] { background:#fff0f2; color:#a32c41; border-color:#edbdc6; }
 .attendance-history-state[data-state=justificado] { background:#fff8e8; color:#805d13; border-color:#e8d7aa; }
 @media(max-width:600px) { .attendance-picker,.member-attendance { padding:16px; } .attendance-export button { flex:1 1 130px; } }
+.attendance-picker-chosen { display:flex; padding:0; border:0; background:none; margin-bottom:0; }
+.attendance-picker-note { margin:0; }
+.attendance-cards { display:grid; grid-template-columns:repeat(auto-fill,minmax(min(100%,220px),1fr)); gap:12px; min-width:0; }
+.attendance-cards > div { display:grid; min-width:0; }
+html body .attendance-card { display:flex; align-items:flex-start; gap:12px; width:100%; min-width:0; min-height:96px; margin:0; padding:14px; border:1px solid #e1e7ef; border-radius:12px; background:#fbfcfe; color:#242a38; font:inherit; text-align:left; box-shadow:none; cursor:pointer; transition:border-color .2s,box-shadow .2s,transform .2s; }
+html body .attendance-card:hover:not(:disabled) { border-color:#ffb68a; background:#fff; box-shadow:0 10px 22px -18px #b44d0b; transform:translateY(-1px); }
+html body .attendance-card:focus-visible { outline:3px solid #ff8a3d; outline-offset:2px; }
+html body .attendance-card:disabled { opacity:.6; cursor:wait; }
+.attendance-card[data-today] { border-color:#ffc9a6; background:#fff7f1; }
+.attendance-card[data-state=cancelada] { background:#fafafa; }
+.attendance-card[data-state=cancelada] strong { color:#7a808a; text-decoration:line-through; }
+.attendance-card-date { display:flex; flex-direction:column; flex:0 0 44px; width:44px; overflow:hidden; border-radius:8px; background:#fff; text-align:center; box-shadow:0 2px 6px #0000001a; }
+.attendance-card-date small { padding:3px; background:#ff6209; color:#fff; font-size:9px; font-weight:700; text-transform:uppercase; }
+.attendance-card-date b { padding:4px 3px; font-size:20px; line-height:1.1; }
+.attendance-card-copy { display:grid; gap:6px; min-width:0; }
+.attendance-card-copy strong { font-size:14px; line-height:1.35; overflow-wrap:anywhere; }
+.attendance-card-when { color:#59697c; font-size:12px; line-height:1.5; }
+.attendance-card-when::first-letter { text-transform:uppercase; }
+.attendance-card-tags { display:flex; flex-wrap:wrap; gap:6px; }
+.attendance-card-tags:empty { display:none; }
+.attendance-card-tags span { padding:2px 7px; border-radius:5px; background:#eef2f7; color:#4d5d72; font-size:10px; font-weight:650; }
+.attendance-card-tags [data-tag=hoy] { background:#ff6209; color:#fff; }
+.attendance-card-tags [data-tag=fijo] { background:#f5e9ff; color:#8a3dbb; }
+.attendance-card-tags [data-tag=cancelada] { background:#ffe8e8; color:#c23d3d; }
+@media(max-width:600px) { .attendance-cards { grid-template-columns:1fr 1fr; gap:10px; } html body .attendance-card { flex-direction:column; gap:10px; padding:12px; } }
+@media(max-width:340px) { .attendance-cards { grid-template-columns:1fr; } }
+.attendance-qr { box-sizing:border-box; display:grid; gap:14px; margin:20px 0; padding:20px; border:1px solid #f0dccb; border-radius:14px; background:#fffaf6; min-width:0; }
+.attendance-qr-heading h3 { margin:0 0 6px; font-size:15px; color:#242a38; }
+.attendance-qr-heading p { margin:0; font-size:13px; line-height:1.6; color:#67768b; }
+.attendance-qr-note,.attendance-blocked { margin:0; padding:10px 12px; border-radius:9px; background:#fff3d6; color:#7a5a12; font-size:13px; line-height:1.6; }
+.attendance-blocked { margin-bottom:12px; }
+html body .attendance-qr > button { justify-self:start; margin:0; }
+.attendance-qr-body { display:flex; flex-wrap:wrap; align-items:flex-start; gap:20px; min-width:0; }
+.attendance-qr-image { box-sizing:border-box; flex:0 0 auto; width:min(220px,100%); padding:8px; border:1px solid #ece6df; border-radius:12px; background:#fff; }
+.attendance-qr-image svg { display:block; width:100%; height:auto; }
+.attendance-qr-actions { display:flex; flex-wrap:wrap; align-content:flex-start; gap:10px; flex:1 1 260px; min-width:0; }
+html body .attendance-qr-actions > button,html body .attendance-qr-actions > a { margin:0; }
+.attendance-qr-link { flex-basis:100%; margin:4px 0 0; font-size:11px; line-height:1.5; color:#7c8593; overflow-wrap:anywhere; }
+.attendance-qr-overlay { position:fixed; inset:0; z-index:5000; display:grid; place-items:center; padding:16px; background:rgb(20 16 12 / 74%); }
+.attendance-qr-poster { box-sizing:border-box; display:grid; justify-items:center; gap:8px; width:min(560px,100%); max-height:100%; overflow:auto; padding:28px 24px; border-radius:20px; background:#fff; color:#242a38; text-align:center; font-family:inherit; }
+.attendance-qr-poster > span { color:#b44d0b; font-size:12px; font-weight:700; letter-spacing:.12em; text-transform:uppercase; }
+.attendance-qr-poster > strong { font-size:clamp(20px,3vw,30px); line-height:1.25; overflow-wrap:anywhere; }
+.attendance-qr-poster > small { color:#59697c; font-size:15px; }
+.attendance-qr-poster > small::first-letter { text-transform:uppercase; }
+.attendance-qr-poster .attendance-qr-image { width:min(420px,100%,60vh); margin:8px 0; padding:0; border:0; }
+.attendance-qr-poster > p { margin:0; color:#59697c; font-size:15px; }
+html body .attendance-qr-poster > button { min-height:44px; margin:8px 0 0; padding:10px 28px; border:1px solid #e1e7ef; border-radius:10px; background:#f3f5f8; color:#3b4250; font:inherit; font-size:14px; font-weight:650; cursor:pointer; }
+html body .attendance-qr-poster > button:hover { background:#e9edf2; }
+html body .attendance-qr-poster > button:focus-visible { outline:3px solid #ff8a3d; outline-offset:2px; }
+@media(max-width:600px) { .attendance-qr { padding:16px; } .attendance-qr-image { width:min(240px,100%); margin-inline:auto; } .attendance-qr-body { justify-content:center; } }
+.attendance-qr-local { margin:0; padding:10px 12px; border-radius:10px; background:#fff7e6; color:#7a5300; font-size:13px; }

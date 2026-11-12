@@ -9,7 +9,7 @@ import './training.css'
 export type TrainingBook = { id_libro: number; nombre: string; descripcion: string | null; asignaciones?: number }
 export const canCreateTrainingBooks = (user: AuthUser | null) => hasPermission(user, 'adiestramiento.gestionar') && Boolean(user?.roles.some(role => !['Usuario', 'Discípulo', 'Discipulo'].includes(role)))
 
-function BookEditor({ onCreated, onCancel, disabled = false, onBusy, initial }: { onCreated: (book: TrainingBook) => Promise<void>; onCancel: () => void; disabled?: boolean; onBusy?: (value: boolean) => void; initial?: TrainingBook }) {
+export function BookEditor({ onCreated, onCancel, disabled = false, onBusy, initial }: { onCreated: (book: TrainingBook) => Promise<void>; onCancel: () => void; disabled?: boolean; onBusy?: (value: boolean) => void; initial?: TrainingBook }) {
   const [name, setName] = useState(initial?.nombre || ''), [description, setDescription] = useState(initial?.descripcion || '')
   const [busy, setBusy] = useState(false), [error, setError] = useState('')
   async function create() {
@@ -83,7 +83,7 @@ export default function Training({ books, onReload, notify, canSeeMembers }: { b
   const query = search.trim().normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase()
   const filtered = books.filter(book => `${book.nombre} ${book.descripcion || ''}`.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase().includes(query))
   return <section className="training-page">
-    <div className="manage-section-heading"><div><h2>Adiestramiento</h2><p className="section-caption">Los libros que acompañan el crecimiento de nuestra comunidad.</p></div>{!creating && !editing && <button type="button" className="record-create" disabled={busy} onClick={() => { setDeleting(null); setError(''); setCreating(true) }}><AdminIcon name="plus"/>Nuevo libro</button>}</div>
+    <div className="manage-section-heading"><div><p className="section-caption">Los libros que acompañan el crecimiento de nuestra comunidad.</p></div>{!creating && !editing && <button type="button" className="record-create" disabled={busy} onClick={() => { setDeleting(null); setError(''); setCreating(true) }}><AdminIcon name="plus"/>Nuevo libro</button>}</div>
     {creating && <div className="manage-editor"><BookEditor onBusy={setBusy} onCancel={() => setCreating(false)} onCreated={async () => { await onReload(); setCreating(false); notify('Libro de adiestramiento creado.') }}/></div>}
     {editing && <div className="manage-editor"><BookEditor key={editing.id_libro} initial={editing} onBusy={setBusy} onCancel={() => setEditing(null)} onCreated={async () => { await onReload(); setEditing(null); notify('Libro actualizado. Sus asignaciones se conservan.') }}/></div>}
     {deleting && <section className="manage-editor training-delete" aria-label="Confirmar eliminación de libro"><h3>Eliminar {deleting.nombre}</h3><p>{deleting.asignaciones ? `Este libro está asignado a ${deleting.asignaciones} discípulo(s). Primero reasigna sus libros para poder eliminarlo.` : '¿Quieres eliminar este libro del catálogo?'}</p><div className="manage-actions"><button type="button" disabled={busy || Boolean(deleting.asignaciones)} onClick={() => void remove()}>{busy ? 'Eliminando…' : 'Confirmar eliminación'}</button><button type="button" className="secondary" disabled={busy} onClick={() => { setDeleting(null); setError('') }}>Cancelar eliminación</button></div></section>}

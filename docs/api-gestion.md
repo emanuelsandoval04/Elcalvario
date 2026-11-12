@@ -49,15 +49,17 @@ La migración `016-account-deletion.sql` adapta las FK de autoría a `ON DELETE 
 | `/api/management/members/:id/relations` | POST `id_grupo` / `id_cobertura_pastoral`, con historial |
 | `/api/management/members/:id/history` | GET cambios de grupo/cobertura |
 | `/api/management/members/:id/ministries` | GET asignaciones; PUT `{ids: [...]}` sin eliminar historial de asignación |
-| `/api/management/members/:id/consents` | GET evidencia; POST nuevo registro con fechas ISO UTC y medio papel/digital |
+| `/api/management/members/:id/consents` | GET estado e historial; `POST …/sms` envía el código y `POST …/sms/confirm` lo confirma (ver autorizacion-datos-sms.md) |
 | `/api/management/groups` | GET grupos autorizados; POST grupo |
 | `/api/management/groups/:id` | PATCH grupo; DELETE archivado |
 | `/api/management/groups/:id/processes` | GET/POST proceso con propósito y destino opcional |
 | `/api/management/activities` | GET con permiso registrar/ver asistencia, editar/publicar eventos o editar grupos, aplicando su alcance; POST actividad y su extensión |
 | `/api/management/activities/:id` | PATCH reprogramación, cancelación o publicación; DELETE archivado |
+| `/api/management/activities/images` | POST `{image}` (JPEG en base64 preparado por el formulario, máx. 1600 px y 900 KB) con `eventos.editar` o `grupos.editar`; devuelve `{url}` para el campo `imagen`. Ver [Imágenes de eventos](imagenes-eventos.md) |
 | `/api/management/attendance/roster?activityId=...` | GET listado activo, indicador de registro previo, versión y datos del evento |
 | `/api/management/attendance?activityId=...` | GET registros autorizados |
 | `/api/management/attendance` | POST registro manual/QR/visitante; devuelve 409 ante duplicado |
+| `/api/management/attendance/checkin-link` | POST `{activityId, renew?}`: código QR de autorregistro de esa fecha. Ver [Registro con código QR](registro-asistencia-qr.md) |
 | `/api/management/attendance/save` | POST guardado completo del listado revisado; sin marcar equivale a ausente sin justificación |
 | `/api/management/members/:id/attendance` | GET historial autorizado del discípulo, con paginación |
 | `/api/management/attendance/:id` | PATCH estado con permiso corregir; DELETE archivado con permiso eliminar |

@@ -52,3 +52,20 @@ Las pruebas usan bases temporales locales. Comprueban asignación y persistencia
 - La columna **ID** de los Excel y de la ficha PDF muestra este código, no el número interno de la base.
 - En producción, la cuenta web de MySQL necesita `GRANT SELECT, UPDATE ON defaultdb.secuencia_codigo TO '<cuenta de la app>'@'%';` y la migración debe aplicarse **antes** de publicar el código.
 - Prueba: `npm run test:codes` (base temporal, 10 grupos de verificación).
+
+### Códigos de los Grupos de Comunión
+
+- Cada grupo recibe su código automáticamente al crearse: **GR-01, GR-02, GR-03…** (después de GR-99 sigue GR-100). El formulario ya no pide el código y la API ignora el que se envíe; tampoco se puede editar.
+- Sale de `secuencia_codigo` (fila `grupo`, migración `027-group-codes.sql`); nunca se reutiliza, aunque el grupo se archive. Si la creación falla, el número no se pierde.
+- Al aplicar la migración, **todos los grupos existentes se renumeraron una sola vez** en orden de creación (incluidos los archivados). Las siguientes ejecuciones de la migración no los vuelven a cambiar.
+- El código es **interno**: no se muestra en la lista ni en la ficha del grupo, ni en los selectores, el Excel de grupos o el correo de bienvenida. Se conserva en la base de datos (`grupo_comunion.codigo_grupo`) y la API lo devuelve.
+
+### Discípulos de un Grupo de Comunión
+
+- En la ficha del grupo, **Discípulos del grupo** lista a sus integrantes y **Agregar discípulos** permite buscarlos y marcarlos (primero aparecen los que no tienen grupo). Quien ya está en otro grupo pasa a este; cada cambio queda en el historial de grupo del discípulo.
+- Requiere `grupos.editar` y `miembros.editar` dentro del alcance del rol (`POST /api/management/groups/:id/members` con `{ids}`).
+- **Ver discípulos** abre la lista filtrada por el grupo; si el grupo está vacío, lo indica y ofrece volver al grupo para agregarlos.
+- Prueba: `npm run test:group-members` (base temporal; `--ui` para la interfaz).
+- La importación de discípulos desde Excel acepta el código nuevo o el nombre del grupo; los códigos anteriores ya no existen.
+- Producción: la cuenta web ya tiene `SELECT, UPDATE` sobre `secuencia_codigo`, así que no requiere `GRANT` nuevo. Respaldar Aiven, ejecutar `npm run db:migrate:aiven` y **después** publicar el código.
+- Prueba: `npm run test:group-codes` (base temporal).

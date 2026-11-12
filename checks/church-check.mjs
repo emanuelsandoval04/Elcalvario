@@ -128,16 +128,14 @@ try {
   await request('management/attendance',{id_actividad:first,estado_asistencia:'visitante',nombre_visitante:'Visita'},media,'POST',201)
   const [qr]=await pool.execute('SELECT codigo_qr FROM miembro WHERE id_miembro=?',[leader])
   await request('management/attendance',{id_actividad:meeting,estado_asistencia:'presente',metodo_registro:'qr',codigo_qr:qr[0].codigo_qr},disciple,'POST',201)
-  const {PDFDocument}=await import('pdf-lib')
-  const signedFixture=await PDFDocument.create();signedFixture.addPage()
-  const consent={files:[{type:'application/pdf',data:Buffer.from(await signedFixture.save()).toString('base64')}],confirmSigned:true,religious:true,health:false}
-  await request(`management/members/${member}/consents`,consent,admin,'POST',201)
-  const latestConsent=(await request(`management/members/${member}/consents`,undefined,admin)).data.items[0]
+  // Authorizations are registered by SMS code (see disciple-consent-check); here, revocation keeps history.
+  const authorize=async religious=>(await pool.execute("INSERT INTO consentimiento_datos(id_miembro,version_politica,acepta_politica_privacidad,acepta_datos_religiosos,medio,estado_consentimiento,fecha_aceptacion) VALUES (?,'sms-2026-11-12',1,?,'sms','aceptado',UTC_TIMESTAMP())",[member,religious]))[0].insertId
+  const latestConsent={id_consentimiento:await authorize(1)}
   await request(`management/members/${member}/consents/${latestConsent.id_consentimiento}/revoke`,{},admin)
   assert.equal((await request(`management/members/${member}/consents`,undefined,admin)).data.items.length,1)
   const [kept]=await pool.execute('SELECT estado_miembro FROM miembro WHERE id_miembro=?',[member]);assert.equal(kept[0].estado_miembro,'inactivo')
-  await request(`management/members/${member}/consents`,{...consent,religious:false},admin,'POST',201)
-  const independentConsent=(await request(`management/members/${member}/consents`,undefined,admin)).data.items.find(row=>row.acepta_datos_religiosos===0)
+  await authorize(0)
+  const independentConsent=(await request(`management/members/${member}/consents`,undefined,admin)).data.items.find(row=>row.estado_consentimiento==='aceptado')
   assert.ok(independentConsent,'Las autorizaciones se conservan de manera independiente')
   for(const type of ['asistencia','cumpleanos','grupos']) for(const format of ['pdf','xlsx']) {
     const response=await fetch(`${base}/api/management/reports/${type}?format=${format}`,{headers:{Cookie:admin}})

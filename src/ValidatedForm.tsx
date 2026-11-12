@@ -1,6 +1,7 @@
 import { Children, cloneElement, isValidElement, useEffect, useId, useRef, useState } from 'react'
 import type { FormHTMLAttributes, ReactElement, ReactNode } from 'react'
 import './form-feedback.css'
+import { birthDateError, emailError, phoneError } from './contact-rules'
 
 export class RequestError extends Error {
   fieldErrors?: Record<string,string>
@@ -34,7 +35,12 @@ function validate(form:HTMLFormElement) {
     else if(validity.tooShort)errors[field.name]=`Usa al menos ${(field as HTMLInputElement).minLength} caracteres.`
     else if(validity.patternMismatch)errors[field.name]=field.title || 'Revisa el formato de este dato.'
     else if(!validity.valid)errors[field.name]='Revisa el formato y los límites de este dato.'
-    if(field.name==='fecha_nacimiento' && field.value>new Intl.DateTimeFormat('en-CA',{timeZone:'America/Bogota',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date()))errors[field.name]='La fecha de nacimiento no puede estar en el futuro.'
+    // Registration fields marked with data-rule (celular, correo, fecha de nacimiento).
+    const rule=field.dataset.rule,value=field.value.trim()
+    if(value && !validity.valueMissing) {
+      const message=rule==='phone'?phoneError(value):rule==='email'?emailError(value):rule==='birthdate'?birthDateError(value):''
+      if(message)errors[field.name]=message
+    }
   }
   for(const [password,confirmation] of [['password','confirmation'],['newPassword','confirmation'],['account_password','account_confirmation']]) {
     const first=form.elements.namedItem(password) as Control|null,second=form.elements.namedItem(confirmation) as Control|null

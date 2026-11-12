@@ -78,6 +78,18 @@ try {
   let publicEvents = (await request('public/events')).data.items
   assert.equal(publicEvents.filter(row => row.id_serie === created.seriesId).length, 1)
   assert.equal(publicEvents.find(row => row.id_serie === created.seriesId).id_actividad, dates[0].id_actividad)
+  // Attendance cards: one date per fixed event (this week's, even after it started today); every single event.
+  const attendanceCards = async period => (await request(`management/activities?view=attendance&period=${period}`, { cookie: owner.cookie })).data.items
+  const singles = [(await create({ ...base, titulo: 'Retiro único', fecha: plusDays(start, 20), publicado: false, recurrence: undefined })).data, (await create({ ...base, titulo: 'Vigilia única', fecha: plusDays(start, 40), publicado: false, recurrence: undefined })).data]
+  let cards = await attendanceCards('upcoming')
+  assert.equal(cards.filter(row => row.id_serie === created.seriesId).length, 1, 'Asistencia debe mostrar una sola fecha por evento fijo.')
+  assert.equal(cards.find(row => row.id_serie === created.seriesId).id_actividad, dates[0].id_actividad)
+  assert.ok(singles.every(single => cards.some(row => row.id_actividad === single.id)), 'Asistencia debe mostrar todos los eventos no fijos.')
+  await db.execute("UPDATE actividad SET fecha=?,hora='00:00:01' WHERE id_actividad=?", [today, dates[0].id_actividad])
+  cards = await attendanceCards('upcoming')
+  assert.deepEqual(cards.filter(row => row.id_serie === created.seriesId).map(row => row.id_actividad), [dates[0].id_actividad], 'La fecha de hoy sigue disponible aunque ya comenzó.')
+  await db.execute('UPDATE actividad SET fecha=?,hora=? WHERE id_actividad=?', [dates[0].fecha, dates[0].hora, dates[0].id_actividad])
+  for (const single of singles) await request(`management/activities/${single.id}`, { body: {}, cookie: owner.cookie, method: 'DELETE' })
   let notifications = (await request('auth/notifications', { cookie: basic.cookie })).data.items
   assert.equal(notifications.filter(item => item.title === 'Culto dominical').length, 1)
   const attendance = id => request('management/attendance', { body: { id_actividad: id, estado_asistencia: 'visitante', nombre_visitante: 'Visitante de prueba' }, cookie: owner.cookie, status: 201 })
@@ -218,9 +230,9 @@ try {
     await page.locator('#dashboard-title').waitFor()
     await page.goto(`${ui}/#gestion/activities`)
     await page.getByRole('button', { name: 'Nuevo evento', exact: true }).click()
-    await pickOption(page.getByRole('combobox', { name: 'Tipo de actividad', exact: true }), { label: 'Culto' })
+    assert.equal(await page.getByRole('combobox', { name: 'Tipo de actividad', exact: true }).count(), 0)
     const form = page.locator('.manage-form')
-    await form.getByLabel('Título *', { exact: true }).fill('Culto semanal de prueba UI')
+    await form.getByLabel('Nombre del evento *', { exact: true }).fill('Culto semanal de prueba UI')
     await form.getByLabel('Fecha *', { exact: true }).fill(start)
     await form.getByLabel('Hora (Colombia) *', { exact: true }).fill('09:00')
     await form.getByLabel('Lugar *', { exact: true }).fill('Templo principal')

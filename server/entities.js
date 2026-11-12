@@ -1,4 +1,5 @@
 // Entidades y validaciones compartidas por la API. No hay un ORM en este proyecto.
+import { commonEmail, maxAge, oldestBirthDate, tenDigitPhone } from './contact-rules.js'
 export function invalid(message, status = 400) { return Object.assign(new Error(message), { status }) }
 export function identifier(value, optional = false) {
   if (optional && (value === null || value === undefined || value === '')) return null
@@ -36,6 +37,27 @@ export function phone(value, required = false) {
   if (result && (!/^[+\d ()-]+$/.test(result) || result.replace(/\D/g, '').length < 7)) throw invalid('Celular inválido: mínimo siete dígitos.')
   return result
 }
+// Registration forms: 10-digit phones, emails from common providers and believable birth dates.
+export function memberPhone(value, required = false) {
+  const result = text(value, 20, required)
+  if (!result) return null
+  const digits = tenDigitPhone(result)
+  if (!digits) throw invalid('El celular debe tener exactamente 10 dígitos.')
+  return digits
+}
+export function registrationEmail(value, required = false) {
+  const result = text(value, 120, required)
+  if (!result) return null
+  const { email, reason } = commonEmail(result)
+  if (!email) throw invalid(reason)
+  return email
+}
+export function birthDate(value) {
+  const result = date(value), today = bogotaToday()
+  if (result > today) throw invalid('La fecha de nacimiento no puede estar en el futuro.')
+  if (result < oldestBirthDate(today)) throw invalid(`Revisa la fecha de nacimiento: la edad no puede ser mayor de ${maxAge} años.`)
+  return result
+}
 export function url(value) {
   const result = text(value, 500)
   if (!result) return null
@@ -47,19 +69,16 @@ export const sensitiveMemberFields = ['grupo_sanguineo_rh','eps','contacto_emerg
 export const memberFields = {
   nombres: v => text(v,100,true), apellidos: v => text(v,100),
   tipo_identificacion: v => text(v,30,true), numero_identificacion: v => text(v,30,true),
-  celular: v => phone(v,true), correo: v => {
-    const result = text(v,120)
-    if (result && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(result)) throw invalid('Correo inválido.')
-    return result
-  },
-  fecha_nacimiento: v => { const result=date(v); if(result>bogotaToday()) throw invalid('La fecha de nacimiento no puede estar en el futuro.'); return result },
+  celular: v => memberPhone(v,true), correo: v => registrationEmail(v),
+  fecha_nacimiento: v => birthDate(v),
   grupo_sanguineo_rh: v => v ? choice(v,['A+','A-','B+','B-','AB+','AB-','O+','O-']) : null,
-  eps: v => text(v,100), contacto_emergencia_nombre: v => text(v,150), contacto_emergencia_celular: v => phone(v),
+  eps: v => text(v,100), contacto_emergencia_nombre: v => text(v,150), contacto_emergencia_celular: v => memberPhone(v),
   funcion_iglesia: v => text(v,150), id_sede: optionalId, id_rol_eclesiastico: optionalId,
   id_grupo: optionalId, id_cobertura_pastoral: optionalId, id_libro: optionalId,
 }
 export const groupFields = {
-  codigo_grupo: v => text(v,30,true), nombre: v => text(v,150,true), id_discipulador: optionalId,
+  // codigo_grupo is assigned by the server (GR-01, GR-02...) and cannot be edited.
+  nombre: v => text(v,150,true), id_discipulador: optionalId,
   id_zona: optionalId, id_grupo_origen: optionalId, direccion: v => text(v,200), barrio: v => text(v,10000),
   latitud: v => coordinate(v,90), longitud: v => coordinate(v,180),
   dia_reunion: v => v ? choice(v,['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo']) : null,

@@ -76,10 +76,11 @@ export async function welcomeMessage(user, password, context, configuration) {
   ]
   if (context.member) {
     const member = context.member
-    details.push(['Grupo de Comunión', member.groupName ? `${member.groupName}${member.groupCode ? ` (${member.groupCode})` : ''}` : 'Sin grupo asignado'])
+    // Group codes (GR-01...) are internal and are not shown.
+    details.push(['Grupo de Comunión', member.groupName || 'Sin grupo asignado'])
     for (const [label, value] of [['Cargo pastoral', member.pastoralRole], ['Función o servicio', member.service], ['Cobertura pastoral', member.coverageName], ['Libro de adiestramiento', member.trainingBook]]) if (value) details.push([label, value])
   }
-  if (context.groups?.length) details.push(['Grupos a tu cargo', context.groups.map(group => `${group.nombre} (${group.codigo_grupo})`).join(', ')])
+  if (context.groups?.length) details.push(['Grupos a tu cargo', context.groups.map(group => group.nombre).join(', ')])
   if (context.ministries?.length) details.push(['Ministerios', context.ministries.map(ministry => ministry.nombre).join(', ')])
   const capabilities = accountCapabilities(user)
   const rows = details.map(([label, value]) => `<tr><th scope="row" align="left" valign="top" style="padding:10px 8px;border-bottom:1px solid #eee9e3;width:40%;font-size:13px">${escapeHtml(label)}</th><td valign="top" style="padding:10px 8px;border-bottom:1px solid #eee9e3;font-size:13px;overflow-wrap:anywhere;word-break:break-word;white-space:pre-wrap">${escapeHtml(value)}</td></tr>`).join('')

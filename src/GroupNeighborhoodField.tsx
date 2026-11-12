@@ -32,8 +32,8 @@ export default function GroupNeighborhoodField({ groupId, legacyText, disabled, 
   const removedNames = barrios.filter(item => original.includes(item.id_barrio) && !selected.includes(item.id_barrio)).map(item => item.nombre)
   return <section className="coverage-assignment manage-wide" aria-labelledby="group-neighborhoods-title">
     <h3 id="group-neighborhoods-title">Barrios del grupo</h3>
-    <p>Busca y selecciona uno o varios barrios. Al guardar, se marcarán en el mapa con el color del discipulador asignado.</p>
-    {!!legacyText && !original.length && !changed && <p>Barrios escritos anteriormente: {legacyText}. Selecciona sus nombres en el catálogo para vincularlos al mapa.</p>}
+    <p>Busca y selecciona uno o varios barrios donde se reúne o al que pertenece el grupo.</p>
+    {!!legacyText && !original.length && !changed && <p>Barrios escritos anteriormente: {legacyText}. Selecciona sus nombres en el catálogo para vincularlos al grupo.</p>}
     <label>Buscar barrio o comuna<input type="search" value={search} maxLength={150} disabled={disabled || !ready} onChange={event => setSearch(event.target.value)}/></label>
     {!ready && !error && <p role="status">Cargando barrios…</p>}
     {error && <div role="alert"><p>{error}</p><button type="button" className="secondary" onClick={() => setRetry(value => value + 1)}>Reintentar barrios</button></div>}

@@ -169,11 +169,11 @@ try {
  await mobilePage.getByRole('button',{name:'Consultar activación',exact:true}).tap()
  await mobilePage.locator('.manage-session').filter({hasText:'Multimedia'}).waitFor({state:'attached'})
  const expectedMenus={
-  Administrador:['Inicio','Discípulos','Grupos de Comunión','Eventos y Cultos','Asistencia y alertas','Reportes','Usuarios, roles y permisos'],
-  Pastor:['Inicio','Discípulos','Grupos de Comunión','Eventos y Cultos','Asistencia y alertas','Reportes'],
-  'Asistencia Pastoral':['Inicio','Discípulos','Grupos de Comunión','Eventos y Cultos','Asistencia y alertas','Reportes','Usuarios, roles y permisos'],
-  Discipulador:['Inicio','Discípulos','Grupos de Comunión','Eventos y Cultos','Asistencia y alertas','Reportes'],
-  Multimedia:['Inicio','Discípulos','Grupos de Comunión','Eventos y Cultos','Asistencia y alertas','Reportes'],
+  Administrador:['Inicio','Discípulos','Grupos de Comunión','Eventos y Cultos','Asistencia','Reportes','Usuarios, roles y permisos'],
+  Pastor:['Inicio','Discípulos','Grupos de Comunión','Eventos y Cultos','Asistencia','Reportes'],
+  'Asistencia Pastoral':['Inicio','Discípulos','Grupos de Comunión','Eventos y Cultos','Asistencia','Reportes','Usuarios, roles y permisos'],
+  Discipulador:['Inicio','Discípulos','Grupos de Comunión','Eventos y Cultos','Asistencia','Reportes'],
+  Multimedia:['Inicio','Discípulos','Grupos de Comunión','Eventos y Cultos','Asistencia','Reportes'],
  }
  async function openMobileMenu(){
   await mobilePage.getByRole('button',{name:'Más opciones',exact:true}).tap()
@@ -194,7 +194,7 @@ try {
   assert.equal(await mobilePage.getByRole('button',{name:'Más opciones',exact:true}).getAttribute('aria-expanded'),'false')
   assert.equal(await mobilePage.locator('.manage-message').textContent(),'')
   await openMobileMenu()
-  await mobilePage.getByRole('button',{name:'Asistencia y alertas',exact:true}).tap()
+  await mobilePage.getByRole('button',{name:'Asistencia',exact:true}).tap()
   await mobilePage.getByRole('heading',{name:'Asistencia',exact:true}).waitFor()
   assert.equal(await mobilePage.locator('.falls-tabs a[href$="/alertas"]').count(),['Asistencia Pastoral','Pastor','Administrador'].includes(name)?1:0,'Las alertas conservan sus permisos propios')
   assert.equal(await mobilePage.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false)
@@ -242,7 +242,7 @@ try {
  assert.equal(await mobilePage.locator('.dashboard-shortcuts button:disabled').count(),5)
  await mediaPermissions(['gestion.acceder','asistencia.ver'])
  await mobilePage.waitForFunction(()=>document.querySelectorAll('.panel-nav [data-panel-item]').length===3)
- assert.deepEqual(await mobilePage.locator('.panel-nav [data-panel-item] > span:not(.panel-click-wave)').allTextContents(),['Inicio','Eventos y Cultos','Asistencia y alertas'])
+ assert.deepEqual(await mobilePage.locator('.panel-nav [data-panel-item] > span:not(.panel-click-wave)').allTextContents(),['Inicio','Eventos y Cultos','Asistencia'])
  await openMobileMenu()
  await mobilePage.getByRole('button',{name:'Eventos y Cultos',exact:true}).tap()
  await mobilePage.getByRole('heading',{name:'Eventos y Cultos',exact:true}).waitFor()
