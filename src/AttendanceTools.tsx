@@ -18,6 +18,8 @@ export function AttendanceQrPanel({activity,notify}:{activity:Row;notify:(text:s
     try{const result=await api<{token:string}>('attendance/checkin-link',{activityId:Number(activity.id_actividad),...(renew?{renew:true}:{})});setLink(`${window.location.origin}/#asistencia/${result.token}`);if(renew)notify('Código QR renovado. El anterior ya no funciona.')}
     catch(cause){notify(message(cause))}finally{setBusy(false)}
   }
+  // A QR already created for this date shows again after reloading the page.
+  useEffect(()=>{let current=true;void api<{token:string|null}>(`attendance/checkin-link?activityId=${activity.id_actividad}`).then(result=>{if(current&&result.token)setLink(`${window.location.origin}/#asistencia/${result.token}`)}).catch(()=>{});return()=>{current=false}},[activity.id_actividad])
   useEffect(()=>{if(!enlarged)return;const close=(event:KeyboardEvent)=>{if(event.key==='Escape')setEnlarged(false)};window.addEventListener('keydown',close);return()=>window.removeEventListener('keydown',close)},[enlarged])
   async function copy(){try{await navigator.clipboard.writeText(link);setCopied(true);window.setTimeout(()=>setCopied(false),2000)}catch{notify('No pudimos copiar el enlace. Selecciónalo y cópialo manualmente.')}}
   const qr=<QrCode value={link} label={`Código QR de asistencia para ${activity.titulo}`}/>

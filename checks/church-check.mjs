@@ -66,8 +66,8 @@ try {
   await request('management/members',{...baseMember,numero_identificacion:'4',fecha_nacimiento:'2025-02-30'},admin,'POST',400)
   await request('management/members',baseMember,admin,'POST',409)
   await request(`management/users/${accounts.Discipulador.id}/member`,{memberId:leader},admin)
-  const group=(await request('management/groups',{codigo_grupo:'G1',nombre:'Grupo real de prueba',id_discipulador:leader,estado_grupo:'activo'},admin,'POST',201)).data.id
-  const otherGroup=(await request('management/groups',{codigo_grupo:'G2',nombre:'Otro grupo de prueba',estado_grupo:'activo'},admin,'POST',201)).data.id
+  const group=(await request('management/groups',{codigo_grupo:'G1',nombre:'Grupo real de prueba',direccion:'Calle 1 # 2-3',id_discipulador:leader,estado_grupo:'activo'},admin,'POST',201)).data.id
+  const otherGroup=(await request('management/groups',{codigo_grupo:'G2',nombre:'Otro grupo de prueba',latitud:4.15,longitud:-73.63,estado_grupo:'activo'},admin,'POST',201)).data.id
   await request(`management/members/${member}`,{id_grupo:group,id_cobertura_pastoral:leader},admin,'PATCH')
   await request(`management/members/${leader}`,{id_grupo:group},admin,'PATCH')
   const visible=(await request('management/members',undefined,disciple)).data.items
@@ -85,7 +85,7 @@ try {
   assert.equal(adminSummary.eventos,0)
   await request(`management/groups/${otherGroup}`,{nombre:'Intento ajeno'},disciple,'PATCH',404)
   await request(`management/groups/${group}`,{id_discipulador:outsider},disciple,'PATCH',403)
-  await request('management/groups',{codigo_grupo:'G3',nombre:'Grupo creado por su discipulador',id_discipulador:leader,estado_grupo:'activo'},disciple,'POST',403)
+  await request('management/groups',{codigo_grupo:'G3',nombre:'Grupo creado por su discipulador',direccion:'Calle 3',id_discipulador:leader,estado_grupo:'activo'},disciple,'POST',403)
   await request(`management/members/${member}/state`,{estado_miembro:'retirado'},disciple,'POST',403)
   await request(`management/members/${member}/state`,{estado_miembro:'inactivo'},assistant)
   await request(`management/members/${member}/relations`,{id_grupo:otherGroup},assistant)

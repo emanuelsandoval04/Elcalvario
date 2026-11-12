@@ -2,15 +2,19 @@
 
 ## Para el equipo
 
-1. **Gestión → Asistencia**, toca el cuadrito del evento.
-2. En **Registro con código QR**, toca **Mostrar código QR**.
+1. **Gestión → Asistencia** y toca el cuadrito del evento. El evento queda en la dirección (`#gestion/falls/registro/actividad/<id>`), así que al recargar la página se abre el mismo evento.
+2. **Registro con código QR**: el código ya creado para esa fecha aparece solo, también después de recargar. Si todavía no existe, toca **Mostrar código QR**.
    - **Ampliar para proyectar**: muestra el código en grande con el nombre, la fecha y la hora del evento (Esc o *Cerrar* para salir).
-   - **Copiar enlace** / **Abrir página de registro**: el mismo registro en un enlace (sirve para enviarlo por WhatsApp o para que un servidor registre personas desde su celular).
-   - **Generar código nuevo**: invalida el código anterior (por ejemplo, si se compartió fuera de la iglesia).
-3. Mientras el evento es de hoy, la lista se actualiza sola cada 15 segundos con quienes se registran por QR (*Autorregistro con QR*; los visitantes muestran su documento si lo dieron).
-4. Al final, **Guardar asistencia y registrar ausentes** marca como ausentes a quienes no llegaron. Se puede guardar en cualquier fecha: eventos pasados (registros atrasados) o futuros. Las alertas de ausencia solo cuentan eventos que ya ocurrieron. Si alguien se registra con el QR después de guardar, su ausencia pasa a presente.
+   - **Copiar enlace** / **Abrir página de registro**: el mismo registro en un enlace.
+   - **Generar código nuevo**: invalida el código anterior.
+   - Si se abre desde `localhost`, un aviso recuerda que los celulares no pueden abrir ese código: hay que usar la versión publicada.
+3. **Por confirmar**: cada persona tiene tres iconos: ✓ verde *asistió*, ✗ roja *no asistió* y ⚠ gris *tiene excusa*. Un toque guarda la asistencia de inmediato y la persona baja a **Asistencias registradas**. Quien se registra con el QR sale solo de esta lista, sin duplicados: la API rechaza un segundo registro de la misma persona en el mismo evento.
+4. **Asistencias registradas**: los registros marcados por el equipo y los del QR juntos, con el más reciente primero. La lista se actualiza sola cada 5 segundos mientras la página está abierta. Quien puede corregir lo hace con los mismos iconos.
+5. **Finalizar evento y guardar asistencia** (al final): quienes sigan por confirmar quedan como ausentes sin justificación. Si alguien se registra después con el QR, su ausencia pasa a presente.
 
-Cada fecha tiene su propio código (también cada semana de un evento fijo) y funciona en **cualquier fecha**, antes o después del evento. Un evento cancelado o archivado no recibe registros; si un código se comparte donde no debía, usa **Generar código nuevo**.
+Ya no existe el registro manual de visitantes ni el de identificadores QR: los visitantes se registran con el código QR.
+
+Cada fecha tiene su propio código (también cada semana de un evento fijo) y funciona en **cualquier fecha**. Un evento cancelado o archivado no recibe registros.
 
 ## Para quien escanea (sin iniciar sesión)
 
@@ -32,6 +36,7 @@ En una **reunión de grupo** solo se reconocen los discípulos de ese grupo; las
 
 | Ruta | Uso |
 | --- | --- |
+| `GET /api/management/attendance/checkin-link?activityId=` | Código ya creado (`token` o `null`), sin crear uno nuevo |
 | `POST /api/management/attendance/checkin-link` | `{activityId, renew?}` con `asistencia.registrar` y su alcance → `{token, state}` |
 | `GET /api/public/checkin/:token` | Evento y estado: `open` o `cancelled` |
 | `POST /api/public/checkin/:token` | `{documento}` → `registered`/`already` con `nombre`, o `not_found`; `{nombre, documento?}` → `visitor`/`already` |

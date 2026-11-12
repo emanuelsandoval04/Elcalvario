@@ -47,9 +47,9 @@ try {
   const owner = await request('auth/login', { body: { email: 'owner@example.invalid', password } })
 
   // New groups continue the series; a code sent by the browser is ignored.
-  const created = (await request('management/groups', { cookie: owner.cookie, status: 201, body: { codigo_grupo: 'MANUAL', nombre: 'Grupo nuevo', estado_grupo: 'activo' } })).data
+  const created = (await request('management/groups', { cookie: owner.cookie, status: 201, body: { codigo_grupo: 'MANUAL', nombre: 'Grupo nuevo', direccion: 'Calle 1', estado_grupo: 'activo' } })).data
   assert.equal(created.codigo_grupo, 'GR-05')
-  const parallel = await Promise.all(Array.from({ length: 5 }, (_, index) => request('management/groups', { cookie: owner.cookie, status: 201, body: { nombre: `Paralelo ${index}`, estado_grupo: 'activo' } })))
+  const parallel = await Promise.all(Array.from({ length: 5 }, (_, index) => request('management/groups', { cookie: owner.cookie, status: 201, body: { nombre: `Paralelo ${index}`, direccion: 'Calle 2', estado_grupo: 'activo' } })))
   assert.deepEqual(parallel.map(item => item.data.codigo_grupo).sort(), ['GR-06', 'GR-07', 'GR-08', 'GR-09', 'GR-10'], 'Creaciones simultáneas no repiten código.')
   // The code cannot be edited.
   await request(`management/groups/${created.id}`, { cookie: owner.cookie, method: 'PATCH', status: 400, body: { codigo_grupo: 'OTRO' } })
@@ -59,11 +59,11 @@ try {
   // A failed creation does not consume a number.
   await request('management/groups', { cookie: owner.cookie, status: 400, body: { nombre: 'Estado inválido', estado_grupo: 'pausado' } })
   // This one fails after the number was reserved (unknown neighborhood); the rollback returns it.
-  await request('management/groups', { cookie: owner.cookie, status: 409, body: { nombre: 'No debe guardarse', estado_grupo: 'activo', barrios: { ids: [999999], expectedIds: [], expectedLeaderId: null } } })
-  assert.equal((await request('management/groups', { cookie: owner.cookie, status: 201, body: { nombre: 'Siguiente', estado_grupo: 'activo' } })).data.codigo_grupo, 'GR-11')
+  await request('management/groups', { cookie: owner.cookie, status: 409, body: { nombre: 'No debe guardarse', direccion: 'Calle 3', estado_grupo: 'activo', barrios: { ids: [999999], expectedIds: [], expectedLeaderId: null } } })
+  assert.equal((await request('management/groups', { cookie: owner.cookie, status: 201, body: { nombre: 'Siguiente', direccion: 'Calle 4', estado_grupo: 'activo' } })).data.codigo_grupo, 'GR-11')
   // After GR-99 comes GR-100. Catalog options carry the code.
   await db.execute("UPDATE secuencia_codigo SET ultimo=99 WHERE nombre='grupo'")
-  assert.equal((await request('management/groups', { cookie: owner.cookie, status: 201, body: { nombre: 'Centésimo', estado_grupo: 'activo' } })).data.codigo_grupo, 'GR-100')
+  assert.equal((await request('management/groups', { cookie: owner.cookie, status: 201, body: { nombre: 'Centésimo', direccion: 'Calle 5', estado_grupo: 'activo' } })).data.codigo_grupo, 'GR-100')
   const catalogs = (await request('management/catalogs', { cookie: owner.cookie })).data
   assert.ok(catalogs.grupos.some(group => group.codigo_grupo === 'GR-100'))
   console.log('PASS group codes: one-time renumbering in creation order (with collisions and archived groups), rerun safety, GR-xx on creation, ignored/locked manual codes, concurrent creation, no gaps on failure, GR-100 and catalog labels')

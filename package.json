@@ -54,6 +54,8 @@
     "test:unit": "node --test --test-isolation=none checks/origin.test.mjs checks/facebook.test.mjs",
     "test:deploy": "node --test --test-isolation=none checks/deployment.test.mjs",
     "test:registration-rules": "node --test checks/registration-rules.test.mjs",
+    "test:groups-map": "node checks/groups-map-check.mjs",
+    "test:groups-map:ui": "npm run build && node checks/groups-map-check.mjs --ui",
     "test:deploy:integration": "node checks/deployment-check.mjs",
     "test:map": "node checks/map-check.mjs",
     "test:map:ui": "node checks/map-check.mjs --ui",

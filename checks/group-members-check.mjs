@@ -41,9 +41,9 @@ try {
     return request('auth/login', { body: { email, password } })
   }
   const leaderA = await member('Líder A'), leaderB = await member('Líder B')
-  const groupA = (await request('management/groups', { cookie: owner.cookie, status: 201, body: { nombre: 'Familia Esperanza', id_discipulador: leaderA, estado_grupo: 'activo' } })).data
-  const groupB = (await request('management/groups', { cookie: owner.cookie, status: 201, body: { nombre: 'Familia Fe', id_discipulador: leaderB, estado_grupo: 'activo' } })).data
-  const empty = (await request('management/groups', { cookie: owner.cookie, status: 201, body: { nombre: 'Grupo sin discípulos', estado_grupo: 'activo' } })).data
+  const groupA = (await request('management/groups', { cookie: owner.cookie, status: 201, body: { nombre: 'Familia Esperanza', latitud: 4.1415, longitud: -73.6302, id_discipulador: leaderA, estado_grupo: 'activo' } })).data
+  const groupB = (await request('management/groups', { cookie: owner.cookie, status: 201, body: { nombre: 'Familia Fe', latitud: 4.1502, longitud: -73.6201, id_discipulador: leaderB, estado_grupo: 'activo' } })).data
+  const empty = (await request('management/groups', { cookie: owner.cookie, status: 201, body: { nombre: 'Grupo sin discípulos', direccion: 'Carrera 30 # 15-20', estado_grupo: 'activo' } })).data
   const ana = await member('Ana'), luis = await member('Luis'), marta = await member('Marta', groupB.id), outside = await member('Fuera', groupB.id)
   const leader = await account('leader@example.invalid', 'Discipulador', leaderA)
   const [[basicRole]] = await db.query("SELECT id_rol FROM rol_sistema WHERE nombre='Usuario'")
@@ -116,7 +116,8 @@ try {
     await page.getByLabel('Correo electrónico', { exact: true }).fill('owner@example.invalid'); await page.getByLabel('Contraseña', { exact: true }).fill(password); await page.getByRole('button', { name: 'Iniciar sesión', exact: true }).click(); await page.locator('#dashboard-title').waitFor()
     // Removed modules and the notifications bell are gone.
     const nav = await page.locator('.panel-nav [data-panel-item]').allInnerTexts()
-    for (const removed of ['Mapa', 'Transmisiones', 'Asistencia y alertas']) assert.ok(!nav.some(text => text.includes(removed)), `${removed} no debe estar en el menú`)
+    for (const removed of ['Transmisiones', 'Asistencia y alertas', 'Seguimiento']) assert.ok(!nav.some(text => text.includes(removed)), `${removed} no debe estar en el menú`)
+    assert.ok(nav.some(text => text.includes('Mapa de grupos')), 'El mapa de grupos vuelve al menú')
     assert.equal(await page.getByRole('button', { name: /Notificaciones/ }).count(), 0)
     assert.equal(await page.locator('[data-shortcut=alerts],[data-shortcut=transmisiones]').count(), 0)
     // Group codes exist but are not shown.

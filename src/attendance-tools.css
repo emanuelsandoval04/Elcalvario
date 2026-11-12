@@ -67,3 +67,29 @@ html body .attendance-qr-poster > button:hover { background:#e9edf2; }
 html body .attendance-qr-poster > button:focus-visible { outline:3px solid #ff8a3d; outline-offset:2px; }
 @media(max-width:600px) { .attendance-qr { padding:16px; } .attendance-qr-image { width:min(240px,100%); margin-inline:auto; } .attendance-qr-body { justify-content:center; } }
 .attendance-qr-local { margin:0; padding:10px 12px; border-radius:10px; background:#fff7e6; color:#7a5300; font-size:13px; }
+/* One tap per person: green check attended, red X absent, grey alert with an excuse. */
+.attendance-marks { display: flex; gap: 6px; flex-shrink: 0; }
+html body .attendance-mark { display: inline-grid; place-items: center; width: 42px; min-width: 42px; height: 42px; min-height: 42px; padding: 0; border-radius: 50%; border: 2px solid currentColor; background: #fff; cursor: pointer; transition: background-color .15s, color .15s, transform .1s; }
+html body .attendance-mark[data-state=presente] { color: #13a24b; }
+html body .attendance-mark[data-state=ausente] { color: #e02f42; }
+html body .attendance-mark[data-state=justificado] { color: #7c8594; }
+html body .attendance-mark:hover:not(:disabled), html body .attendance-mark[aria-pressed=true] { background: currentColor; }
+html body .attendance-mark:hover:not(:disabled) svg, html body .attendance-mark[aria-pressed=true] svg { color: #fff; }
+html body .attendance-mark:active:not(:disabled) { transform: scale(.94); }
+html body .attendance-mark:disabled { opacity: .45; cursor: default; }
+.attendance-corrections .attendance-mark { width: 36px; min-width: 36px; height: 36px; min-height: 36px; }
+.attendance-records article { display: flex; align-items: center; gap: 12px; }
+.attendance-records article > div:first-of-type { flex: 1; min-width: 0; }
+.attendance-state-icon { display: inline-grid; place-items: center; flex: 0 0 38px; width: 38px; height: 38px; border-radius: 50%; color: #fff; background: #7c8594; }
+.attendance-state-icon[data-state=presente] { background: #13a24b; }
+.attendance-state-icon[data-state=ausente] { background: #e02f42; }
+.attendance-state-icon[data-state=visitante] { background: #2e86ab; }
+.attendance-done, .attendance-empty-records { margin: 8px 0; color: #6b6259; font-size: 13px; }
+.attendance-finish { margin-top: 24px; padding-top: 16px; border-top: 1px solid #e9ecf1; }
+@media (max-width: 420px) {
+  .attendance-person { flex-wrap: wrap; }
+  .attendance-person > strong { flex-basis: calc(100% - 60px); }
+  .attendance-person .attendance-marks { margin-left: 52px; }
+  .attendance-records article { flex-wrap: wrap; }
+  .attendance-corrections { margin-left: 50px; }
+}

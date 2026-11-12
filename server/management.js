@@ -101,6 +101,13 @@ async function memberRelations(req,values,connection,id=null,old=null,creating=f
     if (!rows.length) throw invalid('Cobertura no disponible.')
   }
 }
+// "Discipuladores" pastoral role (level 6): a disciple leader can be registered without an access account.
+async function leaderRole(connection) {
+  const [rows]=await connection.execute('SELECT id_rol_eclesiastico FROM rol_eclesiastico WHERE nivel_jerarquico=6 ORDER BY id_rol_eclesiastico LIMIT 1')
+  if(!rows.length) throw invalid('Falta el cargo "Discipuladores" en el catálogo de cargos pastorales.',409)
+  return rows[0].id_rol_eclesiastico
+}
+const leaderFlag=body=>Object.hasOwn(body||{},'cargo_discipulador') ? boolean(body.cargo_discipulador)===1 : null
 async function recordRelations(connection,old,values,actorId) {
   for(const [key,concepto] of [['id_grupo','grupo'],['id_cobertura_pastoral','cobertura']]) if(Object.hasOwn(values,key) && old[key]!==values[key]) {
     await insert(connection,'historial_miembro',{id_miembro:old.id_miembro,concepto,id_anterior:old[key],id_nuevo:values[key],id_usuario:actorId})
@@ -224,7 +231,8 @@ managementRouter.get('/members',requirePermission('miembros.ver'),async (req,res
   // A disciple leader (discipulador) has the "Discipuladores" pastoral role (level 6) or leads an active group.
   const [rows]=await pool.execute(`SELECT m.*,l.nombre AS libro_actual,${additionalBooksSql('m')} AS libros_adicionales,CAST(m.fecha_nacimiento AS CHAR) AS fecha_nacimiento,
     (SELECT GROUP_CONCAT(g.nombre ORDER BY g.nombre SEPARATOR ', ') FROM grupo_comunion g WHERE g.id_discipulador=m.id_miembro AND g.archivado=0) AS grupos_a_cargo,
-    (COALESCE(r.nivel_jerarquico=6,0) OR EXISTS(SELECT 1 FROM grupo_comunion g WHERE g.id_discipulador=m.id_miembro AND g.archivado=0)) AS es_discipulador
+    (COALESCE(r.nivel_jerarquico=6,0) OR EXISTS(SELECT 1 FROM grupo_comunion g WHERE g.id_discipulador=m.id_miembro AND g.archivado=0)) AS es_discipulador,
+    COALESCE(r.nivel_jerarquico=6,0) AS cargo_discipulador,EXISTS(SELECT 1 FROM usuario u WHERE u.id_miembro=m.id_miembro) AS tiene_cuenta
     FROM miembro m LEFT JOIN libro_adiestramiento l ON l.id_libro=m.id_libro LEFT JOIN rol_eclesiastico r ON r.id_rol_eclesiastico=m.id_rol_eclesiastico WHERE m.archivado=0 ${filter.sql}
     AND (CONCAT_WS(' ',m.nombres,m.apellidos) LIKE ? OR m.numero_identificacion LIKE ? OR m.codigo_miembro=?) ORDER BY m.nombres LIMIT 500`,[...filter.params,`%${search}%`,`%${search}%`,parseMemberCode(search) ?? -1])
   res.json({items:rows.map(row=>cleanMember(req,row))})
@@ -235,6 +243,8 @@ managementRouter.post('/members',(req,res,next)=>can(req,'miembros.registrar') |
   const values=fields(req.body,memberFields,true)
   checkMemberServices(req.authUser,values)
   if(registrationType==='discipulo' && values.id_rol_eclesiastico) throw invalid('El discípulo normal no recibe un cargo pastoral. Selecciona registro administrativo.',400)
+  const leaderRequested=registrationType==='discipulo' && leaderFlag(req.body)===true
+  if(leaderRequested && !hasPastoralAuthority(req.authUser)) throw invalid('Solo los cargos pastorales autorizados pueden registrar discipuladores.',403)
   const ministryId=identifier(req.body.id_ministerio,true)
   const leadsGroup=Object.hasOwn(req.body,'responsable_grupo') ? boolean(req.body.responsable_grupo) : 0
   if((ministryId || leadsGroup) && !hasPastoralAuthority(req.authUser)) throw invalid('No tienes autorización para asignar servicios.',403)
@@ -255,6 +265,10 @@ managementRouter.post('/members',(req,res,next)=>can(req,'miembros.registrar') |
     const actor=await currentActor(req,connection)
     if(!hasPermission(actor,'miembros.editar') && !hasPermission(actor,'miembros.registrar')) throw invalid('Ya no tienes permiso para registrar discípulos.',403)
     checkMemberServices(actor,values)
+    if(leaderRequested) {
+      if(!hasPastoralAuthority(actor)) throw invalid('Ya no tienes autorización para registrar discipuladores.',403)
+      values.id_rol_eclesiastico=await leaderRole(connection)
+    }
     values.id_libro=await validateTrainingBook(connection,values.id_libro,registrationType==='discipulo')
     if(registrationType==='administrativo' && !actor.registration.canCreateAdministrative) throw invalid('Tu cargo no permite crear administrativos.',403)
     if((ministryId || leadsGroup) && !hasPastoralAuthority(actor)) throw invalid('Ya no tienes autorización para asignar servicios.',403)
@@ -312,8 +326,20 @@ managementRouter.patch('/members/:id',requirePermission('miembros.editar'),async
       values.id_libro=await validateTrainingBook(connection,values.id_libro,values.id_libro!==old.id_libro)
       if(values.id_libro!==old.id_libro) values.id_libro=await tidyMemberBooks(connection,id,values.id_libro)
     }
+    let leaderToggle=false
+    const wantsLeader=leaderFlag(req.body)
+    if(wantsLeader!==null) {
+      const leader=await leaderRole(connection)
+      if(wantsLeader!==(old.id_rol_eclesiastico===leader)) {
+        const [accounts]=await connection.execute('SELECT id_usuario FROM usuario WHERE id_miembro=?',[id])
+        if(accounts.length) throw invalid('Esta persona tiene cuenta de acceso: su cargo se gestiona en Usuarios y roles.',409)
+        if(old.id_rol_eclesiastico && old.id_rol_eclesiastico!==leader) throw invalid('Esta persona tiene otro cargo pastoral; gestiónalo en Usuarios y roles.',409)
+        values.id_rol_eclesiastico=wantsLeader?leader:null
+        leaderToggle=true
+      }
+    }
     checkMemberServices(actor,values,old)
-    if(Object.hasOwn(values,'id_rol_eclesiastico') && values.id_rol_eclesiastico!==old.id_rol_eclesiastico) {
+    if(!leaderToggle && Object.hasOwn(values,'id_rol_eclesiastico') && values.id_rol_eclesiastico!==old.id_rol_eclesiastico) {
       const [accounts]=await connection.execute('SELECT id_usuario FROM usuario WHERE id_miembro=?',[id])
       if(accounts.length || !old.id_rol_eclesiastico && values.id_rol_eclesiastico) throw invalid('Gestiona el cargo desde Usuarios y roles. Para una cuenta nueva usa el registro administrativo.',409)
     }
@@ -412,7 +438,7 @@ managementRouter.put('/members/:id/ministries',requirePermission('ministerios.ge
 })
 managementRouter.get('/groups',requirePermission('grupos.ver'),async (req,res) => {
   const filter=groupFilter(req,'grupos.ver')
-  const [items]=await pool.execute(`SELECT g.*,(SELECT COUNT(*) FROM miembro m WHERE m.id_grupo=g.id_grupo AND m.archivado=0) AS miembros FROM grupo_comunion g WHERE g.archivado=0 ${filter.sql} ORDER BY g.nombre`,filter.params)
+  const [items]=await pool.execute(`SELECT g.*,(SELECT COUNT(*) FROM miembro m WHERE m.id_grupo=g.id_grupo AND m.archivado=0) AS miembros,(SELECT NULLIF(TRIM(CONCAT_WS(' ',d.nombres,d.apellidos)),'') FROM miembro d WHERE d.id_miembro=g.id_discipulador) AS discipulador_nombre FROM grupo_comunion g WHERE g.archivado=0 ${filter.sql} ORDER BY g.nombre`,filter.params)
   res.json({items})
 })
 async function saveGroup(req,res,create) {
@@ -423,6 +449,10 @@ async function saveGroup(req,res,create) {
   if(!hasPermission(actor,'grupos.editar')) throw invalid('Ya no tienes permiso para gestionar grupos.',403)
   if(create && !hasPastoralAuthority(actor)) throw invalid('Solo los cargos pastorales autorizados pueden crear grupos y asignar responsables.',403)
   const old=create?null:await getGroup(req,id,'grupos.editar',connection)
+  // Location: the point on the map (latitude and longitude together) or a written address; one is required.
+  const after=key=>Object.hasOwn(values,key)?values[key]:old?.[key] ?? null
+  if((after('latitud')==null)!==(after('longitud')==null)) throw invalid('Marca el punto completo del grupo en el mapa.')
+  if(after('latitud')==null && !after('direccion')) throw invalid('Marca la ubicación del grupo en el mapa o escribe su dirección.')
   if(scoped(req,'grupos.editar')) {
     if(!req.authUser.memberId) throw invalid('Tu cuenta debe vincularse primero a tu ficha de discípulo.',409)
     if(Object.hasOwn(values,'id_discipulador') && values.id_discipulador!==req.authUser.memberId) throw invalid('Solo puedes gestionar grupos a tu cargo.',403)
@@ -662,7 +692,7 @@ managementRouter.get('/attendance/roster',requirePermission('asistencia.registra
 })
 managementRouter.get('/attendance',requirePermission('asistencia.ver'),async(req,res)=>{
   const activity=await getActivity(req,req.query.activityId,'asistencia.ver')
-  const [items]=await pool.execute(`SELECT a.*,CONCAT_WS(' ',m.nombres,m.apellidos) AS nombre,m.codigo_miembro FROM asistencia a LEFT JOIN miembro m ON m.id_miembro=a.id_miembro WHERE a.id_actividad=? AND a.archivado=0 ORDER BY a.fecha_registro`,[activity.id_actividad])
+  const [items]=await pool.execute(`SELECT a.*,CONCAT_WS(' ',m.nombres,m.apellidos) AS nombre,m.codigo_miembro FROM asistencia a LEFT JOIN miembro m ON m.id_miembro=a.id_miembro WHERE a.id_actividad=? AND a.archivado=0 ORDER BY a.fecha_registro DESC,a.id_asistencia DESC`,[activity.id_actividad])
   res.json({items,activity})
 })
 managementRouter.post('/attendance',requirePermission('asistencia.registrar'),async(req,res)=>{
@@ -684,6 +714,9 @@ managementRouter.post('/attendance',requirePermission('asistencia.registrar'),as
     if(id) {
       const [rows]=await connection.execute('SELECT id_grupo FROM miembro WHERE id_miembro=? AND archivado=0 FOR UPDATE',[id])
       if(!rows.length || (activity.id_grupo && rows[0].id_grupo!==activity.id_grupo)) throw invalid('Discípulo no disponible para esta actividad.',404)
+      // One record per person and event (manual or QR): a second one is refused instead of duplicated.
+      const [saved]=await connection.execute('SELECT id_asistencia FROM asistencia WHERE id_actividad=? AND id_miembro=? AND archivado=0',[activity.id_actividad,id])
+      if(saved.length) throw invalid('Esta persona ya tiene su asistencia registrada en este evento.',409)
     }
     const resultId=await insert(connection,'asistencia',{id_actividad:activity.id_actividad,id_miembro:id,nombre_visitante:!id?text(req.body.nombre_visitante,150):null,
       id_usuario_registro:req.authUser.id,estado_asistencia:state,metodo_registro:method,

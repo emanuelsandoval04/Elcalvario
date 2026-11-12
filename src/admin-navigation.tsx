@@ -7,6 +7,7 @@ const modules = [
   { key: 'dashboard', label: 'Inicio', permissions: ['gestion.acceder'] },
   { key: 'members', label: 'Discípulos', permissions: ['miembros.ver', 'miembros.editar', 'miembros.registrar'] },
   { key: 'groups', label: 'Grupos de Comunión', permissions: ['grupos.ver'] },
+  { key: 'mapa', label: 'Mapa de grupos', permissions: ['grupos.ver'] },
   { key: 'training', label: 'Adiestramiento', permissions: ['adiestramiento.gestionar'] },
   { key: 'activities', label: 'Eventos y Cultos', permissions: ['eventos.editar', 'eventos.publicar', 'grupos.editar', 'asistencia.registrar', 'asistencia.ver'] },
   { key: 'falls', label: 'Asistencia', permissions: ['asistencia.registrar', 'asistencia.ver'] },

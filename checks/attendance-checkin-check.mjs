@@ -64,6 +64,10 @@ try {
   const [[before]] = await db.query('SELECT fecha_actualizacion FROM actividad WHERE id_actividad=?', [tonight])
   const token = (await link(tonight, true)).token
   assert.notEqual(token, first.token)
+  // Reading the current QR never creates one (the page shows it again after a reload).
+  assert.equal((await request(`management/attendance/checkin-link?activityId=${tonight}`, { cookie: owner.cookie })).data.token, token)
+  assert.equal((await request(`management/attendance/checkin-link?activityId=${tomorrow}`, { cookie: owner.cookie })).data.token, null)
+  await request(`management/attendance/checkin-link?activityId=${tonight}`, { cookie: basic.cookie, status: 403 })
   const [[after]] = await db.query('SELECT fecha_actualizacion FROM actividad WHERE id_actividad=?', [tonight])
   assert.deepEqual(after.fecha_actualizacion, before.fecha_actualizacion, 'Renovar el código no marca el evento como modificado.')
   await request(`public/checkin/${first.token}`, { status: 404 })
@@ -170,11 +174,19 @@ try {
     await page.getByLabel('Correo electrónico', { exact: true }).fill('owner@example.invalid'); await page.getByLabel('Contraseña', { exact: true }).fill(password); await page.getByRole('button', { name: 'Iniciar sesión', exact: true }).click(); await page.locator('#dashboard-title').waitFor()
     await page.goto(`${ui}/#gestion/falls/registro`)
     await page.locator('.attendance-card', { hasText: 'Culto de esta noche' }).click()
-    await page.getByRole('button', { name: 'Mostrar código QR' }).click()
+    // The QR created earlier shows by itself, and again after reloading the page.
+    await page.locator('.attendance-qr svg.qr-code').waitFor()
+    assert.equal(await page.getByRole('button', { name: 'Mostrar código QR' }).count(), 0)
+    assert.ok((await page.locator('.attendance-qr-link').innerText()).endsWith(`/#asistencia/${token}`))
+    await page.reload()
     await page.locator('.attendance-qr svg.qr-code').waitFor()
     assert.ok((await page.locator('.attendance-qr-link').innerText()).endsWith(`/#asistencia/${token}`))
     assert.ok(await page.getByText('Sofía Visitante').count())
-    assert.ok(await page.getByText('Autorregistro con QR').first().count())
+    assert.ok(await page.getByText('Con código QR').first().count())
+    // A new QR registration appears in the list without reloading.
+    const arrived = await fetch(`${origin}/api/public/checkin/${token}`, { method: 'POST', headers: { Origin: origin, 'Content-Type': 'application/json' }, body: JSON.stringify({ nombre: 'Tomás Recién Llegado' }) })
+    assert.equal(arrived.status, 201)
+    await page.locator('.attendance-records article', { hasText: 'Tomás Recién Llegado' }).waitFor({ timeout: 12000 })
     await page.screenshot({ path: `${shots}/checkin-team-1280.png`, fullPage: true })
     await page.setViewportSize({ width: 390, height: 844 })
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false, 'Panel del QR sin desbordamiento en celular')

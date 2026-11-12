@@ -46,6 +46,11 @@ async function transaction(action) {
 // Team side: show (and optionally renew) the QR link of one event date.
 export function checkinManagementRouter({ getActivity }) {
   const router = Router()
+  // The QR already created for this date (null when there is none yet): reloading the page shows it again.
+  router.get('/attendance/checkin-link', requirePermission('asistencia.registrar'), async (req, res) => {
+    const activity = await getActivity(req, identifier(req.query.activityId), 'asistencia.registrar')
+    res.json({ token: activity.token_asistencia || null, state: checkinState(activity) })
+  })
   router.post('/attendance/checkin-link', requirePermission('asistencia.registrar'), async (req, res) => {
     const activity = await getActivity(req, identifier(req.body?.activityId), 'asistencia.registrar')
     const renew = req.body?.renew === true

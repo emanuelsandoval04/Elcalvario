@@ -58,7 +58,7 @@ try {
   const leader = (await request('management/members', { ...values, nombres: 'Responsable', numero_identificacion: 'L3' }, owner, 'POST', 201)).data.id
   assert.deepEqual((await request('management/catalogs', undefined, owner)).data.libros, [])
   await request(`management/users/${accounts.leader.id}/member`, { memberId: leader }, owner)
-  const group = (await request('management/groups', { codigo_grupo: 'TRAIN', nombre: 'Grupo de prueba', id_discipulador: leader, estado_grupo: 'activo' }, owner, 'POST', 201)).data.id
+  const group = (await request('management/groups', { codigo_grupo: 'TRAIN', nombre: 'Grupo de prueba', direccion: 'Calle 1', id_discipulador: leader, estado_grupo: 'activo' }, owner, 'POST', 201)).data.id
   await request(`management/members/${memberA}`, { id_grupo: group }, owner, 'PATCH')
   await request('management/training/books', undefined, basic, 'GET', 403)
   await request('management/training/books', { nombre: 'No autorizado' }, accounts.pending.cookie, 'POST', 403)

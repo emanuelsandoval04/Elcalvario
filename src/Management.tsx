@@ -23,11 +23,14 @@ import LeaderGroups from './LeaderGroups'
 import type { Barrio } from './GroupNeighborhoodField'
 import Training, { TrainingBookPicker, canCreateTrainingBooks } from './Training'
 import MemberBooks from './MemberBooks'
+import GroupLocationField from './GroupLocationField'
+import { groupColor } from './group-colors'
 import { colombiaToday, fieldRules, oldestBirthDate } from './contact-rules'
 import type { TrainingBook } from './Training'
 import { downloadReport } from './report-download'
 import ValidatedForm, { reportFormErrors, requestFieldErrors } from './ValidatedForm'
 const EventCalendar = lazy(() => import('./EventCalendar'))
+const GroupsMap = lazy(() => import('./GroupsMap'))
 const MemberImport = lazy(() => import('./MemberImport'))
 
 type Row = Record<string, string | number | null>
@@ -146,6 +149,8 @@ function Records({ resource, user, catalogs, reloadCatalogs, notify }: { resourc
   const remove = { members: 'miembros.eliminar', groups: 'grupos.eliminar', activities: 'eventos.eliminar' }
   const memberOptions = (resource === 'members' ? items : members).map(row => ({ value: Number(row.id_miembro), label: `${memberCode(row.codigo_miembro) ? `${memberCode(row.codigo_miembro)} · ` : ''}${row.nombres} ${row.apellidos || ''}`.trim() }))
   if (user.memberId && !memberOptions.some(option => option.value === user.memberId)) memberOptions.push({ value: user.memberId, label: 'Mi ficha de discípulo' })
+  // A Grupo de Comunión is led by a discipulador: only they appear in the group form.
+  const leaderOptions = members.filter(row => Number(row.es_discipulador)).map(row => ({ value: Number(row.id_miembro), label: `${memberCode(row.codigo_miembro) ? `${memberCode(row.codigo_miembro)} · ` : ''}${row.nombres} ${row.apellidos || ''}`.trim() }))
   async function load(silent = false) {
     const request = ++listRequest.current
     if (!silent) setLoading(true)
@@ -186,6 +191,8 @@ function Records({ resource, user, catalogs, reloadCatalogs, notify }: { resourc
       { key: 'id_libro', label: 'Libro de adiestramiento', required: !edit?.id_rol_eclesiastico && Boolean(catalogs.libros?.length), render: ({ initial, disabled, labelId, onBusy }) => <TrainingBookPicker books={catalogs.libros || []} initialId={initial.id_libro} disabled={disabled} required={!edit?.id_rol_eclesiastico && Boolean(catalogs.libros?.length)} canCreate={canCreateTrainingBooks(user)} onCreated={reloadCatalogs} onBusy={onBusy} labelledBy={labelId}/> },
     ]
     if (canServices && edit?.id_miembro) formFields.push({ key: 'funcion_iglesia', label: 'Función o servicio en la iglesia', max: 150 }, { key: 'id_cobertura_pastoral', label: 'Cobertura pastoral', options: memberOptions.filter(option => option.value !== edit?.id_miembro) })
+    // A discipulador can be registered without an access account (accounts are created in Usuarios y roles).
+    if (canServices && (!edit?.id_miembro || !Number(edit.tiene_cuenta) && (!edit.id_rol_eclesiastico || Number(edit.cargo_discipulador)))) formFields.push({ key: 'cargo_discipulador', label: 'Es discipulador (podrá tener Grupos de Comunión a cargo; no necesita cuenta de acceso)', type: 'checkbox' })
     if (canServices && has(user, 'ministerios.gestionar') && !edit?.id_miembro) formFields.push({ key: 'id_ministerio', label: 'Servicio en ministerio', options: catalogOptions(catalogs.ministerios, 'id_ministerio') })
     if (has(user, 'miembros.sensibles')) formFields.push(
       { key: 'grupo_sanguineo_rh', label: 'Grupo sanguíneo / RH', options: options(['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-']) },
@@ -195,8 +202,11 @@ function Records({ resource, user, catalogs, reloadCatalogs, notify }: { resourc
   } else if (resource === 'groups') formFields = [
     // codigo_grupo (GR-01, GR-02...) is assigned by the server and kept internal: it is not shown.
     { key: 'nombre', label: 'Nombre', required: true, max: 150 },
-    { key: 'id_discipulador', label: 'Discipulador', options: user.permissions['grupos.editar'] === 'grupo' ? memberOptions.filter(option => option.value === user.memberId) : memberOptions },
+    { key: 'id_discipulador', label: leaderOptions.length ? 'Discipulador' : 'Discipulador (registra primero un discipulador en Discípulos)', options: user.permissions['grupos.editar'] === 'grupo' ? memberOptions.filter(option => option.value === user.memberId) : leaderOptions },
     { key: 'estado_grupo', label: 'Estado del grupo', required: true, options: options(['activo', 'inactivo']) },
+    { key: 'direccion', label: 'Dirección (opcional si marcas el punto en el mapa)', max: 200, placeholder: 'Ej.: Calle 10 # 20-30, barrio La Esperanza' },
+    { key: 'latitud', label: 'Ubicación en el mapa', type: 'number', render: ({ initial, disabled, labelId }) => <GroupLocationField initialLat={initial.latitud} initialLng={initial.longitud} color={groupColor(initial.nombre)} disabled={disabled} labelledBy={labelId}/> },
+    { key: 'longitud', label: '', type: 'number', virtual: true },
   ]
   else {
     formFields = [
@@ -214,12 +224,14 @@ function Records({ resource, user, catalogs, reloadCatalogs, notify }: { resourc
     if (activityType === 'evento') formFields.push({ key: 'requiere_inscripcion', label: 'Requiere inscripción', type: 'checkbox' }, { key: 'url_inscripcion', label: 'Enlace de inscripción', type: 'url', max: 500 })
   }
   if (resource === 'groups' && !canServices) formFields = formFields.filter(field => field.key !== 'id_discipulador')
-  if (resource === 'groups' && !edit?.id_grupo) formFields = formFields.filter(field => !['id_grupo_origen', 'direccion', 'dia_reunion', 'hora_reunion'].includes(field.key))
+  if (resource === 'groups' && !edit?.id_grupo) formFields = formFields.filter(field => !['id_grupo_origen', 'dia_reunion', 'hora_reunion'].includes(field.key))
   async function save(values: Row) {
     const id = edit?.[ids[resource]]
     const { barrios_seleccion, ...recordValues } = values
     const selection = barrios_seleccion ? JSON.parse(String(barrios_seleccion)) : null
     if (selection?.removedNames?.length && !window.confirm(`¿Quitar estos barrios del grupo: ${selection.removedNames.join(', ')}?`)) throw new Error('Guardado cancelado. Se conservan tus cambios en el formulario.')
+    // A group needs its point on the map or a written address (one of the two).
+    if (resource === 'groups' && recordValues.latitud == null && !String(recordValues.direccion || '').trim()) throw new Error('Marca la ubicación del grupo en el mapa o escribe su dirección.')
     const groupValues = { ...recordValues, ...(selection ? { barrios: { ...selection, confirmRemoval: Boolean(selection.removedNames?.length) } } : {}) }
     const result = await api<{ id?: number; accountCreated?: boolean; emailDelivery?: WelcomeEmailStatus; seriesId?: number; occurrences?: number; codigo_grupo?: string }>(id ? `${resource}/${id}` : resource, resource === 'groups' ? groupValues : resource === 'activities' ? { ...values, tipo_actividad: activityType, ...(Object.hasOwn(values, 'recurrence') ? { recurrence: values.recurrence ? JSON.parse(String(values.recurrence)) : null } : {}) } : resource === 'members' && !id ? { ...values, tipo_registro: 'discipulo' } : values, id ? 'PATCH' : 'POST')
     if (result.seriesId) { setEdit(null); notify(id ? 'Programación semanal guardada. Se conservan las asistencias de cada fecha.' : 'Programación semanal creada. Las próximas fechas se prepararán automáticamente.'); await load(); return }
@@ -285,6 +297,7 @@ function Records({ resource, user, catalogs, reloadCatalogs, notify }: { resourc
         <span className="record-copy">{resource === 'members' && memberCode(row.codigo_miembro) && <span className="member-code">ID {memberCode(row.codigo_miembro)}</span>}<strong>{name}</strong>{resource === 'members' ? <>{isLeader(row) && <span className="member-leader">Discipulador{row.grupos_a_cargo ? ` · ${row.grupos_a_cargo}` : ' · Sin grupo a cargo'}</span>}<span>{row.tipo_identificacion} {row.numero_identificacion}</span><span>Libro: {row.libro_actual || 'Sin asignar'}</span><span className="record-state" data-state={row.estado_miembro}>{row.estado_miembro}</span></> : resource === 'groups' ? <><span>{row.miembros} discípulos</span><span>{row.dia_reunion || 'Día por definir'}{row.hora_reunion ? ` · ${String(row.hora_reunion).slice(0, 5)}` : ''}</span></> : <><span>{row.fecha} · {String(row.hora).slice(0, 5)}</span>{row.id_serie && <span>{weeklySchedule(Number(row.dia_semana), String(row.repeticion_hora || row.hora), Boolean(row.repeticion_activa))}</span>}<span>{row.lugar}</span>{(row.estado_actividad === 'cancelada' || row.tipo_actividad === 'reunion_grupo') && <span className="event-type" data-state={row.estado_actividad}>{row.estado_actividad === 'cancelada' ? 'Cancelada' : 'Reunión de grupo'}</span>}</>}</span>
         <AdminIcon name="chevron"/>
       </button>
+      {resource === 'groups' && row.latitud != null && row.longitud != null && <a className="app-action secondary record-map-link" href={`#gestion/mapa/grupo/${row.id_grupo}`}>Ver en el mapa</a>}
       {(canEdit(row) || has(user, remove[resource])) && <details className="record-menu"><summary aria-label={`Acciones de ${name}`}>•••</summary><div>{canEdit(row) && <button className="secondary" onClick={() => openEdit(row)}>Editar</button>}{has(user, remove[resource]) && <button className="secondary" onClick={() => void (resource === 'activities' && row.id_serie ? stopRepetition(row) : archive(row))}>{resource === 'activities' && row.id_serie ? 'Eliminar fijo' : 'Archivar'}</button>}</div></details>}
     </article>})}</div>)}
     {detail && resource === 'activities' && <aside className="manage-editor activity-detail">{detail.imagen && <img className="activity-detail-image" src={String(detail.imagen)} alt=""/>}{detail.tipo_actividad === 'reunion_grupo' && <span className="event-type">Reunión de grupo</span>}<h3>{detail.titulo}</h3><p>{detail.fecha} · {String(detail.hora).slice(0, 5)} · {detail.lugar}</p>{detail.id_serie && <p className="event-repeat-note">{weeklySchedule(Number(detail.dia_semana), String(detail.repeticion_hora || detail.hora), Boolean(detail.repeticion_activa))}{detail.repeticion_fin ? ` · Hasta ${detail.repeticion_fin}` : ''}</p>}<p>{detail.descripcion || 'Sin descripción adicional.'}</p><p>Estado: {detail.estado_actividad}</p><div className="manage-actions">{canEdit(detail) && <button onClick={() => openEdit(detail)}>Editar actividad</button>}{detail.id_serie && has(user, 'eventos.eliminar') && <button className="secondary" disabled={stoppingRepeat} onClick={() => void stopRepetition(detail)}>{stoppingRepeat ? 'Eliminando…' : 'Eliminar evento fijo'}</button>}{(has(user, 'asistencia.registrar') || has(user, 'asistencia.ver')) && <a className="app-action secondary" href={`#gestion/falls/registro/actividad/${detail.id_actividad}`}>Ver asistencia</a>}</div></aside>}
@@ -350,8 +363,15 @@ function GroupDetail({ row, user, onClose, onEdit, members, groupNames, notify, 
     <p>Discípulos registrados: {row.miembros}. Discipulador: ID {row.id_discipulador || 'sin asignar'}.</p>
     {!row.id_discipulador && onEdit && <button type="button" className="secondary" onClick={onEdit}>Asignar discipulador</button>}
     {members && <GroupMembers group={row} members={members} groupNames={groupNames} canAdd={has(user, 'grupos.editar') && has(user, 'miembros.editar')} canRemove={has(user, 'grupos.editar') && has(user, 'miembros.editar') && user.permissions['miembros.editar'] === 'todos'} notify={notify} onChanged={onMembersChanged}/>}
-    <div className="group-detail-actions">{has(user, 'miembros.ver') && <a className="app-action secondary" href={`#gestion/members/grupo/${row.id_grupo}`}><span className="dashboard-card-icon"><AdminIcon name="members"/></span>Ver discípulos<AdminIcon name="chevron"/></a>}{onEdit && <button type="button" className="secondary" onClick={onEdit}><span className="dashboard-card-icon"><AdminIcon name="groups"/></span>Editar grupo<AdminIcon name="chevron"/></button>}{mapQuery && <a className="app-action secondary" href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(mapQuery)}`} target="_blank" rel="noopener noreferrer"><span className="dashboard-card-icon"><AdminIcon name="home"/></span>Ubicación en mapa<AdminIcon name="chevron"/></a>}</div>
+    <div className="group-detail-actions">{has(user, 'miembros.ver') && <a className="app-action secondary" href={`#gestion/members/grupo/${row.id_grupo}`}><span className="dashboard-card-icon"><AdminIcon name="members"/></span>Ver discípulos<AdminIcon name="chevron"/></a>}{onEdit && <button type="button" className="secondary" onClick={onEdit}><span className="dashboard-card-icon"><AdminIcon name="groups"/></span>Editar grupo<AdminIcon name="chevron"/></button>}{row.latitud != null && row.longitud != null ? <a className="app-action secondary" href={`#gestion/mapa/grupo/${row.id_grupo}`}><span className="dashboard-card-icon"><AdminIcon name="mapa"/></span>Ver en el mapa<AdminIcon name="chevron"/></a> : mapQuery && <a className="app-action secondary" href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(mapQuery)}`} target="_blank" rel="noopener noreferrer"><span className="dashboard-card-icon"><AdminIcon name="home"/></span>Buscar dirección en Google Maps<AdminIcon name="chevron"/></a>}</div>
   </aside>
+}
+
+// Green check: attended. Red X: did not attend. Grey alert: has an excuse.
+function AttendanceIcon({ state }: { state: string }) {
+  return <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    {state === 'presente' ? <path d="m5 12.5 4.5 4.5L19 7.5"/> : state === 'ausente' ? <path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/> : state === 'justificado' ? <><path d="M12 3.5 2.8 19.5h18.4Z"/><path d="M12 9.5v4.5M12 17h.01"/></> : <><circle cx="12" cy="8" r="3.5"/><path d="M5 20c.8-3.6 3.6-5.5 7-5.5s6.2 1.9 7 5.5"/></>}
+  </svg>
 }
 
 function Attendance({ user, notify }: { user: AuthUser; notify: Message }) {
@@ -361,9 +381,7 @@ function Attendance({ user, notify }: { user: AuthUser; notify: Message }) {
   const [activityId, setActivityId] = useState(() => window.location.hash.split('/')[3] === 'actividad' ? window.location.hash.split('/')[4] || '' : '')
   const [roster, setRoster] = useState<Row[]>([])
   const [records, setRecords] = useState<Row[]>([])
-  const [method, setMethod] = useState('manual')
-  const [corrections, setCorrections] = useState<Record<string, string>>({})
-  const [pending, setPending] = useState<Record<string, string>>({})
+  const [marking, setMarking] = useState<Record<string, boolean>>({})
   const [search, setSearch] = useState('')
   const [saving, setSaving] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -375,40 +393,66 @@ function Attendance({ user, notify }: { user: AuthUser; notify: Message }) {
     try {
       const [people, attendance] = await Promise.all([has(user, 'asistencia.registrar') ? api<{ items: Row[]; version?:string; activity?:Row }>(`attendance/roster?activityId=${activityId}`) : Promise.resolve({ items: [],version:'',activity:undefined }), has(user, 'asistencia.ver') ? api<{ items: Row[]; activity?:Row }>(`attendance?activityId=${activityId}`) : Promise.resolve({ items: [],activity:undefined })])
       if (request !== requestId.current) return
-      setRoster(people.items);setRosterVersion(people.version || ''); setRecords(attendance.items); setCorrections({})
+      setRoster(people.items);setRosterVersion(people.version || ''); setRecords(attendance.items)
       setSelectedActivity(attendance.activity || people.activity || null)
     } catch (error) { if (request === requestId.current) { notify(errorMessage(error)); setRoster([]); setRecords([]) } }
     finally { if (request === requestId.current) setLoading(false) }
   }
-  useEffect(() => { setPending({}); setSearch(''); void load(); return () => { requestId.current++ } }, [activityId])
-  const selected = selectedActivity && String(selectedActivity.id_actividad)===activityId ? selectedActivity : null
-  const eventToday = Boolean(selected) && String(selected?.fecha) === bogotaToday()
-  // While the event is today, QR self check-ins appear without reloading. The roster version is kept,
-  // so a changed list still asks for a review before the full save.
-  const refreshing = useRef(0)
+  useEffect(() => { setMarking({}); setSearch(''); void load(); return () => { requestId.current++ } }, [activityId])
+  // The chosen event stays in the address, so reloading the page reopens it (with its QR).
   useEffect(() => {
-    if (!eventToday || !activityId) return
-    const timer = window.setInterval(() => {
-      if (document.visibilityState !== 'visible') return
-      const base = requestId.current, request = ++refreshing.current
-      void Promise.all([has(user, 'asistencia.registrar') ? api<{ items: Row[] }>(`attendance/roster?activityId=${activityId}`) : Promise.resolve(null), has(user, 'asistencia.ver') ? api<{ items: Row[] }>(`attendance?activityId=${activityId}`) : Promise.resolve(null)])
-        .then(([people, attendance]) => { if (base !== requestId.current || request !== refreshing.current) return; if (people) setRoster(people.items); if (attendance) setRecords(attendance.items) }).catch(() => {})
-    }, 15000)
-    return () => window.clearInterval(timer)
-  }, [eventToday, activityId])
+    const parts = window.location.hash.split('/')
+    if (parts[1] !== 'falls') return
+    const wanted = activityId ? `#gestion/falls/registro/actividad/${activityId}` : '#gestion/falls/registro'
+    if (window.location.hash !== wanted) window.history.replaceState(null, '', wanted)
+  }, [activityId])
+  const selected = selectedActivity && String(selectedActivity.id_actividad)===activityId ? selectedActivity : null
+  // QR check-ins and other devices' marks keep arriving: both lists refresh every few seconds while the page is visible.
+  const refreshing = useRef(0)
+  async function refresh() {
+    const base = requestId.current, request = ++refreshing.current
+    try {
+      const [people, attendance] = await Promise.all([has(user, 'asistencia.registrar') ? api<{ items: Row[]; version?: string }>(`attendance/roster?activityId=${activityId}`) : Promise.resolve(null), has(user, 'asistencia.ver') ? api<{ items: Row[] }>(`attendance?activityId=${activityId}`) : Promise.resolve(null)])
+      if (base !== requestId.current || request !== refreshing.current) return
+      if (people) { setRoster(people.items); setRosterVersion(people.version || '') }
+      if (attendance) setRecords(attendance.items)
+    } catch { /* the next refresh retries */ }
+  }
+  useEffect(() => {
+    if (!activityId) return
+    const timer = window.setInterval(() => { if (document.visibilityState === 'visible') void refresh() }, 5000)
+    const visible = () => { if (document.visibilityState === 'visible') void refresh() }
+    document.addEventListener('visibilitychange', visible)
+    return () => { window.clearInterval(timer); document.removeEventListener('visibilitychange', visible) }
+  }, [activityId])
   const states: Record<string, string> = { presente: 'Presente', ausente: 'Ausente sin justificación', justificado: 'Justificado', visitante: 'Visitante' }
-  const outstanding=roster.filter(person=>!person.registrado&&!records.some(record=>record.id_miembro===person.id_miembro))
+  const outstanding=roster.filter(person=>!Number(person.registrado)&&!records.some(record=>record.id_miembro===person.id_miembro))
   // Attendance can be saved for any date: past events (late records) or future ones.
-  const blockedReason=!selected ? '' : selected.estado_actividad === 'cancelada' ? 'Este evento está cancelado: no se registra asistencia.' : !roster.length ? 'No hay discípulos activos en este listado. Puedes registrar visitantes abajo.' : !outstanding.length ? 'Todos los discípulos de este listado ya tienen su asistencia guardada.' : ''
-  async function saveRoster() {
+  const blockedReason=!selected ? '' : selected.estado_actividad === 'cancelada' ? 'Este evento está cancelado: no se registra asistencia.' : !roster.length ? 'No hay discípulos activos en este listado. Los visitantes se registran con el código QR.' : ''
+  // One tap saves the person's attendance at once; they leave the pending list and join the saved records.
+  async function mark(person: Row, state: 'presente' | 'ausente' | 'justificado') {
+    const id = String(person.id_miembro)
+    if (marking[id]) return
+    setMarking(previous => ({ ...previous, [id]: true }))
+    try { await api('attendance', { id_actividad: Number(activityId), id_miembro: Number(person.id_miembro), estado_asistencia: state, metodo_registro: 'manual' }); await refresh() }
+    catch (error) { notify(errorMessage(error)); await refresh() }
+    finally { setMarking(previous => { const next = { ...previous }; delete next[id]; return next }) }
+  }
+  async function correct(row: Row, state: string) {
+    if (String(row.estado_asistencia) === state) return
+    try { await api(`attendance/${row.id_asistencia}`, { estado_asistencia: state }, 'PATCH'); notify('Asistencia corregida.'); await refresh() }
+    catch (error) { notify(errorMessage(error)) }
+  }
+  // Ending the event: whoever is still pending is saved as absent without justification.
+  async function finish() {
     if (saving || !outstanding.length) return
+    if (!window.confirm(`Quedan ${outstanding.length === 1 ? '1 persona sin marcar; quedará' : `${outstanding.length} personas sin marcar; quedarán`} como ausente sin justificación. ¿Finalizar el evento?`)) return
     setSaving(true)
     try {
-      const eligible=new Set(outstanding.map(person=>String(person.id_miembro)))
-      const result=await api<{created:number;absent:number;present:number;justified:number}>('attendance/save',{activityId:Number(activityId),rosterVersion,states:Object.fromEntries(Object.entries(pending).filter(([id])=>eligible.has(id)))})
-      setPending({});await load()
-      notify(`Asistencia guardada. Presentes: ${result.present}; justificados: ${result.justified}; ausentes sin justificación: ${result.absent}.`)
-    }catch(error){notify(errorMessage(error));await load()}finally{setSaving(false)}
+      const result = await api<{ created: number; absent: number }>('attendance/save', { activityId: Number(activityId), rosterVersion, states: {} })
+      await load()
+      notify(`Evento finalizado. ${result.absent === 1 ? '1 persona quedó' : `${result.absent} personas quedaron`} como ausente sin justificación.`)
+    } catch (error) { notify(errorMessage(error)); await load() } finally { setSaving(false) }
   }
   return <section className="attendance-page"><p className="section-caption">Consulta encuentros actuales y anteriores, guarda la asistencia o descarga el registro de un evento.</p><AttendanceActivityPicker value={activityId} selected={selected} disabled={saving||loading} onChange={activity=>{setSelectedActivity(activity);setActivityId(activity?String(activity.id_actividad):'')}}/>
     {!activityId && <div className="app-empty"><span className="empty-icon"><AdminIcon name="attendance"/></span><h3>¿En qué encuentro estamos?</h3><p>Selecciona una actividad para consultar o registrar su asistencia.</p></div>}
@@ -417,27 +461,29 @@ function Attendance({ user, notify }: { user: AuthUser; notify: Message }) {
       {has(user, 'asistencia.registrar') && selected && selected.estado_actividad !== 'cancelada' && <AttendanceQrPanel key={String(selected.id_actividad)} activity={selected} notify={notify}/>}
       {has(user,'reportes.asistencia') && selected && <div className="attendance-export"><p>Descargar los registros guardados de este evento y esta fecha.</p>{(['pdf','xlsx'] as const).map(format=><button type="button" className="secondary" key={format} disabled={exporting||saving||loading} onClick={()=>{setExporting(true);void downloadReport(`reports/asistencia?${new URLSearchParams({activityId,format})}`,`asistencia-${selected.fecha}-${activityId}.${format}`).catch(error=>notify(errorMessage(error))).finally(()=>setExporting(false))}}>Descargar asistencia en {format==='pdf'?'PDF':'Excel'}</button>)}</div>}
       {has(user, 'asistencia.registrar') && <>
-        <form className="record-search" onSubmit={event => event.preventDefault()}><AdminIcon name="search"/><label className="sr-only" htmlFor="attendance-search">Buscar discípulo para asistencia</label><input id="attendance-search" value={search} placeholder="Buscar discípulo" type="search" onChange={event => setSearch(event.target.value)}/></form>
-        {loading ? <p role="status">Cargando asistencia…</p> : <div className="attendance-roster">{roster.filter(person => String(person.nombre).toLowerCase().includes(search.toLowerCase())).map(person => {
-          const id = String(person.id_miembro)
-          const existing = records.find(record => String(record.id_miembro) === id)
-          return <div key={id} className="attendance-person"><span className="member-avatar" aria-hidden="true">{String(person.nombre).split(' ').slice(0, 2).map(word => word[0]).join('')}</span><strong>{memberCode(person.codigo_miembro) && <span className="member-code">{memberCode(person.codigo_miembro)}</span>} {person.nombre}</strong>{existing ? <span className="attendance-saved" data-state={existing.estado_asistencia}>{states[String(existing.estado_asistencia)] || existing.estado_asistencia}<small>Guardado</small></span> : person.registrado ? <span className="attendance-saved">Asistencia guardada</span> : <AppSelect aria-label={`Asistencia de ${person.nombre}`} data-state={pending[id] || 'ausente'} disabled={saving || selected?.estado_actividad === 'cancelada'} value={pending[id] || ''} onChange={event => setPending(previous => { const next = { ...previous }; if (event.target.value) next[id] = event.target.value; else delete next[id]; return next })}><option value="">Ausente sin justificación (sin marcar)</option>{['presente', 'ausente', 'justificado'].map(state => <option key={state} value={state}>{states[state]}</option>)}</AppSelect>}</div>
-        })}{!roster.length && <p>No hay discípulos disponibles para esta actividad. Puedes registrar un visitante a continuación.</p>}</div>}
-        <p className="attendance-save-note">Al guardar, quienes queden sin marcar se registrarán como ausentes sin justificación. Los justificados se seleccionan aparte. Quienes se registren después con el código QR pasan a presentes.</p>
+        <h3 className="attendance-record-heading">Por confirmar <span>{outstanding.length}</span></h3>
+        {outstanding.length > 6 && <form className="record-search" onSubmit={event => event.preventDefault()}><AdminIcon name="search"/><label className="sr-only" htmlFor="attendance-search">Buscar discípulo para asistencia</label><input id="attendance-search" value={search} placeholder="Buscar discípulo" type="search" onChange={event => setSearch(event.target.value)}/></form>}
+        {loading ? <p role="status">Cargando asistencia…</p> : <div className="attendance-roster">{outstanding.filter(person => String(person.nombre).toLowerCase().includes(search.toLowerCase())).map(person => {
+          const id = String(person.id_miembro), busy = Boolean(marking[id]) || saving || selected?.estado_actividad === 'cancelada'
+          return <div key={id} className="attendance-person"><span className="member-avatar" aria-hidden="true">{String(person.nombre).split(' ').slice(0, 2).map(word => word[0]).join('')}</span><strong>{memberCode(person.codigo_miembro) && <span className="member-code">{memberCode(person.codigo_miembro)}</span>} {person.nombre}</strong>
+            <span className="attendance-marks" role="group" aria-label={`Asistencia de ${person.nombre}`}>
+              <button type="button" className="attendance-mark" data-state="presente" disabled={busy} aria-label={`Asistió: ${person.nombre}`} title="Asistió" onClick={() => void mark(person, 'presente')}><AttendanceIcon state="presente"/></button>
+              <button type="button" className="attendance-mark" data-state="ausente" disabled={busy} aria-label={`No asistió: ${person.nombre}`} title="No asistió" onClick={() => void mark(person, 'ausente')}><AttendanceIcon state="ausente"/></button>
+              <button type="button" className="attendance-mark" data-state="justificado" disabled={busy} aria-label={`Tiene excusa: ${person.nombre}`} title="Tiene excusa" onClick={() => void mark(person, 'justificado')}><AttendanceIcon state="justificado"/></button>
+            </span></div>
+        })}{!outstanding.length && roster.length > 0 && <p className="attendance-done">Todos los discípulos de este listado ya tienen su asistencia.</p>}</div>}
         {blockedReason && !loading && <p className="attendance-blocked" role="status">{blockedReason}</p>}
-        <button className="attendance-save" disabled={saving || loading || !outstanding.length || selected?.estado_actividad === 'cancelada'} onClick={() => void saveRoster()}>{saving ? 'Guardando asistencia…' : 'Guardar asistencia y registrar ausentes'}</button>
       </>}
-      {has(user, 'asistencia.registrar') && <details className="attendance-other"><summary>Registrar visitante, identificador QR u otro estado</summary><div className="manage-editor"><label>Método <AppSelect value={method} disabled={saving} onChange={event => setMethod(event.target.value)}><option value="manual">Manual</option><option value="qr">QR: ingresar identificador</option></AppSelect></label>
-      <DataForm key={`${activityId}-${method}`} fields={[
-        ...(method === 'manual' ? [{ key: 'id_miembro', label: 'Discípulo (sin asignar para visitante)', options: roster.map(item => ({ value: Number(item.id_miembro), label: String(item.nombre) })) }] : [{ key: 'codigo_qr', label: 'Identificador QR del discípulo', required: true, max: 36 }]),
-        { key: 'estado_asistencia', label: 'Estado de asistencia', required: true, options: options(attendanceStates) },
-        { key: 'nombre_visitante', label: 'Nombre del visitante, si aplica', max: 150 },
-      ]} initial={{ estado_asistencia: 'presente' }} onSave={async values => { await api('attendance', { ...values, id_actividad: Number(activityId), metodo_registro: method }); notify('Asistencia registrada.'); await load() }} label="Registrar asistencia" />
-    </div></details>}
-    {records.length > 0 && <h3 className="attendance-record-heading">Asistencias guardadas <span>{records.length}</span></h3>}
-    <div className="manage-records">{records.map(row => <article key={row.id_asistencia}><div><strong>{row.nombre || row.nombre_visitante || 'Visitante'}</strong><p>{states[String(row.estado_asistencia)] || row.estado_asistencia} · {row.origen_registro === 'autoregistro_qr' ? 'Autorregistro con QR' : row.metodo_registro === 'qr' ? 'QR' : 'Manual'}{row.documento_visitante ? ` · Doc. ${row.documento_visitante}` : ''}</p></div><div className="manage-actions">
-      {has(user, 'asistencia.corregir') && <><label>Corregir <AppSelect aria-label="Corregir" value={corrections[String(row.id_asistencia)] || String(row.estado_asistencia)} onChange={event => setCorrections({ ...corrections, [String(row.id_asistencia)]: event.target.value })}>{attendanceStates.map(value => <option key={value}>{value}</option>)}</AppSelect></label><button onClick={() => void api(`attendance/${row.id_asistencia}`, { estado_asistencia: corrections[String(row.id_asistencia)] || row.estado_asistencia }, 'PATCH').then(() => { notify('Asistencia corregida; alertas recalculadas.'); void load() }).catch(error => notify(errorMessage(error)))}>Guardar corrección</button></>}
-    </div></article>)}</div></>}
+      <h3 className="attendance-record-heading">Asistencias registradas <span>{records.length}</span></h3>
+      {!records.length && <p className="attendance-empty-records">Aún no hay registros. Aparecerán aquí a medida que se marquen o se registren con el código QR.</p>}
+      <div className="manage-records attendance-records">{records.map(row => <article key={row.id_asistencia}><span className="attendance-state-icon" data-state={row.estado_asistencia} aria-hidden="true"><AttendanceIcon state={String(row.estado_asistencia)}/></span><div><strong>{row.nombre || row.nombre_visitante || 'Visitante'}</strong><p>{states[String(row.estado_asistencia)] || row.estado_asistencia} · {row.origen_registro === 'autoregistro_qr' ? 'Con código QR' : row.metodo_registro === 'qr' ? 'QR' : 'Marcado por el equipo'}{row.documento_visitante ? ` · Doc. ${row.documento_visitante}` : ''}</p></div>
+        {has(user, 'asistencia.corregir') && row.id_miembro && <span className="attendance-marks attendance-corrections" role="group" aria-label={`Corregir asistencia de ${row.nombre}`}>{(['presente', 'ausente', 'justificado'] as const).map(state => <button key={state} type="button" className="attendance-mark" data-state={state} aria-pressed={String(row.estado_asistencia) === state} aria-label={`${states[state]}: ${row.nombre}`} title={states[state]} onClick={() => void correct(row, state)}><AttendanceIcon state={state}/></button>)}</span>}
+      </article>)}</div>
+      {has(user, 'asistencia.registrar') && selected && selected.estado_actividad !== 'cancelada' && roster.length > 0 && <div className="attendance-finish">
+        <p className="attendance-save-note">Al finalizar, quienes sigan por confirmar quedarán como ausentes sin justificación. Si alguien se registra después con el código QR, pasa a presente.</p>
+        <button className="attendance-save" disabled={saving || loading || !outstanding.length} onClick={() => void finish()}>{saving ? 'Finalizando…' : 'Finalizar evento y guardar asistencia'}</button>
+      </div>}
+    </>}
   </section>
 }
 
@@ -560,7 +606,7 @@ export default function Management() {
       {tab === 'dashboard' && <Dashboard key={accessKey} user={user} />}
       {tab === 'training' && <Training books={catalogs.libros || []} onReload={reloadCatalogs} notify={setMessage} canSeeMembers={has(user, 'miembros.ver')}/>}
       {(['members', 'groups', 'activities'] as const).map(resource => tab === resource && <Records key={`${resource}-${accessKey}`} resource={resource} user={user} catalogs={catalogs} reloadCatalogs={reloadCatalogs} notify={setMessage} />)}
-      {tab === 'falls' && <Falls key={accessKey} user={user} notify={setMessage} />}{tab === 'reports' && <Reports user={user} notify={setMessage} />}
+      {tab === 'mapa' && <Suspense fallback={<p role="status">Cargando mapa…</p>}><GroupsMap/></Suspense>}{tab === 'falls' && <Falls key={accessKey} user={user} notify={setMessage} />}{tab === 'reports' && <Reports user={user} notify={setMessage} />}
     </>}
     </div>
   </AdminFrame>
