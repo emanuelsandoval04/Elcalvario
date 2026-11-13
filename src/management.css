@@ -107,3 +107,32 @@ html body .group-members-list .group-members-remove:hover:not(:disabled) { backg
 .member-group-history li span, .member-group-history li time { font-size: 0.92em; color: #6b6259; }
 .record-map-link { flex-shrink: 0; align-self: center; min-height: 40px; padding: 8px 12px; font-size: 13px; white-space: nowrap; }
 @media (max-width: 520px) { .manage-records article:has(.record-map-link) { flex-wrap: wrap; } .record-map-link { order: 3; margin: 0 0 4px 56px; } }
+.group-attendance { justify-self: start; width: fit-content; padding: 2px 9px; border-radius: 999px; font-weight: 700; background: #eef0f3; color: #5b6472; }
+.group-attendance[data-level=high] { background: #e3f6ea; color: #137a3d; }
+.group-attendance[data-level=mid] { background: #fff3dc; color: #8a5a00; }
+.group-attendance[data-level=low] { background: #fde7ea; color: #b4232f; }
+/* Forms organized in section cards (Nuevo evento). */
+.form-card { display: grid; gap: 14px; padding: 20px; border: 1px solid #ece6df; border-radius: 16px; background: #fff; box-shadow: 0 1px 2px #1f29370a; min-width: 0; }
+.form-card-title { margin: 0; display: flex; align-items: center; gap: 10px; font-size: 15px; font-weight: 750; color: #1f2633; }
+.form-card-title::before { content: ""; width: 4px; height: 18px; border-radius: 4px; background: linear-gradient(180deg, #ff8417, #ef4d00); }
+.form-card-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; min-width: 0; }
+.form-card-fields > .manage-wide { grid-column: 1 / -1; }
+.form-card .event-recurrence, .form-card .event-image-field { border: 0; padding: 0; margin: 0; background: transparent; }
+.form-switch { display: flex !important; align-items: flex-start; gap: 12px; padding: 12px 14px; border: 1px solid #ece6df; border-radius: 12px; background: #fbfaf8; cursor: pointer; }
+.form-switch input[type=checkbox] { appearance: none; -webkit-appearance: none; flex: 0 0 40px; width: 40px; height: 24px; min-height: 24px; margin: 1px 0 0; border-radius: 999px; background: #d5d9e0; position: relative; cursor: pointer; transition: background-color .2s; }
+.form-switch input[type=checkbox]::after { content: ""; position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%; background: #fff; box-shadow: 0 1px 2px #0003; transition: transform .2s; }
+.form-switch input[type=checkbox]:checked { background: #ef6a12; }
+.form-switch input[type=checkbox]:checked::after { transform: translateX(16px); }
+.form-switch input[type=checkbox]:focus-visible { outline: 3px solid #ffd2b3; outline-offset: 2px; }
+.form-switch-copy { display: grid; gap: 2px; min-width: 0; }
+.form-switch-copy strong { font-size: 14px; color: #1f2633; }
+.form-switch-copy small { font-size: 12px; color: #6b7280; line-height: 1.4; }
+/* The registration link only shows when "Requiere inscripción" is on. */
+.manage-form:has(input[name=requiere_inscripcion]:not(:checked)) :is([data-field=url_inscripcion], .form-feedback-field:has(> [data-field=url_inscripcion])) { display: none; }
+/* The validation wrapper copies the label's classes: only the label itself draws the switch box. */
+div.form-switch { display: grid !important; padding: 0; border: 0; background: none; }
+@media (max-width: 639px) { .form-card { padding: 16px 14px; } .form-card-fields { grid-template-columns: minmax(0, 1fr); } }
+.admin-workspace .management-shell .form-card .form-card-title, .manage-form .form-card .form-card-title { margin: 0; }
+.member-book { display: inline-flex; align-items: center; gap: 6px; }
+.member-book-dot { display: inline-block; flex: 0 0 10px; width: 10px; height: 10px; border-radius: 50%; }
+.member-book-dot-large { width: 14px; height: 14px; margin-right: 8px; vertical-align: middle; box-shadow: 0 0 0 2px #fff, 0 0 0 3px #0002; }

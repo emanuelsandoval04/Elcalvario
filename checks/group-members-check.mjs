@@ -99,6 +99,32 @@ try {
   const unassigned = (await request('management/members', { cookie: owner.cookie, status: 201, body: { nombres: 'Registrada', apellidos: 'Sin grupo', tipo_identificacion: 'CC', numero_identificacion: 'REG-NONE', celular: '3001112234', fecha_nacimiento: '1995-04-02' } })).data.id
   assert.deepEqual((await request(`management/members/${unassigned}/history`, { cookie: owner.cookie })).data.items, [])
   await db.execute('UPDATE miembro SET archivado=1 WHERE id_miembro IN (?,?)', [registered, unassigned])
+  // Data consistency: archiving a group releases its disciples (with history); a record with an
+  // account or leading a group cannot be archived; an old email is kept when editing other data.
+  const closing = (await request('management/groups', { cookie: owner.cookie, status: 201, body: { nombre: 'Grupo por cerrar', direccion: 'Calle 1 # 2-3', estado_grupo: 'activo' } })).data
+  const pedro = await member('Pedro'), sara = await member('Sara')
+  await add(closing.id, [pedro, sara])
+  const archiveGroup = await request(`management/groups/${closing.id}`, { cookie: owner.cookie, method: 'DELETE', body: {} })
+  assert.equal(archiveGroup.data.released, 2)
+  assert.deepEqual((await db.query('SELECT id_grupo FROM miembro WHERE id_miembro IN (?,?)', [pedro, sara]))[0].map(row => row.id_grupo), [null, null], 'Archivar un grupo deja a sus discípulos sin grupo')
+  assert.deepEqual((await request(`management/members/${pedro}/history`, { cookie: owner.cookie })).data.items.map(item => [item.grupo_anterior, item.grupo_nuevo]).slice(0, 1), [['Grupo por cerrar', null]])
+  const archiveMember = (id, status) => request(`management/members/${id}`, { cookie: owner.cookie, method: 'DELETE', body: {}, status })
+  assert.match((await archiveMember(leaderA, 409)).data.error, /cuenta de acceso/)
+  assert.match((await archiveMember(leaderB, 409)).data.error, /Familia Fe/)
+  await db.execute("UPDATE miembro SET correo='antiguo@example.com' WHERE id_miembro=?", [sara])
+  await request(`management/members/${sara}`, { cookie: owner.cookie, method: 'PATCH', body: { correo: 'antiguo@example.com', celular: '3009998877' } })
+  await request(`management/members/${sara}`, { cookie: owner.cookie, method: 'PATCH', body: { correo: 'otro@example.com' }, status: 400 })
+  await request(`management/members/${sara}`, { cookie: owner.cookie, method: 'PATCH', body: { correo: 'sara@gmail.com' } })
+  assert.equal((await db.query('SELECT correo FROM miembro WHERE id_miembro=?', [sara]))[0][0].correo, 'sara@gmail.com')
+  assert.equal((await request('management/members', { cookie: owner.cookie })).data.truncated, false)
+  // Migration 031 repairs older data the same way.
+  await db.execute('UPDATE miembro SET id_grupo=? WHERE id_miembro=?', [closing.id, pedro])
+  await db.execute('UPDATE miembro SET archivado=1 WHERE id_miembro=?', [leaderA])
+  await (await import('../server/migration-runner.js')).applyMigrations(db)
+  assert.equal((await db.query('SELECT id_grupo FROM miembro WHERE id_miembro=?', [pedro]))[0][0].id_grupo, null)
+  assert.equal((await db.query('SELECT archivado FROM miembro WHERE id_miembro=?', [leaderA]))[0][0].archivado, 0)
+  await archiveMember(sara, 200); await archiveMember(pedro, 200)
+  console.log('PASS consistencia: archivar grupo libera a sus discípulos con historial, no se archiva una ficha con cuenta o grupo a cargo, correo antiguo conservado y migración 031')
   console.log('PASS API: add/move disciples to a group with history, idempotency, validation, permissions, group scope and atomicity, group history with names and who assigned')
 
   if (process.argv.includes('--ui')) {
@@ -210,6 +236,8 @@ try {
     await page.getByRole('button', { name: 'Ver ficha de Marta Prueba', exact: true }).click()
     const groupHistory = page.locator('.member-group-history')
     await groupHistory.getByRole('heading', { name: 'Historial de grupos' }).waitFor()
+    await page.waitForFunction(() => document.querySelectorAll('.member-group-history li').length >= 2)
+    await page.waitForTimeout(300)
     const entries = await groupHistory.locator('li').allInnerTexts()
     assert.equal(entries.length, 2, 'Solo las asignaciones (no cuando se quitó del grupo)')
     for (const entry of entries) assert.match(entry, /^Familia Esperanza\nAsignado por Propietario\n\d{1,2} de \p{L}+ de 20\d\d(,| a las) \d{1,2}:\d\d/u)

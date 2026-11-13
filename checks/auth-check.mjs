@@ -3,7 +3,7 @@ import { randomUUID } from 'node:crypto'
 import { createRequire } from 'node:module'
 import { pool } from '../server/db.js'
 const require = createRequire(import.meta.url)
-const { chromium } = require(process.env.TEMP + '/nexusbox-browser-check/node_modules/playwright')
+const { chromium } = require('../.secrets/browser-tools/node_modules/playwright-core')
 const base = process.env.UI_ORIGIN || 'http://127.0.0.1:5174'
 const email = `check-${randomUUID()}@example.invalid`
 const browserEmail = `check-${randomUUID()}@example.invalid`

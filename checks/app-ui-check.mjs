@@ -7,7 +7,7 @@ import express from 'express'
 import { applyMigrations } from '../server/migration-runner.js'
 
 const require = createRequire(import.meta.url)
-const { chromium } = require(process.env.TEMP + '/nexusbox-browser-check/node_modules/playwright')
+const { chromium } = require('../.secrets/browser-tools/node_modules/playwright-core')
 const testDatabase = `calvario_app_test_${randomUUID().replaceAll('-', '')}`
 assert.match(testDatabase, /^calvario_app_test_[a-f0-9]{32}$/)
 process.env.DB_NAME = testDatabase

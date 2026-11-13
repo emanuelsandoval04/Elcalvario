@@ -8,7 +8,7 @@ import { recalculateAlerts } from './alerts.js'
 import { facebookTransmission } from './facebook.js'
 import { sendReport, discipleReportRows, discipleColumns } from './reports.js'
 import { databaseRateLimit } from './rate-limit.js'
-import { canManageTraining, requireTraining, trainingBooks, trainingBook, checkBookVersion, validateTrainingBook, bookAssignmentsSql, additionalBooksSql, allBookNamesSql, memberBookIds, bookList, saveMemberBooks, tidyMemberBooks } from './training.js'
+import { canManageTraining, requireTraining, trainingBooks, trainingBook, checkBookVersion, validateTrainingBook, bookAssignmentsSql, allBookNamesSql, bookColor, nextBookColor, memberBookIds, bookList, saveMemberBooks, tidyMemberBooks } from './training.js'
 import { parseProfilePhoto, saveProfilePhoto } from './profile-photo.js'
 import { mapRouter } from './map.js'
 import { applyGroupCoverage } from './group-coverage.js'
@@ -169,15 +169,16 @@ managementRouter.use(activityImagesRouter())
 managementRouter.use(checkinManagementRouter({getActivity}))
 managementRouter.get('/training/books', requireTraining, async (_req,res) => res.json({items:await trainingBooks()}))
 managementRouter.post('/training/books', requireTraining, async (req,res) => {
-  const name=text(req.body?.nombre,150,true), description=text(req.body?.descripcion,2000)
-  const id=await transaction(async connection=>{
+  const name=text(req.body?.nombre,150,true), description=text(req.body?.descripcion,2000), requestedColor=bookColor(req.body?.color)
+  const created=await transaction(async connection=>{
     const actor=await currentActor(req,connection)
     if(!canManageTraining(actor)) throw invalid('Ya no tienes permiso para crear libros.',403)
     const [existing]=await connection.execute('SELECT id_libro FROM libro_adiestramiento WHERE nombre=?',[name])
     if(existing.length) throw invalid('Ya existe un libro con ese nombre.',409)
-    return insert(connection,'libro_adiestramiento',{nombre:name,descripcion:description,id_usuario_creacion:actor.id})
+    const color=requestedColor || await nextBookColor(connection)
+    return {id:await insert(connection,'libro_adiestramiento',{nombre:name,descripcion:description,color,id_usuario_creacion:actor.id}),color}
   })
-  res.status(201).json({id,nombre:name,descripcion:description})
+  res.status(201).json({id:created.id,nombre:name,descripcion:description,color:created.color})
 })
 managementRouter.get('/training/books/:id',requireTraining,async(req,res)=>{
   const book=await trainingBook(pool,req.params.id)
@@ -185,7 +186,7 @@ managementRouter.get('/training/books/:id',requireTraining,async(req,res)=>{
   res.json({...book,asignaciones:counts[0].total})
 })
 managementRouter.patch('/training/books/:id',requireTraining,async(req,res)=>{
-  const values=fields(req.body,{nombre:value=>text(value,150,true),descripcion:value=>text(value,2000)})
+  const values=fields(req.body,{nombre:value=>text(value,150,true),descripcion:value=>text(value,2000),color:value=>bookColor(value,true)})
   const result=await transaction(async connection=>{
     const actor=await currentActor(req,connection)
     if(!canManageTraining(actor)) throw invalid('Ya no tienes permiso para actualizar libros.',403)
@@ -196,7 +197,7 @@ managementRouter.patch('/training/books/:id',requireTraining,async(req,res)=>{
       if(duplicates.length) throw invalid('Ya existe otro libro con ese nombre.',409)
     }
     await update(connection,'libro_adiestramiento','id_libro',book.id_libro,values)
-    return {id:book.id_libro,nombre:values.nombre ?? book.nombre,descripcion:Object.hasOwn(values,'descripcion') ? values.descripcion : book.descripcion}
+    return {id:book.id_libro,nombre:values.nombre ?? book.nombre,descripcion:Object.hasOwn(values,'descripcion') ? values.descripcion : book.descripcion,color:values.color ?? book.color}
   })
   res.json(result)
 })
@@ -225,17 +226,19 @@ managementRouter.get('/catalogs',async (req,res) => {
   const libros=(can(req,'miembros.ver') || can(req,'miembros.editar') || can(req,'miembros.registrar') || canManageTraining(req.authUser)) ? await trainingBooks() : []
   res.json({roles,sedes,zonas,ministerios,grupos,registrationGroups,barrios,libros})
 })
+const memberListLimit=Number(process.env.MEMBER_LIST_LIMIT) || 3000
 managementRouter.get('/members',requirePermission('miembros.ver'),async (req,res) => {
   const filter=memberFilter(req,'miembros.ver')
   const search=text(req.query.q,100) || ''
   // A disciple leader (discipulador) has the "Discipuladores" pastoral role (level 6) or leads an active group.
-  const [rows]=await pool.execute(`SELECT m.*,l.nombre AS libro_actual,${additionalBooksSql('m')} AS libros_adicionales,CAST(m.fecha_nacimiento AS CHAR) AS fecha_nacimiento,
+  const [rows]=await pool.execute(`SELECT m.*,l.nombre AS libro_actual,l.color AS libro_color,CAST(m.fecha_nacimiento AS CHAR) AS fecha_nacimiento,
     (SELECT GROUP_CONCAT(g.nombre ORDER BY g.nombre SEPARATOR ', ') FROM grupo_comunion g WHERE g.id_discipulador=m.id_miembro AND g.archivado=0) AS grupos_a_cargo,
     (COALESCE(r.nivel_jerarquico=6,0) OR EXISTS(SELECT 1 FROM grupo_comunion g WHERE g.id_discipulador=m.id_miembro AND g.archivado=0)) AS es_discipulador,
     COALESCE(r.nivel_jerarquico=6,0) AS cargo_discipulador,EXISTS(SELECT 1 FROM usuario u WHERE u.id_miembro=m.id_miembro) AS tiene_cuenta
     FROM miembro m LEFT JOIN libro_adiestramiento l ON l.id_libro=m.id_libro LEFT JOIN rol_eclesiastico r ON r.id_rol_eclesiastico=m.id_rol_eclesiastico WHERE m.archivado=0 ${filter.sql}
-    AND (CONCAT_WS(' ',m.nombres,m.apellidos) LIKE ? OR m.numero_identificacion LIKE ? OR m.codigo_miembro=?) ORDER BY m.nombres LIMIT 500`,[...filter.params,`%${search}%`,`%${search}%`,parseMemberCode(search) ?? -1])
-  res.json({items:rows.map(row=>cleanMember(req,row))})
+    AND (CONCAT_WS(' ',m.nombres,m.apellidos) LIKE ? OR m.numero_identificacion LIKE ? OR m.codigo_miembro=?) ORDER BY m.nombres LIMIT ${memberListLimit+1}`,[...filter.params,`%${search}%`,`%${search}%`,parseMemberCode(search) ?? -1])
+  // The list is capped, and says so: the screens warn and ask to search instead of hiding people silently.
+  res.json({items:rows.slice(0,memberListLimit).map(row=>cleanMember(req,row)),truncated:rows.length>memberListLimit,limit:memberListLimit})
 })
 managementRouter.post('/members',(req,res,next)=>can(req,'miembros.registrar') || can(req,'miembros.editar') ? next() : res.status(403).json({error:'No tienes permiso para registrar discípulos.'}),async (req,res) => {
   const registrationType=choice(req.body?.tipo_registro || 'discipulo',['discipulo','administrativo'])
@@ -314,13 +317,15 @@ managementRouter.post('/members',(req,res,next)=>can(req,'miembros.registrar') |
   res.status(201).json({...created,...(emailDelivery ? {emailDelivery} : {})})
 })
 managementRouter.patch('/members/:id',requirePermission('miembros.editar'),async (req,res) => {
-  const values=fields(req.body,memberFields)
+  // The email rule (common providers) is checked below only when the email changes.
+  const values=fields(req.body,{...memberFields,correo:v=>text(v,120)})
   if (!can(req,'miembros.sensibles') && sensitiveMemberFields.some(key=>Object.hasOwn(values,key))) throw invalid('Sin permiso para datos sensibles.',403)
   const id=identifier(req.params.id)
   await transaction(async connection=>{
     const actor=await currentActor(req,connection)
     if(!hasPermission(actor,'miembros.editar')) throw invalid('Ya no tienes permiso para editar discípulos.',403)
     const old=await getMember(req,id,'miembros.editar',connection,true)
+    if(Object.hasOwn(values,'correo')) values.correo=(values.correo||'').toLowerCase()===(old.correo||'').toLowerCase() ? old.correo : registrationEmail(values.correo)
     if(Object.hasOwn(values,'id_libro')) {
       if(values.id_libro!==old.id_libro && !canManageTraining(actor)) throw invalid('Sin permiso para asignar libros.',403)
       values.id_libro=await validateTrainingBook(connection,values.id_libro,values.id_libro!==old.id_libro)
@@ -369,6 +374,30 @@ managementRouter.put('/members/:id/book',requirePermission('miembros.ver'),requi
   })
   res.json({ok:true})
 })
+// One book for several disciples at once (Adiestramiento). Each disciple has one book: it replaces the previous one.
+// Whoever already has it is left as is.
+managementRouter.post('/training/books/:id/assign',requirePermission('miembros.ver'),requireTraining,async(req,res)=>{
+  const ids=req.body?.ids
+  if(!Array.isArray(ids) || !ids.length || ids.length>500) throw invalid('Selecciona entre 1 y 500 discípulos.')
+  const members=[...new Set(ids.map(value=>identifier(value)))]
+  const result=await transaction(async connection=>{
+    const actor=await currentActor(req,connection)
+    if(!hasPermission(actor,'miembros.ver') || !canManageTraining(actor)) throw invalid('Tus permisos para asignar libros han cambiado.',403)
+    const book=await trainingBook(connection,req.params.id,true)
+    let assigned=0,already=0,replaced=0
+    for(const id of members) {
+      const member=await getMember(req,id,'miembros.ver',connection,true)
+      const current=await memberBookIds(connection,member)
+      if(current.includes(book.id_libro)) { already++; continue }
+      if(current.length) replaced++
+      const main=await saveMemberBooks(connection,id,[book.id_libro])
+      await update(connection,'miembro','id_miembro',id,{id_libro:main,id_usuario_actualizacion:actor.id})
+      assigned++
+    }
+    return {assigned,already,replaced,book:book.nombre}
+  })
+  res.json(result)
+})
 managementRouter.get('/members/:id/excel',requirePermission('reportes.discipulos'),async(req,res)=>exportDisciples(req,res,identifier(req.params.id)))
 managementRouter.post('/members/:id/relations',requirePermission('grupos.editar'),requirePermission('miembros.ver'),async (req,res) => {
   const values=fields(req.body,{id_grupo:memberFields.id_grupo,id_cobertura_pastoral:memberFields.id_cobertura_pastoral})
@@ -401,6 +430,11 @@ managementRouter.delete('/members/:id',requirePermission('miembros.eliminar'),as
     const actor=await currentActor(req,connection)
     if(!hasPermission(actor,'miembros.eliminar')) throw invalid('Ya no tienes permiso para archivar discípulos.',403)
     const row=await getMember(req,req.params.id,'miembros.eliminar',connection,true)
+    // An archived record must not leave an account or a group pointing to it.
+    const [accounts]=await connection.execute('SELECT 1 FROM usuario WHERE id_miembro=? LIMIT 1',[row.id_miembro])
+    if(accounts.length) throw invalid('Esta ficha tiene una cuenta de acceso. Elimínala o desvincúlala en Usuarios y roles antes de archivar la ficha.',409)
+    const [led]=await connection.execute('SELECT nombre FROM grupo_comunion WHERE id_discipulador=? AND archivado=0 ORDER BY nombre',[row.id_miembro])
+    if(led.length) throw invalid(`Esta persona es discipuladora de ${led.map(group=>group.nombre).join(', ')}. Asigna otro discipulador antes de archivar su ficha.`,409)
     await update(connection,'miembro','id_miembro',row.id_miembro,{archivado:1,id_usuario_actualizacion:actor.id})
     await recordMemberState(connection,row.id_miembro,'archivado',actor.id)
   })
@@ -437,8 +471,14 @@ managementRouter.put('/members/:id/ministries',requirePermission('ministerios.ge
   res.json({ok:true})
 })
 managementRouter.get('/groups',requirePermission('grupos.ver'),async (req,res) => {
+  // asistencia_porcentaje: attendance of the group's current disciples at church events that already happened
+  // (not cancelled or archived): attended / (attended + absent + excused), as a whole percentage.
   const filter=groupFilter(req,'grupos.ver')
-  const [items]=await pool.execute(`SELECT g.*,(SELECT COUNT(*) FROM miembro m WHERE m.id_grupo=g.id_grupo AND m.archivado=0) AS miembros,(SELECT NULLIF(TRIM(CONCAT_WS(' ',d.nombres,d.apellidos)),'') FROM miembro d WHERE d.id_miembro=g.id_discipulador) AS discipulador_nombre FROM grupo_comunion g WHERE g.archivado=0 ${filter.sql} ORDER BY g.nombre`,filter.params)
+  const [items]=await pool.execute(`SELECT g.*,(SELECT COUNT(*) FROM miembro m WHERE m.id_grupo=g.id_grupo AND m.archivado=0) AS miembros,(SELECT NULLIF(TRIM(CONCAT_WS(' ',d.nombres,d.apellidos)),'') FROM miembro d WHERE d.id_miembro=g.id_discipulador) AS discipulador_nombre,
+    (SELECT ROUND(100*SUM(a.estado_asistencia='presente')/COUNT(*)) FROM asistencia a JOIN miembro m ON m.id_miembro=a.id_miembro JOIN actividad ac ON ac.id_actividad=a.id_actividad
+      WHERE m.id_grupo=g.id_grupo AND m.archivado=0 AND a.archivado=0 AND a.estado_asistencia IN ('presente','ausente','justificado')
+      AND ac.archivado=0 AND ac.estado_actividad<>'cancelada' AND ac.fecha<=?) AS asistencia_porcentaje
+    FROM grupo_comunion g WHERE g.archivado=0 ${filter.sql} ORDER BY g.nombre`,[bogotaToday(),...filter.params])
   res.json({items})
 })
 async function saveGroup(req,res,create) {
@@ -518,10 +558,22 @@ managementRouter.post('/groups/:id/members',requirePermission('grupos.editar'),r
   })
   res.json(result)
 })
+// Archiving a group leaves its disciples without group; each change enters their group history.
 managementRouter.delete('/groups/:id',requirePermission('grupos.eliminar'),async(req,res)=>{
-  const row=await getGroup(req,req.params.id,'grupos.eliminar')
-  await update(pool,'grupo_comunion','id_grupo',row.id_grupo,{archivado:1})
-  res.json({ok:true})
+  const released=await transaction(async connection=>{
+    const actor=await currentActor(req,connection)
+    if(!hasPermission(actor,'grupos.eliminar')) throw invalid('Ya no tienes permiso para archivar grupos.',403)
+    const row=await getGroup(req,req.params.id,'grupos.eliminar',connection)
+    await connection.execute('SELECT id_grupo FROM grupo_comunion WHERE id_grupo=? FOR UPDATE',[row.id_grupo])
+    const [people]=await connection.execute('SELECT id_miembro,id_grupo,id_cobertura_pastoral FROM miembro WHERE id_grupo=? FOR UPDATE',[row.id_grupo])
+    for(const person of people) {
+      await recordRelations(connection,person,{id_grupo:null},actor.id)
+      await update(connection,'miembro','id_miembro',person.id_miembro,{id_grupo:null,id_usuario_actualizacion:actor.id})
+    }
+    await update(connection,'grupo_comunion','id_grupo',row.id_grupo,{archivado:1})
+    return people.length
+  })
+  res.json({ok:true,released})
 })
 managementRouter.get('/groups/:id/processes',requirePermission('grupos.ver'),async(req,res)=>{
   const group=await getGroup(req,req.params.id,'grupos.ver')
@@ -851,6 +903,7 @@ managementRouter.put('/permissions/:roleId',requirePermission('permisos.gestiona
   res.json({ok:true})
 })
 managementRouter.get('/reports/:type',async(req,res)=>{
+  let filters=[]
   const type=choice(req.params.type,['asistencia','cumpleanos','grupos','discipulos'])
   const code=`reportes.${type}`
   if(!can(req,code)) throw invalid('No tienes permiso para este reporte.',403)
@@ -869,12 +922,27 @@ managementRouter.get('/reports/:type',async(req,res)=>{
   } else {
     const filter=activityFilter(req,code)
     const clauses=[],params=[...filter.params]
+    filters=[]
     const activityId=identifier(req.query.activityId,true)
     const activity=activityId?await getActivity(req,activityId,code):null
     if(activity){clauses.push('ac.id_actividad=?');params.push(activity.id_actividad)}
     if(req.query.from){clauses.push('ac.fecha>=?');params.push(date(req.query.from))}
     if(req.query.to){clauses.push('ac.fecha<=?');params.push(date(req.query.to))}
     if(req.query.from && req.query.to && req.query.from>req.query.to)throw invalid('La fecha inicial no puede ser posterior a la final.')
+    // Optional: only disciples studying a training book (main or additional) or belonging to a Grupo de Comunión.
+    const bookId=identifier(req.query.id_libro,true), groupId=identifier(req.query.id_grupo,true)
+    if(bookId){
+      const [books]=await pool.execute('SELECT nombre FROM libro_adiestramiento WHERE id_libro=?',[bookId])
+      if(!books.length)throw invalid('Libro de adiestramiento no disponible.',404)
+      filters.push(['Libro de adiestramiento',books[0].nombre])
+      clauses.push('m.id_libro=?');params.push(bookId)
+    }
+    if(groupId){
+      const [groups]=await pool.execute('SELECT nombre FROM grupo_comunion WHERE id_grupo=? AND archivado=0',[groupId])
+      if(!groups.length)throw invalid('Grupo de Comunión no disponible.',404)
+      filters.push(['Grupo de Comunión',groups[0].nombre])
+      clauses.push('m.id_grupo=?');params.push(groupId)
+    }
     // Multimedia receives operational attendance, with no personal names in exports.
     const memberScope=memberFilter(req,'miembros.ver')
     const name=can(req,'miembros.ver')?`CASE WHEN m.id_miembro IS NULL THEN COALESCE(a.nombre_visitante,'Visitante') WHEN 1=1 ${memberScope.sql} THEN CONCAT_WS(' ',m.nombres,m.apellidos) ELSE CONCAT('Discípulo ',${memberCodeSql('m')}) END`:`IF(m.id_miembro IS NULL,'Visitante',CONCAT('Discípulo ',${memberCodeSql('m')}))`
@@ -888,7 +956,7 @@ managementRouter.get('/reports/:type',async(req,res)=>{
       })
     }
   }
-  await sendReport(res,type,format,rows,type==='asistencia' && (req.query.from || req.query.to) ? {metadataTitle:'Filtros del reporte',metadata:[['Desde',req.query.from || 'Sin límite inicial'],['Hasta',req.query.to || 'Sin límite final']]} : {})
+  await sendReport(res,type,format,rows,type==='asistencia' && (req.query.from || req.query.to || filters.length) ? {metadataTitle:'Filtros del reporte',metadata:[['Desde',req.query.from || 'Sin límite inicial'],['Hasta',req.query.to || 'Sin límite final'],...filters]} : {})
 })
 export function managementError(error,_req,res,_next) {
   if(res.headersSent) return res.end()

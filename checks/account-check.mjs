@@ -36,7 +36,7 @@ try {
     return { data, cookie: response.headers.get('set-cookie')?.split(';')[0] }
   }
   const require = createRequire(import.meta.url)
-  const { chromium } = require(process.env.TEMP + '/nexusbox-browser-check/node_modules/playwright')
+  const { chromium } = require('../.secrets/browser-tools/node_modules/playwright-core')
   browser = await chromium.launch({ headless: true, channel: 'msedge' })
   const fixture = await browser.newPage()
   const photos = await fixture.evaluate(() => ['#ff650b', '#298ddd'].map(color => { const canvas = document.createElement('canvas'); canvas.width = canvas.height = 512; const ctx = canvas.getContext('2d'); ctx.fillStyle = color; ctx.fillRect(0, 0, 512, 512); return canvas.toDataURL('image/jpeg', .85) }))

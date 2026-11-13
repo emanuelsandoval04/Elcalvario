@@ -53,7 +53,7 @@ try {
   console.log('PASS API display: normal default, per-account persistence and login, own account only, invalid values/origin/session rejection, pending privileges unchanged and repeatable migration.')
 
   const require = createRequire(import.meta.url)
-  const { chromium } = require(process.env.TEMP + '/nexusbox-browser-check/node_modules/playwright')
+  const { chromium } = require('../.secrets/browser-tools/node_modules/playwright-core')
   browser = await chromium.launch({ headless: true, channel: 'msedge' })
   const context = await browser.newContext({ viewport: { width: 390, height: 844 }, reducedMotion: 'reduce' })
   await context.route('**/api/**', async route => {

@@ -4,7 +4,7 @@ import { mkdtempSync, realpathSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { basename, dirname, join } from 'node:path'
 const require = createRequire(import.meta.url)
-const { chromium } = require(process.env.TEMP + '/nexusbox-browser-check/node_modules/playwright')
+const { chromium } = require('../.secrets/browser-tools/node_modules/playwright-core')
 const origin = process.env.PWA_ORIGIN || 'http://127.0.0.1:4175'
 const temporaryRoot = realpathSync(tmpdir())
 const profile = mkdtempSync(join(temporaryRoot, 'calvario-pwa-check-'))

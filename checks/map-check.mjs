@@ -157,7 +157,7 @@ try {
 
   if(process.argv.includes('--ui')) {
     const {createRequire}=await import('node:module');const require=createRequire(import.meta.url)
-    const {chromium}=require(process.env.TEMP+'/nexusbox-browser-check/node_modules/playwright')
+    const {chromium}=require('../.secrets/browser-tools/node_modules/playwright-core')
     browser=await chromium.launch({headless:true,channel:'msedge'})
     const ui=process.env.UI_ORIGIN || 'http://127.0.0.1:5173';process.env.APP_ORIGINS=`${base},${ui}`
     const context=await browser.newContext({viewport:{width:390,height:844}})

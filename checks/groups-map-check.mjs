@@ -51,6 +51,21 @@ try {
   assert.equal(byName['Familia del Norte'].discipulador_nombre, 'Ana Líder')
   assert.equal(Number(byName['Familia Sur'].latitud), 4.1203); assert.equal(byName['Familia Sur'].direccion, null)
   assert.equal(byName['Solo dirección'].latitud, null)
+  // Group preview: overall attendance of its current disciples at events that already happened.
+  const ownerId = owner.data.user.id
+  const disciple = async (name, groupId) => (await db.execute("INSERT INTO miembro(nombres,apellidos,tipo_identificacion,numero_identificacion,celular,fecha_nacimiento,codigo_qr,id_grupo,id_usuario_creacion) VALUES (?,'Prueba','CC',?,'3001234567','1990-01-01',?,?,?)", [name, `G-${name}`, randomUUID(), groupId, ownerId]))[0].insertId
+  const eventOn = async (title, offset, state = 'programada') => (await db.execute("INSERT INTO actividad(tipo_actividad,titulo,fecha,hora,lugar,estado_actividad,id_usuario_creacion) VALUES ('evento',?,DATE_ADD(CURDATE(),INTERVAL ? DAY),'19:00','Templo',?,?)", [title, offset, state, ownerId]))[0].insertId
+  const mark = (activityId, memberId, state, archived = 0) => db.execute('INSERT INTO asistencia(id_actividad,id_miembro,id_usuario_registro,estado_asistencia,archivado) VALUES (?,?,?,?,?)', [activityId, memberId, ownerId, state, archived])
+  const m1 = await disciple('Uno', north), m2 = await disciple('Dos', north), other = await disciple('Otro', written)
+  const e1 = await eventOn('Culto pasado', -7), e2 = await eventOn('Vigilia pasada', -3), cancelledEvent = await eventOn('Culto cancelado', -2, 'cancelada'), future = await eventOn('Culto futuro', 10)
+  await mark(e1, m1, 'presente'); await mark(e1, m2, 'ausente'); await mark(e2, m1, 'presente'); await mark(e2, m2, 'justificado')
+  await mark(cancelledEvent, m2, 'presente'); await mark(future, m1, 'ausente'); await mark(e1, other, 'ausente'); await mark(e2, other, 'presente', 1)
+  const groupPreview = Object.fromEntries((await request('management/groups', { cookie: owner.cookie })).data.items.map(row => [row.nombre, row]))
+  assert.equal(Number(groupPreview['Familia del Norte'].asistencia_porcentaje), 50, '2 de 4 registros válidos')
+  assert.equal(Number(groupPreview['Familia del Norte'].miembros), 2)
+  assert.equal(Number(groupPreview['Solo dirección'].asistencia_porcentaje), 0, 'El registro archivado no cuenta')
+  assert.equal(groupPreview['Familia Sur'].asistencia_porcentaje, null, 'Sin registros no hay porcentaje')
+
   // A discipulador can be registered without an access account; only pastoral roles may do it.
   const base = { apellidos: 'Prueba', tipo_identificacion: 'CC', celular: '3001234567', fecha_nacimiento: '1990-01-01', tipo_registro: 'discipulo' }
   const pedro = (await request('management/members', { cookie: owner.cookie, status: 201, body: { ...base, nombres: 'Pedro', numero_identificacion: 'D-1' } })).data.id
@@ -127,6 +142,12 @@ try {
     // Cards of located groups link to the map; the map fits every pin and opens the chosen one.
     await page.goto(`${ui}/#gestion/groups`); await page.reload()
     await page.locator('.record-map-link').first().waitFor()
+    // Preview: number of disciples, discipulador and only the attendance percentage.
+    const northCard = await page.locator('.manage-records article', { hasText: 'Familia del Norte' }).innerText()
+    assert.match(northCard, /2 discípulos/); assert.match(northCard, /Discipulador: Ana Líder/); assert.match(northCard, /Asistencia 50%/)
+    assert.match(await page.locator('.manage-records article', { hasText: 'Familia Sur' }).innerText(), /Discipulador: Sin asignar[\s\S]*Asistencia: sin registros/)
+    assert.match(await page.locator('.manage-records article', { hasText: 'Solo dirección' }).innerText(), /1 discípulo\b[\s\S]*Asistencia 0%/)
+    if (shots) await page.locator('.manage-records').screenshot({ path: `${shots}/groups-preview.png` })
     assert.equal(await page.locator('.record-map-link').count(), 3, 'Solo los grupos ubicados muestran "Ver en el mapa"')
     await page.locator('article', { hasText: 'Familia Sur' }).getByRole('link', { name: 'Ver en el mapa' }).click()
     await page.locator('.groups-map[data-fake-map]').waitFor()

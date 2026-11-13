@@ -1,5 +1,8 @@
-import { test } from 'node:test'
+import { after, test } from 'node:test'
 import assert from 'node:assert/strict'
+
+// server/facebook.js opens the database pool on import: close it so the run ends.
+after(async()=>{ await (await import('../server/db.js')).pool.end() })
 
 test('Facebook prioritizes a live broadcast, caches requests and keeps credentials on the server',async()=>{
   process.env.FACEBOOK_PAGE_ID='123456';process.env.FACEBOOK_PAGE_ACCESS_TOKEN='test-server-token';process.env.FACEBOOK_GRAPH_VERSION='v99.0'

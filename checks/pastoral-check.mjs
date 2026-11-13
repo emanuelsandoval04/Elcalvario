@@ -154,7 +154,7 @@ try {
 
   if (process.env.PASTORAL_API_ONLY !== '1') {
     const require = createRequire(import.meta.url)
-    const { chromium } = require(process.env.TEMP + '/nexusbox-browser-check/node_modules/playwright')
+    const { chromium } = require('../.secrets/browser-tools/node_modules/playwright-core')
     browser = await chromium.launch({ headless: true, channel: 'msedge' })
     const context = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true })
     await context.route('**/api/**', async route => {

@@ -69,14 +69,17 @@ html body .attendance-qr-poster > button:focus-visible { outline:3px solid #ff8a
 .attendance-qr-local { margin:0; padding:10px 12px; border-radius:10px; background:#fff7e6; color:#7a5300; font-size:13px; }
 /* One tap per person: green check attended, red X absent, grey alert with an excuse. */
 .attendance-marks { display: flex; gap: 6px; flex-shrink: 0; }
-html body .attendance-mark { display: inline-grid; place-items: center; width: 42px; min-width: 42px; height: 42px; min-height: 42px; padding: 0; border-radius: 50%; border: 2px solid currentColor; background: #fff; cursor: pointer; transition: background-color .15s, color .15s, transform .1s; }
-html body .attendance-mark[data-state=presente] { color: #13a24b; }
-html body .attendance-mark[data-state=ausente] { color: #e02f42; }
-html body .attendance-mark[data-state=justificado] { color: #7c8594; }
-html body .attendance-mark:hover:not(:disabled), html body .attendance-mark[aria-pressed=true] { background: currentColor; }
-html body .attendance-mark:hover:not(:disabled) svg, html body .attendance-mark[aria-pressed=true] svg { color: #fff; }
-html body .attendance-mark:active:not(:disabled) { transform: scale(.94); }
-html body .attendance-mark:disabled { opacity: .45; cursor: default; }
+/* Each icon keeps its own color: light background at rest, full color while pressed or when it is the current state.
+   The selectors outrank the panel's generic (orange) button rules. */
+.admin-workspace .management-shell .attendance-mark, html body .attendance-mark { --mark: #13a24b; --mark-soft: #e3f6ea; --mark-hover: #cdeedb; display: inline-grid; place-items: center; width: 42px; min-width: 42px; height: 42px; min-height: 42px; padding: 0; border-radius: 50%; border: 0; background: var(--mark-soft); color: var(--mark); box-shadow: none; cursor: pointer; transition: background-color .15s, color .15s, transform .1s; }
+.admin-workspace .management-shell .attendance-mark[data-state=ausente], html body .attendance-mark[data-state=ausente] { --mark: #e02f42; --mark-soft: #fde7ea; --mark-hover: #f9cfd5; }
+.admin-workspace .management-shell .attendance-mark[data-state=justificado], html body .attendance-mark[data-state=justificado] { --mark: #6b7482; --mark-soft: #eceef2; --mark-hover: #dde1e7; }
+.admin-workspace .management-shell .attendance-mark svg, html body .attendance-mark svg { color: inherit; opacity: 1; }
+.admin-workspace .management-shell .attendance-mark:hover:not(:disabled), html body .attendance-mark:hover:not(:disabled) { background: var(--mark-hover); color: var(--mark); box-shadow: none; }
+.admin-workspace .management-shell .attendance-mark:active:not(:disabled), .admin-workspace .management-shell .attendance-mark[aria-pressed=true], html body .attendance-mark:active:not(:disabled), html body .attendance-mark[aria-pressed=true] { background: var(--mark); color: #fff; transform: scale(.94); }
+.admin-workspace .management-shell .attendance-mark[aria-pressed=true], html body .attendance-mark[aria-pressed=true] { transform: none; }
+.admin-workspace .management-shell .attendance-mark:focus-visible, html body .attendance-mark:focus-visible { outline: 3px solid var(--mark-hover); outline-offset: 2px; }
+.admin-workspace .management-shell .attendance-mark:disabled, html body .attendance-mark:disabled { opacity: .55; cursor: default; background: var(--mark-soft); color: var(--mark); }
 .attendance-corrections .attendance-mark { width: 36px; min-width: 36px; height: 36px; min-height: 36px; }
 .attendance-records article { display: flex; align-items: center; gap: 12px; }
 .attendance-records article > div:first-of-type { flex: 1; min-width: 0; }

@@ -37,7 +37,9 @@ function validate(form:HTMLFormElement) {
     else if(!validity.valid)errors[field.name]='Revisa el formato y los límites de este dato.'
     // Registration fields marked with data-rule (celular, correo, fecha de nacimiento).
     const rule=field.dataset.rule,value=field.value.trim()
-    if(value && !validity.valueMissing) {
+    // An unchanged email is kept as it was: the provider rule applies when it is written or changed.
+    const unchangedEmail=rule==='email' && 'defaultValue' in field && value.toLowerCase()===String(field.defaultValue).trim().toLowerCase()
+    if(value && !validity.valueMissing && !unchangedEmail) {
       const message=rule==='phone'?phoneError(value):rule==='email'?emailError(value):rule==='birthdate'?birthDateError(value):''
       if(message)errors[field.name]=message
     }

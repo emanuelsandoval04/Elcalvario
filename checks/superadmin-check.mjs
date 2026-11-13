@@ -84,7 +84,7 @@ try {
  console.log('PASS API: initial-admin rollback/concurrency, pending registration/login, no automatic role, role injection rejected, atomic activation, protected self-role and live revocation')
 
  const require=createRequire(import.meta.url)
- const {chromium}=require(process.env.TEMP+'/nexusbox-browser-check/node_modules/playwright')
+ const {chromium}=require('../.secrets/browser-tools/node_modules/playwright-core')
  browser=await chromium.launch({headless:true,channel:'msedge'})
  const context=await browser.newContext({viewport:{width:1440,height:900}})
  const page=await context.newPage()

@@ -36,7 +36,7 @@ const MemberImport = lazy(() => import('./MemberImport'))
 type Row = Record<string, string | number | null>
 type Catalogs = { roles: Row[]; ministerios: Row[]; grupos: Row[]; registrationGroups?: Row[]; barrios?: Barrio[]; libros?: TrainingBook[] }
 type Option = { value: string | number; label: string }
-type Field = { key: string; label: string; type?: string; required?: boolean; max?: number; options?: Option[]; step?: string; placeholder?: string; virtual?: boolean; render?: (props: { initial: Row; disabled: boolean; labelId: string; onBusy: (busy: boolean) => void }) => ReactNode }
+type Field = { key: string; label: string; type?: string; required?: boolean; max?: number; options?: Option[]; step?: string; placeholder?: string; virtual?: boolean; section?: string; wide?: boolean; hint?: string; render?: (props: { initial: Row; disabled: boolean; labelId: string; onBusy: (busy: boolean) => void }) => ReactNode }
 type Message = (message: string) => void
 const errorMessage = (error: unknown) => error instanceof Error ? error.message : 'No pudimos completar la operación.'
 const searchable = (value: string) => value.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase()
@@ -91,7 +91,9 @@ function DataForm({ fields, initial = {}, onSave, onCancel, label = 'Guardar', m
     {memberWizard && <div className="wizard-progress manage-wide"><span>Paso {page + 1} de {steps.length}</span><span>{['Lo esencial', 'Un poco más de ti', 'Último paso'][page]}</span><progress value={page + 1} max={steps.length} aria-label="Progreso del registro"/></div>}
     {steps.map((group, index) => <fieldset key={index} data-form-step={index} hidden={index !== page} className="manage-form-fields manage-wide">
     {memberWizard && <div className="wizard-step-heading manage-wide"><h3 ref={index === page ? heading : undefined} tabIndex={-1}>{group.title}</h3><p>{['Empecemos por conocer a la persona.', 'Completa los datos que tengas disponibles.', 'Ya casi está. Revisa y guarda su información.'][index]}</p></div>}
-    {group.fields.filter(field => !field.virtual).map(field => field.render ? <div key={field.key} className="manage-wide"><span id={`${formId}-${field.key}`}>{field.label}{field.required ? ' *' : ''}</span>{field.render({ initial, disabled: busy, labelId: `${formId}-${field.key}`, onBusy: setInlineBusy })}</div> : field.type === 'photo' ? <div key={field.key} className="manage-wide"><ProfilePhoto name={field.key} defaultValue={initial[field.key] ? String(initial[field.key]) : null} onBusyChange={setPhotoBusy} disabled={busy}/></div> : <label key={field.key} className={field.type === 'textarea' ? 'manage-wide' : ''}>
+    {(() => {
+      const visible = group.fields.filter(field => !field.virtual)
+      const renderField = (field: Field) => field.render ? <div key={field.key} className="manage-wide"><span id={`${formId}-${field.key}`} className={field.label ? undefined : 'sr-only'}>{field.label || field.section}{field.required ? ' *' : ''}</span>{field.render({ initial, disabled: busy, labelId: `${formId}-${field.key}`, onBusy: setInlineBusy })}</div> : field.type === 'photo' ? <div key={field.key} className="manage-wide"><ProfilePhoto name={field.key} defaultValue={initial[field.key] ? String(initial[field.key]) : null} onBusyChange={setPhotoBusy} disabled={busy}/></div> : field.type === 'checkbox' ? <label key={field.key} className={`form-switch${field.wide ? ' manage-wide' : ''}`} data-field={field.key}><input name={field.key} type="checkbox" defaultChecked={Boolean(initial[field.key])} disabled={busy} /><span className="form-switch-copy"><strong>{field.label}</strong>{field.hint && <small>{field.hint}</small>}</span></label> : <label key={field.key} className={field.type === 'textarea' || field.wide ? 'manage-wide' : ''} data-field={field.key}>
       <span id={`${formId}-${field.key}`}>{field.label}{field.required && <span className="field-required"> *</span>}</span>
       {field.options ? <AppSelect aria-labelledby={`${formId}-${field.key}`} name={field.key} required={field.required} defaultValue={String(initial[field.key] ?? '')} disabled={busy}>
         <option value="">{field.required ? 'Selecciona…' : 'Sin asignar'}</option>
@@ -100,7 +102,13 @@ function DataForm({ fields, initial = {}, onSave, onCancel, label = 'Guardar', m
       </AppSelect> : field.type === 'textarea' ? <textarea aria-labelledby={`${formId}-${field.key}`} name={field.key} defaultValue={String(initial[field.key] ?? '')} maxLength={field.max} disabled={busy} />
         : field.type === 'checkbox' ? <input name={field.key} type="checkbox" defaultChecked={Boolean(initial[field.key])} disabled={busy} />
           : <input name={field.key} type={field.type || 'text'} data-rule={fieldRules[field.key]} {...(fieldRules[field.key] === 'phone' ? { inputMode: 'numeric' as const } : fieldRules[field.key] === 'birthdate' ? { min: oldestBirthDate(), max: colombiaToday() } : {})} autoComplete={field.type === 'password' ? 'new-password' : fieldRules[field.key] === 'phone' ? 'tel-national' : undefined} minLength={field.type === 'password' ? 10 : undefined} required={field.required} maxLength={field.max} step={field.step} placeholder={field.type === 'date' || field.type === 'time' ? undefined : field.placeholder || `Ingresa ${field.label.toLowerCase()}`} defaultValue={String(initial[field.key] ?? '')} disabled={busy} />}
-    </label>)}
+    </label>
+      if (!visible.some(field => field.section)) return visible.map(renderField)
+      // Section cards: fields keep their order inside the section where they first appear.
+      const sections: { title: string; fields: Field[] }[] = []
+      for (const field of visible) { const title = field.section || ''; const found = sections.find(item => item.title === title); if (found) found.fields.push(field); else sections.push({ title, fields: [field] }) }
+      return sections.map(section => <section key={section.title} className="form-card manage-wide" aria-label={section.title || undefined}>{section.title && <h4 className="form-card-title">{section.title}</h4>}<div className="form-card-fields">{section.fields.map(renderField)}</div></section>)
+    })()}
     {memberWizard && index === 2 && <><div className="wizard-review manage-wide"><span className="member-avatar" aria-hidden="true">{review.nombres?.[0]}{review.apellidos?.[0]}</span><div><strong>{review.nombres} {review.apellidos}</strong><span>{review.tipo_identificacion} {review.numero_identificacion}</span><span>{review.celular}</span></div></div><p className="wizard-note manage-wide"><AdminIcon name="warning"/><span>Los campos marcados con <b>*</b> son obligatorios. La información adicional puede completarse después.</span></p></>}
     </fieldset>)}
     {groupNeighborhoods && <GroupNeighborhoodField groupId={initial.id_grupo ? Number(initial.id_grupo) : null} legacyText={String(initial.barrio || '')} disabled={busy} onBusy={setNeighborhoodBusy} availableBarrios={availableBarrios}/>}
@@ -118,6 +126,7 @@ function Records({ resource, user, catalogs, reloadCatalogs, notify }: { resourc
   const [edit, setEdit] = useState<Row | null>(null)
   const [detail, setDetail] = useState<Row | null>(null)
   const [loading, setLoading] = useState(true)
+  const [truncated, setTruncated] = useState(0)
   const [search, setSearch] = useState('')
   const [filter, setFilter] = useState('todos')
   // Disciples and disciple leaders (discipuladores) are listed separately; both open the same disciple record.
@@ -156,9 +165,9 @@ function Records({ resource, user, catalogs, reloadCatalogs, notify }: { resourc
     if (!silent) setLoading(true)
     try {
       if (resource === 'members' && !has(user, 'miembros.ver')) { setItems([]); return }
-      const result = await api<{ items: Row[] }>(`${resource}${resource === 'members' ? `?q=${encodeURIComponent(search)}` : resource === 'activities' ? '?view=agenda' : ''}`)
+      const result = await api<{ items: Row[]; truncated?: boolean; limit?: number }>(`${resource}${resource === 'members' ? `?q=${encodeURIComponent(search)}` : resource === 'activities' ? '?view=agenda' : ''}`)
       if (request !== listRequest.current) return
-      setItems(result.items)
+      setItems(result.items); setTruncated(result.truncated ? result.limit || result.items.length : 0)
       const detailId = window.location.hash.split('/')[2] === 'ficha' ? Number(window.location.hash.split('/')[3]) : null
       setDetail(previous => detailId ? result.items.find(row => Number(row[ids[resource]]) === detailId) || null : previous ? result.items.find(row => row[ids[resource]] === previous[ids[resource]]) || null : null)
       if (resource === 'groups' && has(user, 'miembros.ver')) setMembers((await api<{ items: Row[] }>('members')).items)
@@ -210,18 +219,18 @@ function Records({ resource, user, catalogs, reloadCatalogs, notify }: { resourc
   ]
   else {
     formFields = [
-      { key: 'titulo', label: 'Nombre del evento', required: true, max: 150, placeholder: activityType === 'reunion_grupo' ? 'Ej.: Reunión del grupo' : 'Ej.: Culto dominical, Vigilia, Retiro' },
-      ...(activityType === 'reunion_grupo' ? [{ key: 'fecha', label: 'Fecha', type: 'date', required: true }, { key: 'hora', label: 'Hora (Colombia)', type: 'time', required: true }] : [
-        { key: 'fecha', label: 'Fecha y horario', render: ({ initial, disabled, labelId }: { initial: Row; disabled: boolean; labelId: string }) => <EventRecurrence initial={initial} disabled={disabled} labelledBy={labelId}/> },
+      { key: 'titulo', label: 'Nombre del evento', required: true, max: 150, wide: true, section: 'Información del evento', placeholder: activityType === 'reunion_grupo' ? 'Ej.: Reunión del grupo' : 'Ej.: Culto dominical, Vigilia, Retiro' },
+      ...(activityType === 'reunion_grupo' ? [{ key: 'fecha', label: 'Fecha', type: 'date', required: true, section: 'Fecha y horario' }, { key: 'hora', label: 'Hora (Colombia)', type: 'time', required: true, section: 'Fecha y horario' }] : [
+        { key: 'fecha', label: '', section: 'Fecha y horario', render: ({ initial, disabled, labelId }: { initial: Row; disabled: boolean; labelId: string }) => <EventRecurrence initial={initial} disabled={disabled} labelledBy={labelId}/> },
         { key: 'hora', label: '', virtual: true }, { key: 'recurrence', label: '', virtual: true }, { key: 'fixed', label: '', type: 'number', virtual: true }, { key: 'edit_scope', label: '', virtual: true },
       ]),
-      { key: 'lugar', label: 'Lugar', required: true, max: 200 },
-      { key: 'imagen', label: 'Imagen del evento', render: ({ initial, disabled, labelId, onBusy }) => <EventImageField initial={String(initial.imagen || '')} disabled={disabled} labelledBy={labelId} onBusy={onBusy}/> }, { key: 'descripcion', label: 'Descripción', type: 'textarea', max: 10000 },
-      { key: 'estado_actividad', label: 'Estado', required: true, options: options(['programada', 'cancelada']) },
+      { key: 'lugar', label: 'Lugar', required: true, max: 200, section: 'Información del evento', placeholder: 'Ej.: Templo principal' },
+      { key: 'estado_actividad', label: 'Estado', required: true, section: 'Información del evento', options: options(['programada', 'cancelada']) },
+      { key: 'imagen', label: '', section: 'Imagen del evento', render: ({ initial, disabled, labelId, onBusy }) => <EventImageField initial={String(initial.imagen || '')} disabled={disabled} labelledBy={labelId} onBusy={onBusy}/> }, { key: 'descripcion', label: 'Descripción', type: 'textarea', max: 10000, section: 'Información del evento' },
     ]
-    if (activityType === 'reunion_grupo') formFields.push({ key: 'id_grupo', label: 'Grupo', required: true, options: catalogOptions(catalogs.grupos, 'id_grupo') })
-    else if (has(user, 'eventos.publicar')) formFields.push({ key: 'publicado', label: 'Visible en la web pública', type: 'checkbox' })
-    if (activityType === 'evento') formFields.push({ key: 'requiere_inscripcion', label: 'Requiere inscripción', type: 'checkbox' }, { key: 'url_inscripcion', label: 'Enlace de inscripción', type: 'url', max: 500 })
+    if (activityType === 'reunion_grupo') formFields.push({ key: 'id_grupo', label: 'Grupo', required: true, section: 'Información del evento', options: catalogOptions(catalogs.grupos, 'id_grupo') })
+    else if (has(user, 'eventos.publicar')) formFields.push({ key: 'publicado', label: 'Visible en la web pública', type: 'checkbox', wide: true, section: 'Publicación e inscripción', hint: 'Aparece en la sección de eventos de la página de la iglesia.' })
+    if (activityType === 'evento') formFields.push({ key: 'requiere_inscripcion', label: 'Requiere inscripción', type: 'checkbox', wide: true, section: 'Publicación e inscripción', hint: 'Muestra un botón para inscribirse con el enlace que indiques.' }, { key: 'url_inscripcion', label: 'Enlace de inscripción', type: 'url', max: 500, wide: true, section: 'Publicación e inscripción', placeholder: 'https://…' })
   }
   if (resource === 'groups' && !canServices) formFields = formFields.filter(field => field.key !== 'id_discipulador')
   if (resource === 'groups' && !edit?.id_grupo) formFields = formFields.filter(field => !['id_grupo_origen', 'dia_reunion', 'hora_reunion'].includes(field.key))
@@ -243,7 +252,11 @@ function Records({ resource, user, catalogs, reloadCatalogs, notify }: { resourc
     setEdit(null); notify(result.accountCreated ? `Administrativo y cuenta de acceso creados. Ya puede iniciar sesión con sus credenciales. ${welcomeEmailMessage(result.emailDelivery)}` : resource === 'members' && !has(user, 'miembros.ver') ? values.id_grupo ? 'Discípulo registrado y asignado al Grupo de Comunión Familiar.' : 'Discípulo registrado. El grupo puede asignarse después.' : 'Cambios guardados.'); await load(); await reloadCatalogs()
   }
   async function archive(row: Row) {
-    try { await api(`${resource}/${row[ids[resource]]}`, {}, 'DELETE'); setDetail(null); notify('Registro archivado. Se conserva su historial.'); await load(); await reloadCatalogs() } catch (error) { notify(errorMessage(error)) }
+    if (resource === 'groups' && !window.confirm(`¿Archivar el grupo «${row.nombre}»? Sus discípulos quedarán sin grupo y el cambio se guarda en su historial.`)) return
+    try {
+      const result = await api<{ released?: number }>(`${resource}/${row[ids[resource]]}`, {}, 'DELETE'); setDetail(null)
+      notify(resource === 'groups' && result.released ? `Grupo archivado. ${result.released === 1 ? '1 discípulo quedó' : `${result.released} discípulos quedaron`} sin grupo.` : 'Registro archivado. Se conserva su historial.'); await load(); await reloadCatalogs()
+    } catch (error) { notify(errorMessage(error)) }
   }
   const createLabels = { members: 'Registrar discípulo', groups: 'Nuevo grupo', activities: 'Nuevo evento' }
   const groupId = window.location.hash.split('/')[2] === 'grupo' ? Number(window.location.hash.split('/')[3]) : null
@@ -289,12 +302,13 @@ function Records({ resource, user, catalogs, reloadCatalogs, notify }: { resourc
       {resource === 'activities' && edit.id_serie && <p className="event-repeat-note">Evento fijo. Los cambios de programación se aplican a las próximas fechas y conservan el historial de asistencia.</p>}
       <DataForm key={`${edit[ids[resource]] || 'new'}-${activityType}`} fields={formFields} initial={edit} onSave={save} onCancel={() => { setEdit(null); if (resource === 'groups' && window.location.hash === '#gestion/groups/nuevo') window.location.hash = '#gestion/groups' }} memberWizard={resource === 'members'} groupNeighborhoods={resource === 'groups' && Boolean(canManageCoverage(user))} availableBarrios={catalogs.barrios} label={resource === 'members' ? 'Guardar discípulo' : resource === 'groups' ? 'Guardar grupo' : 'Guardar'} />
     </div>}
+    {resource === 'members' && truncated > 0 && !edit && !detail && !loading && <p className="training-hint" role="status">Se muestran los primeros {truncated} discípulos. Usa la búsqueda para encontrar a los demás.</p>}
     {!edit && !detail && (resource!=='activities'||activityView==='list') && (loading ? <div className="app-empty" role="status"><span className="auth-spinner"/>Cargando tu comunidad…</div> : resource === 'members' && groupId && !scopedItems.length && !createOnly ? <div className="app-empty"><span className="empty-icon"><AdminIcon name="groups"/></span><h3>Este grupo todavía no tiene discípulos</h3><p>Puedes agregarlos desde la ficha del grupo con “Agregar discípulos”.</p><a className="app-action" href={`#gestion/groups/ficha/${groupId}`}>Ir al grupo</a></div> : resource === 'members' && !groupId && !createOnly && memberKind === 'discipuladores' && !scopedItems.length ? <div className="app-empty"><span className="empty-icon"><AdminIcon name="groups"/></span><h3>Aún no hay discipuladores</h3><p>Un discípulo aparece aquí cuando tiene un Grupo de Comunión a cargo o el cargo pastoral de Discipulador.</p></div> : !visibleItems.length ? <div className="app-empty"><span className="empty-icon"><AdminIcon name={resource}/></span><h3>{createOnly ? 'Registra un discípulo' : items.length ? 'No encontramos coincidencias' : resource === 'members' ? 'Aquí comienza tu comunidad' : resource === 'groups' ? 'Un lugar para compartir la fe' : 'Preparemos el próximo encuentro'}</h3><p>{createOnly ? 'Crea su ficha y selecciona el Grupo de Comunión Familiar al que pertenece.' : items.length ? 'Prueba otra búsqueda o cambia el filtro.' : 'Los registros que crees aparecerán aquí.'}</p></div> : <div className="manage-records app-record-list">{visibleItems.map(row => {
       const name = String(row.nombres ? `${row.nombres} ${row.apellidos || ''}` : row.nombre || row.titulo)
       return <article key={row[ids[resource]]}>
       <button className="record-open" aria-label={`Ver ficha de ${name}`} onClick={() => { setDetail(row); setEdit(null) }}>
-        {resource === 'members' ? <span className="member-avatar" aria-hidden="true">{`${String(row.nombres || '').slice(0, 1)}${String(row.apellidos || '').slice(0, 1)}`}</span> : resource === 'groups' ? <span className="group-avatar"><AdminIcon name="members"/></span> : <span className="event-cover">{row.imagen ? <img src={String(row.imagen)} alt="" loading="lazy"/> : <AdminIcon name="activities"/>}<span className="event-date"><small>{new Date(`${row.fecha}T12:00:00-05:00`).toLocaleDateString('es-CO', { month: 'short', timeZone: 'America/Bogota' }).replace('.', '')}</small><b>{String(row.fecha).slice(8, 10)}</b></span></span>}
-        <span className="record-copy">{resource === 'members' && memberCode(row.codigo_miembro) && <span className="member-code">ID {memberCode(row.codigo_miembro)}</span>}<strong>{name}</strong>{resource === 'members' ? <>{isLeader(row) && <span className="member-leader">Discipulador{row.grupos_a_cargo ? ` · ${row.grupos_a_cargo}` : ' · Sin grupo a cargo'}</span>}<span>{row.tipo_identificacion} {row.numero_identificacion}</span><span>Libro: {row.libro_actual || 'Sin asignar'}</span><span className="record-state" data-state={row.estado_miembro}>{row.estado_miembro}</span></> : resource === 'groups' ? <><span>{row.miembros} discípulos</span><span>{row.dia_reunion || 'Día por definir'}{row.hora_reunion ? ` · ${String(row.hora_reunion).slice(0, 5)}` : ''}</span></> : <><span>{row.fecha} · {String(row.hora).slice(0, 5)}</span>{row.id_serie && <span>{weeklySchedule(Number(row.dia_semana), String(row.repeticion_hora || row.hora), Boolean(row.repeticion_activa))}</span>}<span>{row.lugar}</span>{(row.estado_actividad === 'cancelada' || row.tipo_actividad === 'reunion_grupo') && <span className="event-type" data-state={row.estado_actividad}>{row.estado_actividad === 'cancelada' ? 'Cancelada' : 'Reunión de grupo'}</span>}</>}</span>
+        {resource === 'members' ? <span className="member-avatar" aria-hidden="true" data-book={row.libro_color ? '' : undefined} style={row.libro_color ? { background: `${row.libro_color}26`, color: String(row.libro_color), boxShadow: `inset 0 0 0 2px ${row.libro_color}` } : undefined}>{`${String(row.nombres || '').slice(0, 1)}${String(row.apellidos || '').slice(0, 1)}`}</span> : resource === 'groups' ? <span className="group-avatar"><AdminIcon name="members"/></span> : <span className="event-cover">{row.imagen ? <img src={String(row.imagen)} alt="" loading="lazy"/> : <AdminIcon name="activities"/>}<span className="event-date"><small>{new Date(`${row.fecha}T12:00:00-05:00`).toLocaleDateString('es-CO', { month: 'short', timeZone: 'America/Bogota' }).replace('.', '')}</small><b>{String(row.fecha).slice(8, 10)}</b></span></span>}
+        <span className="record-copy">{resource === 'members' && memberCode(row.codigo_miembro) && <span className="member-code">ID {memberCode(row.codigo_miembro)}</span>}<strong>{name}</strong>{resource === 'members' ? <>{isLeader(row) && <span className="member-leader">Discipulador{row.grupos_a_cargo ? ` · ${row.grupos_a_cargo}` : ' · Sin grupo a cargo'}</span>}<span>{row.tipo_identificacion} {row.numero_identificacion}</span><span className="member-book"><span className="member-book-dot" style={{ background: String(row.libro_color || '#c9ced6') }} aria-hidden="true"/>Libro: {row.libro_actual || 'Sin asignar'}</span><span className="record-state" data-state={row.estado_miembro}>{row.estado_miembro}</span></> : resource === 'groups' ? <><span>{row.miembros === 1 || row.miembros === '1' ? '1 discípulo' : `${row.miembros} discípulos`}</span><span>Discipulador: {row.discipulador_nombre || 'Sin asignar'}</span><span className="group-attendance" data-level={row.asistencia_porcentaje == null ? 'none' : Number(row.asistencia_porcentaje) >= 75 ? 'high' : Number(row.asistencia_porcentaje) >= 50 ? 'mid' : 'low'}>{row.asistencia_porcentaje == null ? 'Asistencia: sin registros' : `Asistencia ${Number(row.asistencia_porcentaje)}%`}</span></> : <><span>{row.fecha} · {String(row.hora).slice(0, 5)}</span>{row.id_serie && <span>{weeklySchedule(Number(row.dia_semana), String(row.repeticion_hora || row.hora), Boolean(row.repeticion_activa))}</span>}<span>{row.lugar}</span>{(row.estado_actividad === 'cancelada' || row.tipo_actividad === 'reunion_grupo') && <span className="event-type" data-state={row.estado_actividad}>{row.estado_actividad === 'cancelada' ? 'Cancelada' : 'Reunión de grupo'}</span>}</>}</span>
         <AdminIcon name="chevron"/>
       </button>
       {resource === 'groups' && row.latitud != null && row.longitud != null && <a className="app-action secondary record-map-link" href={`#gestion/mapa/grupo/${row.id_grupo}`}>Ver en el mapa</a>}
@@ -325,12 +339,12 @@ function MemberDetail({ row, user, catalogs, reloadCatalogs, notify, onSaved, on
   }
   useEffect(() => { void loadDetails() }, [row.id_miembro])
   const labels: Record<string, string> = { nombres: 'Nombres', apellidos: 'Apellidos', tipo_identificacion: 'Tipo de identificación', numero_identificacion: 'Identificación', celular: 'Celular', correo: 'Correo', fecha_nacimiento: 'Nacimiento / cumpleaños', funcion_iglesia: 'Función', grupo_sanguineo_rh: 'Grupo sanguíneo / RH', eps: 'EPS', contacto_emergencia_nombre: 'Contacto de emergencia', contacto_emergencia_celular: 'Celular de emergencia', id_grupo: 'ID de grupo', id_rol_eclesiastico: 'ID de rol eclesiástico', id_cobertura_pastoral: 'ID de cobertura pastoral', codigo_qr: 'Identificador QR', fecha_creacion: 'Creación', fecha_actualizacion: 'Actualización' }
-  return <aside className="manage-editor"><div className="manage-section-heading"><h3>Ficha de {row.nombres}</h3><button className="secondary" onClick={onClose}>Cerrar ficha</button></div>
+  // The record carries the color of the disciple's training book.
+  return <aside className="manage-editor member-detail" style={row.libro_color ? { borderTop: `5px solid ${row.libro_color}` } : undefined}><div className="manage-section-heading"><h3>{row.libro_color && <span className="member-book-dot member-book-dot-large" style={{ background: String(row.libro_color) }} title={`Libro: ${row.libro_actual}`} aria-hidden="true"/>}Ficha de {row.nombres}</h3><button className="secondary" onClick={onClose}>Cerrar ficha</button></div>
     {Boolean(Number(row.es_discipulador)) && <p className="member-leader-note"><strong>Discipulador</strong>{row.grupos_a_cargo ? ` de: ${row.grupos_a_cargo}` : ' (sin grupo a cargo por ahora)'}</p>}
     {leader && <div className="tool-toggle leader-sections" role="tablist" aria-label="Secciones de la ficha">{([['info', 'Información'], ['grupos', `Grupos a cargo (${row.grupos_a_cargo ? String(row.grupos_a_cargo).split(', ').length : 0})`]] as const).map(([value, label]) => <button key={value} type="button" role="tab" aria-selected={section === value} aria-pressed={section === value} onClick={() => setSection(value)}>{label}</button>)}</div>}
     {leader && section === 'grupos' ? <LeaderGroups leader={row} user={user} notify={notify} onChanged={onSaved}/> : <>
-    {memberCode(row.codigo_miembro) && <div className="member-id-banner"><span>ID del discípulo</span><strong>{memberCode(row.codigo_miembro)}</strong></div>}
-    <MemberBooks key={`${row.id_miembro}-${row.id_libro || ''}-${row.libros_adicionales || ''}`} row={row} books={catalogs.libros || []} canEdit={canCreateTrainingBooks(user)} onCreated={reloadCatalogs} onSaved={onSaved} notify={notify}/>
+    <MemberBooks key={`${row.id_miembro}-${row.id_libro || ''}`} row={row} books={catalogs.libros || []} canEdit={canCreateTrainingBooks(user)} onCreated={reloadCatalogs} onSaved={onSaved} notify={notify}/>
     {has(user, 'reportes.discipulos') && <button type="button" className="secondary" disabled={exporting} onClick={() => { setExporting(true); void downloadReport(`members/${row.id_miembro}/excel`, `discipulo-${memberCode(row.codigo_miembro) || row.id_miembro}.xlsx`).then(() => notify('Ficha completa descargada en Excel.')).catch(cause => notify(errorMessage(cause))).finally(() => setExporting(false)) }}>{exporting ? 'Preparando Excel…' : 'Descargar ficha en Excel'}</button>}
     <dl className="manage-details">{memberCode(row.codigo_miembro) && <div><dt>ID</dt><dd>{memberCode(row.codigo_miembro)}</dd></div>}{Object.entries(labels).filter(([key]) => Object.hasOwn(row, key)).map(([key, label]) => <div key={key}><dt>{label}</dt><dd>{String(row[key] || 'Sin registrar')}</dd></div>)}</dl>
     {has(user,'asistencia.ver') && <MemberAttendance key={row.id_miembro} memberId={Number(row.id_miembro)}/>}
@@ -489,21 +503,33 @@ function Attendance({ user, notify }: { user: AuthUser; notify: Message }) {
 
 function Reports({ user, notify }: { user: AuthUser; notify: Message }) {
   const [from, setFrom] = useState(''), [to, setTo] = useState(''), [busy, setBusy] = useState(false)
+  // Attendance report: by dates in general, or only the disciples of a training book or a Grupo de Comunión.
+  const [bookId, setBookId] = useState(''), [groupId, setGroupId] = useState('')
+  const [filterCatalogs, setFilterCatalogs] = useState<{ libros: Row[]; grupos: Row[] }>({ libros: [], grupos: [] })
+  useEffect(() => {
+    if (!has(user, 'reportes.asistencia')) return
+    let current = true
+    api<Catalogs>('catalogs').then(result => { if (current) setFilterCatalogs({ libros: (result.libros || []) as unknown as Row[], grupos: result.grupos || [] }) }).catch(() => {})
+    return () => { current = false }
+  }, [])
   async function download(type: string, format: string) {
     setBusy(true)
     try {
-      const query = new URLSearchParams({ format, ...(from ? { from } : {}), ...(to ? { to } : {}) })
+      const query = new URLSearchParams({ format, ...(from ? { from } : {}), ...(to ? { to } : {}), ...(type === 'asistencia' && bookId ? { id_libro: bookId } : {}), ...(type === 'asistencia' && groupId ? { id_grupo: groupId } : {}) })
       await downloadReport(`reports/${type}?${query}`, `${type}.${format}`)
       notify('Reporte descargado.')
     } catch (error) { notify(errorMessage(error)) } finally { setBusy(false) }
   }
   return <section className="reports-page"><p className="section-caption">La información que necesitas, lista para compartir.</p>
     <div className="manage-records report-cards">{[
-      { type: 'asistencia', label: 'Reporte de asistencia', icon: 'activities', description: 'Consulta la asistencia registrada en un rango de fechas.' },
+      { type: 'asistencia', label: 'Reporte de asistencia', icon: 'activities', description: 'Asistencia por rango de fechas, en general o solo de un libro de adiestramiento o un Grupo de Comunión.' },
       { type: 'cumpleanos', label: 'Listado de cumpleaños', icon: 'birthday', description: 'Las fechas para celebrar a nuestra comunidad.' },
       { type: 'grupos', label: 'Grupos de Comunión', icon: 'members', description: 'Grupos registrados y las personas que los integran.' },
       { type: 'discipulos', label: 'Ficha completa de discípulos', icon: 'training', description: 'Datos de la ficha, ministerios y libro de adiestramiento actual.' },
-    ].filter(report => has(user, `reportes.${report.type}`)).map(report => <article key={report.type} data-report={report.type}><span className="report-icon"><AdminIcon name={report.icon}/></span><div className="report-copy"><strong>{report.label}</strong><p>{report.description}</p>{report.type === 'asistencia' && <div className="report-dates"><label>Desde<input type="date" value={from} onChange={event => setFrom(event.target.value)}/></label><label>Hasta<input type="date" min={from} value={to} onChange={event => setTo(event.target.value)}/></label></div>}<div className="manage-actions">{(report.type === 'discipulos' ? ['xlsx'] : ['pdf', 'xlsx']).map(format => <button key={format} className={`report-export export-${format}`} aria-label={`${report.label}: descargar ${format === 'pdf' ? 'PDF' : 'Excel'}`} disabled={busy || Boolean(from && to && from > to) && report.type === 'asistencia'} onClick={() => void download(report.type, format)}><AdminIcon name="reports"/>{format === 'pdf' ? 'PDF' : 'Excel'}</button>)}</div></div></article>)}</div>
+    ].filter(report => has(user, `reportes.${report.type}`)).map(report => <article key={report.type} data-report={report.type}><span className="report-icon"><AdminIcon name={report.icon}/></span><div className="report-copy"><strong>{report.label}</strong><p>{report.description}</p>{report.type === 'asistencia' && <div className="report-dates"><label>Desde<input type="date" value={from} onChange={event => setFrom(event.target.value)}/></label><label>Hasta<input type="date" min={from} value={to} onChange={event => setTo(event.target.value)}/></label>
+        {filterCatalogs.libros.length > 0 && <label>Libro de adiestramiento<AppSelect value={bookId} onChange={event => setBookId(event.target.value)}><option value="">Todos (general)</option>{filterCatalogs.libros.map(book => <option key={String(book.id_libro)} value={String(book.id_libro)}>{String(book.nombre)}</option>)}</AppSelect></label>}
+        {filterCatalogs.grupos.length > 0 && <label>Grupo de Comunión<AppSelect value={groupId} onChange={event => setGroupId(event.target.value)}><option value="">Todos (general)</option>{filterCatalogs.grupos.map(group => <option key={String(group.id_grupo)} value={String(group.id_grupo)}>{String(group.nombre)}</option>)}</AppSelect></label>}
+      </div>}<div className="manage-actions">{(report.type === 'discipulos' ? ['xlsx'] : ['pdf', 'xlsx']).map(format => <button key={format} className={`report-export export-${format}`} aria-label={`${report.label}: descargar ${format === 'pdf' ? 'PDF' : 'Excel'}`} disabled={busy || Boolean(from && to && from > to) && report.type === 'asistencia'} onClick={() => void download(report.type, format)}><AdminIcon name="reports"/>{format === 'pdf' ? 'PDF' : 'Excel'}</button>)}</div></div></article>)}</div>
   </section>
 }
 

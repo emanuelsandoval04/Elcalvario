@@ -33,3 +33,25 @@
   .member-books-row { flex-wrap: wrap; }
   .member-books-row > :first-child { flex-basis: 100%; }
 }
+.book-assign { display: grid; gap: 12px; margin-top: 20px; }
+.book-assign h3 { margin: 0; overflow-wrap: anywhere; }
+.book-assign-tools { display: flex; flex-wrap: wrap; align-items: end; gap: 12px; }
+.book-assign-tools .training-search { flex: 1 1 260px; margin: 0; }
+.book-assign-filter { display: flex; align-items: center; gap: 8px; font-size: 13px; min-height: 44px; }
+.book-assign-summary { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; font-size: 13px; color: #6b6259; }
+.book-assign-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; max-height: 420px; overflow: auto; }
+.book-assign-list label { display: grid; grid-template-columns: 20px minmax(0, 1fr) auto; align-items: center; gap: 10px; padding: 10px 12px; border: 1px solid #ece3da; border-radius: 10px; background: #fff; cursor: pointer; }
+.book-assign-list label[data-owned] { background: #f6f7f9; color: #8a8f99; cursor: default; }
+.book-assign-list input { width: 18px; height: 18px; margin: 0; accent-color: #ec661c; }
+.book-assign-name { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; min-width: 0; overflow-wrap: anywhere; font-weight: 600; }
+.book-assign-list small { color: #6b6259; text-align: right; overflow-wrap: anywhere; }
+@media (max-width: 520px) { .book-assign-list label { grid-template-columns: 20px minmax(0, 1fr); } .book-assign-list small { grid-column: 2; text-align: left; } }
+.admin-workspace .management-shell .book-assign-filter, .book-assign .book-assign-filter { display: flex; flex-direction: row; align-items: center; gap: 8px; }
+.book-assign .book-assign-filter input { flex: 0 0 18px; width: 18px; height: 18px; min-height: 18px; margin: 0; accent-color: #ec661c; }
+/* Book colors: the swatch picker and the marks on disciples. */
+.book-color-field { display: grid; gap: 8px; font-size: 13px; }
+.book-color-swatches { display: flex; flex-wrap: wrap; gap: 8px; }
+html body .book-color-swatch, .admin-workspace .management-shell .book-color-swatch, .admin-workspace .management-shell .book-color-swatch:hover { width: 32px; min-width: 32px; height: 32px; min-height: 32px; padding: 0; border-radius: 50%; border: 3px solid #fff; box-shadow: 0 0 0 1px #0002; cursor: pointer; }
+html body .book-color-swatch[aria-checked=true], .admin-workspace .management-shell .book-color-swatch[aria-checked=true] { box-shadow: 0 0 0 3px #1f2633; }
+.member-book-current { display: flex; align-items: center; gap: 10px; margin: 0 0 12px; }
+.member-book-swatch { flex: 0 0 18px; width: 18px; height: 18px; border-radius: 50%; box-shadow: 0 0 0 2px #fff, 0 0 0 3px #0002; }
