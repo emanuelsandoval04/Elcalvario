@@ -3,6 +3,8 @@ import { randomUUID } from 'node:crypto'
 import { createRequire } from 'node:module'
 import mysql from 'mysql2/promise'
 import express from 'express'
+import { spawn } from 'node:child_process'
+import { setTimeout as delay } from 'node:timers/promises'
 import { applyMigrations } from '../server/migration-runner.js'
 import { jsonBody } from '../server/body-parser.js'
 
@@ -12,13 +14,14 @@ process.env.DB_NAME = testDatabase
 const { databaseConfig } = await import('../server/config.js')
 const { database, ...config } = databaseConfig
 const connection = await mysql.createConnection(config)
-const ui = process.env.UI_ORIGIN || 'http://127.0.0.1:5173'
-let pool, server, browser
+const ui = process.env.UI_ORIGIN || 'http://127.0.0.1:5186'
+let pool, server, browser, preview
 try {
   await connection.query(`CREATE DATABASE \`${testDatabase}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci`)
   await connection.query(`USE \`${testDatabase}\``)
   await applyMigrations(connection)
   pool = (await import('../server/db.js')).pool
+  const { createAccount, createOwner } = await import('./test-accounts.mjs')
   const { authRouter } = await import('../server/auth.js')
   const { managementRouter, publicRouter } = await import('../server/management.js')
   const app = express()
@@ -33,8 +36,12 @@ try {
     assert.equal(response.status, expected, `${path}: ${JSON.stringify(data)}`)
     return { data, cookie: response.headers.get('set-cookie')?.split(';')[0] }
   }
-  const owner = await api('register', { email: 'owner@example.invalid', password }, '', 201)
-  const pending = await api('register', { email: 'pending@example.invalid', password }, '', 201)
+  // Public registration is closed: the owner comes from the installation, the pending account from the database.
+  await api('register', { email: 'owner@example.invalid', password }, '', 403)
+  await createOwner({ email: 'owner@example.invalid', password })
+  await createAccount(connection, { email: 'pending@example.invalid', password })
+  const owner = await api('login', { email: 'owner@example.invalid', password })
+  const pending = await api('login', { email: 'pending@example.invalid', password })
   assert.equal(owner.data.user.displaySize, 'normal'); assert.equal(pending.data.user.displaySize, 'normal')
   await api('account/preferences', { displaySize: 'large' }, '', 401)
   await api('account/preferences', { displaySize: 'large' }, owner.cookie, 403, { Origin: 'https://untrusted.invalid' })
@@ -52,6 +59,10 @@ try {
   await pool.execute("UPDATE usuario SET estado_usuario='pendiente' WHERE id_usuario=?", [pending.data.user.id])
   console.log('PASS API display: normal default, per-account persistence and login, own account only, invalid values/origin/session rejection, pending privileges unchanged and repeatable migration.')
 
+  if (!process.env.UI_ORIGIN) {
+    preview = spawn(process.execPath, ['node_modules/vite/bin/vite.js', 'preview', '--host', '127.0.0.1', '--port', '5186', '--strictPort'], { windowsHide: true, stdio: 'ignore' })
+    for (let i = 0; i < 80; i++) { try { if ((await fetch(ui)).ok) break } catch {} await delay(150) }
+  }
   const require = createRequire(import.meta.url)
   const { chromium } = require('../.secrets/browser-tools/node_modules/playwright-core')
   browser = await chromium.launch({ headless: true, channel: 'msedge' })
@@ -80,7 +91,7 @@ try {
     for (const width of widths) {
       await page.setViewportSize({ width, height: 900 })
       await page.evaluate(() => document.fonts.ready)
-      const overflow = await page.evaluate(() => ({ viewport: innerWidth, width: document.documentElement.scrollWidth, nodes: [...document.querySelectorAll('body *')].filter(n => n.getClientRects().length && n.getBoundingClientRect().right > innerWidth + 1 && !n.closest('.panel-sidebar,.nav-links')).slice(0, 5).map(n => `${n.tagName}.${n.className}`) }))
+      const overflow = await page.evaluate(() => ({ viewport: innerWidth, width: document.documentElement.scrollWidth, nodes: [...document.querySelectorAll('body *')].filter(n => n.getClientRects().length && n.getBoundingClientRect().right > innerWidth + 1 && !n.closest('.panel-sidebar,.nav-links')).slice(0, 5).map(n => `${n.tagName}.${n.className}${n.tagName === "BUTTON" ? `(${n.textContent.trim().slice(0, 40)} in ${n.parentElement?.className})` : ""}`) }))
       assert.ok(overflow.width <= overflow.viewport, `${name} ${width}px: ${JSON.stringify(overflow)}`)
       await page.screenshot({ path: `checks/display-${name}-${width}.png`, fullPage: false, animations: 'disabled' })
     }
@@ -142,6 +153,7 @@ try {
   console.log('PASS browser display: normal/115%/130%, text and icon scaling, account options, reload/logout/account isolation, public page, forms/picker/navigation and 320/390/768/1440px without overflow.')
 } finally {
   if (browser) await browser.close()
+  if (preview) preview.kill()
   if (server) await new Promise(resolve => server.close(resolve))
   if (pool) await pool.end()
   await connection.query(`DROP DATABASE IF EXISTS \`${testDatabase}\``)

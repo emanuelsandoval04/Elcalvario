@@ -119,8 +119,8 @@ html body .pastoral-page .pastoral-case.is-selected { border-color:#f1b58b; back
   .community-tool :is(fieldset,.tool-filters) { grid-template-columns:minmax(0,1fr); }
   .community-tool :is(input,textarea) { font-size:16px; }
   .community-tool .tool-heading > button { width:100%; }
-  .record-heading-actions { flex:1; justify-content:stretch; }
-  .record-heading-actions > button { flex:1 1 100%; }
+  .record-heading-actions { flex:1 1 100%; min-width:0; max-width:100%; justify-content:stretch; }
+  .record-heading-actions > button { flex:1 1 100%; min-width:0; max-width:100%; white-space:normal; overflow-wrap:anywhere; }
   .admin-workspace .manage-section-heading:has(.record-heading-actions) { flex-wrap:wrap; }
   .event-calendar { padding:16px 12px; }
   .event-calendar .calendar-day { min-height:54px; padding:3px; }

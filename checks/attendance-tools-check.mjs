@@ -176,7 +176,11 @@ try {
     await finish.click()
     await page.getByRole('status').filter({hasText:'Evento finalizado. 1 persona quedó como ausente sin justificación.'}).waitFor()
     await page.getByText('Todos los discípulos de este listado ya tienen su asistencia.').first().waitFor()
-    assert.ok(await finish.isDisabled())
+    // With everyone marked, the button still works and confirms that everything is saved.
+    assert.equal(await finish.isDisabled(),false)
+    await page.getByText('Todas las asistencias ya están guardadas. Puedes finalizar el evento.').waitFor()
+    await finish.click()
+    await page.getByRole('status').filter({hasText:'Evento finalizado. Todas las asistencias quedaron guardadas.'}).waitFor()
     const [uiStored]=await db.execute('SELECT id_miembro,estado_asistencia FROM asistencia WHERE id_actividad=? AND archivado=0 ORDER BY id_miembro',[uiActivity])
     assert.deepEqual(uiStored.map(row=>[row.id_miembro,row.estado_asistencia]),[[personA,'presente'],[personJ,'justificado'],[personAbsent,'ausente'],[personSaved,'presente']])
     for(const width of [1440,390,320]) {await page.setViewportSize({width,height:1000});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);await page.screenshot({path:`checks/attendance-history-${width}.png`,fullPage:true})}

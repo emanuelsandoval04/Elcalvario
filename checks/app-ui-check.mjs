@@ -4,6 +4,8 @@ import { randomUUID } from 'node:crypto'
 import { createRequire } from 'node:module'
 import mysql from 'mysql2/promise'
 import express from 'express'
+import { spawn } from 'node:child_process'
+import { setTimeout as delay } from 'node:timers/promises'
 import { applyMigrations } from '../server/migration-runner.js'
 
 const require = createRequire(import.meta.url)
@@ -14,8 +16,8 @@ process.env.DB_NAME = testDatabase
 const { databaseConfig } = await import('../server/config.js')
 const { database, ...config } = databaseConfig
 const connection = await mysql.createConnection(config)
-let pool, server, browser
-const ui = process.env.UI_ORIGIN || 'http://127.0.0.1:5173'
+let pool, server, browser, preview
+const ui = process.env.UI_ORIGIN || 'http://127.0.0.1:5182'
 try {
   await connection.query(`CREATE DATABASE \`${testDatabase}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci`)
   await connection.query(`USE \`${testDatabase}\``)
@@ -29,8 +31,15 @@ try {
   const base = `http://127.0.0.1:${server.address().port}`
   process.env.APP_ORIGINS = `${base},${ui}`
   const email = 'propietario@example.invalid', password = `Check-${randomUUID()}`
+  // Public registration is closed: the owner comes from the installation script.
   const response = await fetch(`${base}/api/auth/register`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, password }) })
-  assert.equal(response.status, 201)
+  assert.equal(response.status, 403)
+  const { createOwner } = await import('./test-accounts.mjs')
+  await createOwner({ email, password })
+  if (!process.env.UI_ORIGIN) {
+    preview = spawn(process.execPath, ['node_modules/vite/bin/vite.js', 'preview', '--host', '127.0.0.1', '--port', '5182', '--strictPort'], { windowsHide: true, stdio: 'ignore' })
+    for (let i = 0; i < 80; i++) { try { if ((await fetch(ui)).ok) break } catch {} await delay(150) }
+  }
   browser = await chromium.launch({ headless: true, channel: 'msedge' })
   const context = await browser.newContext({ viewport: { width: 1440, height: 900 } })
   await context.route('**/api/**', async route => {
@@ -56,7 +65,7 @@ try {
   assert.equal(await page.locator('.management-shell').evaluate(node => /\bmiembros?\b/i.test(node.innerText)), false)
   assert.equal(await page.locator('.site-header').count(), 0)
   const shortcuts = page.getByRole('navigation', { name: 'Accesos principales' })
-  assert.deepEqual(await shortcuts.getByRole('link').evaluateAll(links => links.map(link => link.getAttribute('aria-label'))), ['Discípulos', 'Grupos de Comunión', 'Asistencia', 'Eventos y Cultos', 'Alertas', 'Reportes'])
+  assert.deepEqual(await shortcuts.getByRole('link').evaluateAll(links => links.map(link => link.getAttribute('aria-label'))), ['Discípulos', 'Grupos de Comunión', 'Adiestramiento', 'Asistencia', 'Eventos y Cultos', 'Reportes'])
   await page.locator('.today-stat').last().waitFor()
   await capture('dashboard-desktop')
   await shortcuts.getByRole('link', { name: 'Discípulos', exact: true }).click()
@@ -68,11 +77,13 @@ try {
   await page.getByLabel('Número de identificación *', { exact: true }).fill('UI-1')
   await page.getByLabel('Celular *', { exact: true }).fill('3001234567')
   await page.getByLabel('Fecha de nacimiento / cumpleaños *', { exact: true }).fill('1990-03-05')
-  // Required selection opens the app picker; Escape preserves the empty value.
+  // A missing required selection is marked; the app picker opens on it and Escape keeps the empty value.
   const identification = page.getByRole('combobox', { name: 'Tipo de identificación *', exact: true })
   await page.getByRole('button', { name: 'Continuar', exact: true }).click()
-  await page.getByRole('dialog', { name: 'Tipo de identificación *', exact: true }).waitFor()
+  await page.waitForFunction(() => document.querySelector('[role=combobox][aria-invalid=true]'))
   assert.equal(await identification.getAttribute('aria-invalid'), 'true')
+  if (!await page.getByRole('dialog', { name: 'Tipo de identificación *', exact: true }).isVisible()) await identification.click()
+  await page.getByRole('dialog', { name: 'Tipo de identificación *', exact: true }).waitFor()
   await capture('select-desktop')
   await page.keyboard.press('Escape')
   assert.equal(await identification.evaluate(node => node === document.activeElement), true)
@@ -84,7 +95,7 @@ try {
   await page.setViewportSize({ width: 390, height: 844 })
   await capture('member-step-1')
   await page.getByRole('button', { name: 'Continuar', exact: true }).click()
-  await page.getByLabel('Correo', { exact: true }).fill('member@example.invalid')
+  await page.getByLabel('Correo', { exact: true }).fill('member@gmail.com')
   const bloodGroup = page.getByRole('combobox', { name: 'Grupo sanguíneo / RH', exact: true })
   await bloodGroup.click()
   const optionSearch = page.getByRole('combobox', { name: 'Buscar opciones', exact: true })
@@ -104,7 +115,7 @@ try {
   await page.getByRole('button', { name: 'Atrás', exact: true }).click()
   assert.equal(await page.getByLabel('Nombres *', { exact: true }).inputValue(), 'Miembro UI')
   await page.getByRole('button', { name: 'Continuar', exact: true }).click()
-  assert.equal(await page.getByLabel('Correo', { exact: true }).inputValue(), 'member@example.invalid')
+  assert.equal(await page.getByLabel('Correo', { exact: true }).inputValue(), 'member@gmail.com')
   await capture('member-step-2')
   await page.getByRole('button', { name: 'Continuar', exact: true }).click()
   await page.getByLabel('Contacto de emergencia', { exact: true }).fill('Contacto UI')
@@ -114,10 +125,10 @@ try {
   await page.getByRole('status').filter({ hasText: 'Cambios guardados.' }).waitFor()
   await page.getByRole('button', { name: 'Ver ficha de Miembro UI Calvario', exact: true }).waitFor()
   await capture('members-mobile')
-  await page.getByRole('searchbox', { name: 'Buscar por nombre o identificación' }).fill('Miembro UI Calvario')
+  await page.getByRole('searchbox', { name: 'Buscar por nombre, identificación o ID' }).fill('Miembro UI Calvario')
   await page.waitForResponse(response => response.url().includes('/members?q=Miembro'))
   await page.getByRole('button', { name: 'Ver ficha de Miembro UI Calvario', exact: true }).waitFor()
-  await page.getByRole('searchbox', { name: 'Buscar por nombre o identificación' }).fill('')
+  await page.getByRole('searchbox', { name: 'Buscar por nombre, identificación o ID' }).fill('')
   await page.waitForResponse(response => response.url().endsWith('/members?q='))
   await page.getByRole('button', { name: 'Inactivos (0)', exact: true }).click()
   await page.getByRole('heading', { name: 'No encontramos coincidencias' }).waitFor()
@@ -140,35 +151,34 @@ try {
   await page.getByRole('button', { name: 'Grupos de Comunión', exact: true }).click()
   await page.getByRole('button', { name: 'Nuevo grupo', exact: true }).click()
   await page.getByLabel('Nombre *', { exact: true }).fill('Grupo UI')
-  await pickOption(page.getByLabel(/^Discipulador/), { label: 'Miembro UI Calvario' })
+  // A group needs its location: the point on the map or a written address.
+  await page.getByLabel('Dirección (opcional si marcas el punto en el mapa)', { exact: true }).fill('Calle 10 # 20-30')
   await page.getByRole('button', { name: 'Guardar grupo', exact: true }).click()
-  await page.getByRole('status').filter({ hasText: /Grupo de Comunión GR-\d+ creado\./ }).waitFor()
+  await page.waitForURL(/#gestion\/groups\/ficha\/\d+$/)
+  await page.getByRole('heading', { name: 'Grupo UI', exact: true }).waitFor()
+  await capture('group-detail-mobile')
   await page.getByRole('button', { name: 'Cerrar ficha', exact: true }).click()
   await capture('groups-mobile')
-  await page.getByRole('button', { name: 'Ver ficha de Grupo UI', exact: true }).click()
-  await page.getByLabel('Descripción', { exact: true }).fill('Camino hacia una nueva iglesia')
-  await page.getByRole('button', { name: 'Registrar proceso' }).click()
-  await page.getByRole('status').filter({ hasText: 'Proceso registrado.' }).waitFor()
-  await capture('group-detail-mobile')
   await bottom.getByRole('link', { name: 'Eventos', exact: true }).click()
   await page.getByRole('button', { name: 'Nuevo evento', exact: true }).click()
   await page.getByLabel('Nombre del evento *', { exact: true }).fill('Encuentro UI')
   await page.getByLabel('Fecha *', { exact: true }).fill('2099-01-01')
   await page.getByLabel('Hora (Colombia) *', { exact: true }).fill('09:00')
   await page.getByLabel('Lugar *', { exact: true }).fill('Sede Villavicencio')
-  await page.getByLabel('Visible en la web pública', { exact: true }).check()
+  await page.locator('input[name=publicado]').check() // a switch whose name also carries its hint
   await page.getByRole('button', { name: 'Guardar', exact: true }).click()
   await page.getByRole('status').filter({ hasText: 'Cambios guardados.' }).waitFor()
   await page.getByRole('button', { name: 'Ver ficha de Encuentro UI', exact: true }).waitFor()
   await capture('events-mobile')
   await bottom.getByRole('link', { name: 'Asistencia', exact: true }).click()
   await page.locator('.attendance-card', { hasText: 'Encuentro UI' }).click()
-  await pickOption(page.getByLabel('Asistencia de Miembro UI Calvario', { exact: true }), 'presente')
-  await page.getByRole('button', { name: 'Guardar asistencia (1)', exact: true }).click()
-  await page.getByRole('status').filter({ hasText: '1 registro de asistencia guardado.' }).waitFor()
-  await pickOption(page.getByLabel('Corregir', { exact: true }), 'justificado')
-  await page.getByRole('button', { name: 'Guardar corrección' }).click()
-  await page.getByRole('status').filter({ hasText: 'Asistencia corregida' }).waitFor()
+  // One tap saves the attendance; corrections use the same icons.
+  await page.getByRole('button', { name: 'Asistió: Miembro UI Calvario', exact: true }).click()
+  await page.locator('.attendance-records article', { hasText: 'Miembro UI Calvario' }).waitFor()
+  await page.getByRole('button', { name: 'Justificado: Miembro UI Calvario', exact: true }).click()
+  await page.getByRole('status').filter({ hasText: 'Asistencia corregida.' }).waitFor()
+  await page.getByRole('button', { name: 'Finalizar evento y guardar asistencia', exact: true }).click()
+  await page.getByRole('status').filter({ hasText: 'Evento finalizado. Todas las asistencias quedaron guardadas.' }).waitFor()
   for (const width of [1440, 390, 320]) {
     await page.setViewportSize({ width, height: 844 })
     await page.waitForFunction(width => document.querySelector('.admin-workspace').dataset.navigationOpen === (width > 900 ? 'true' : 'false'), width)
@@ -192,7 +202,8 @@ try {
   await page.emulateMedia({ reducedMotion: 'reduce' })
   for (const width of [1440, 390, 320]) {
     await page.setViewportSize({ width, height: 844 })
-    await page.waitForFunction(() => document.querySelector('.admin-workspace').dataset.navigationOpen === 'false')
+    // The side menu stays open on desktop and closed (drawer) on phones.
+    await page.waitForFunction(width => document.querySelector('.admin-workspace').dataset.navigationOpen === (width > 900 ? 'true' : 'false'), width)
     await capture(`dashboard-${width}`)
   }
   assert.equal(await page.locator('.panel-click-wave').count(), 0)
@@ -220,6 +231,7 @@ try {
   console.log('PASS: integrated select keyboard/search/required validation/reset/nested dialogs, real API, wizard preserved fields, filters, groups, navigation, attendance, Excel, public site, manifest and 320/390/1440px without overflow or React errors.')
 } finally {
   if (browser) await browser.close()
+  if (preview) preview.kill()
   if (server) await new Promise(resolve => server.close(resolve))
   if (pool) await pool.end()
   await connection.query(`DROP DATABASE IF EXISTS \`${testDatabase}\``)

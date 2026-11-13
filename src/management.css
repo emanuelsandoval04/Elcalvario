@@ -136,3 +136,10 @@ div.form-switch { display: grid !important; padding: 0; border: 0; background: n
 .member-book { display: inline-flex; align-items: center; gap: 6px; }
 .member-book-dot { display: inline-block; flex: 0 0 10px; width: 10px; height: 10px; border-radius: 50%; }
 .member-book-dot-large { width: 14px; height: 14px; margin-right: 8px; vertical-align: middle; box-shadow: 0 0 0 2px #fff, 0 0 0 3px #0002; }
+
+/* Group history: a deleted group keeps its name, marked as deleted. */
+.member-group-history .history-removed{display:inline-block;margin-left:8px;padding:1px 8px;border-radius:999px;background:var(--surface-muted,#eef0f3);color:var(--text-muted,#5b6472);font-size:.75rem;font-weight:600;vertical-align:middle}
+.group-detail .group-delete{margin-top:20px;padding-top:16px;border-top:1px solid var(--line,#e3e6ea);display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between}
+.group-detail .group-delete p{margin:0;flex:1 1 240px;color:var(--text-muted,#5b6472);font-size:.9rem}
+.admin-workspace .management-shell .group-delete button.danger{color:#b42318;border-color:#f3c4bf;background:#fff5f4}
+.admin-workspace .management-shell .group-delete button.danger:hover{background:#fde8e6}

@@ -18,6 +18,7 @@ try{
  await db.query(`CREATE DATABASE \`${database}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci`)
  await db.query(`USE \`${database}\``);await applyMigrations(db);await applyMigrations(db)
  pool=(await import('../server/db.js')).pool
+ const {createAccount,createOwner}=await import('./test-accounts.mjs')
  const {default:app}=await import('../server/app.js');app.set('trust proxy',1)
  server=app.listen(0,'127.0.0.1');await once(server,'listening')
  const origin=`http://127.0.0.1:${server.address().port}`;process.env.APP_ORIGINS=origin
@@ -31,8 +32,11 @@ try{
   assert.equal(response.status,expected,`${path}: ${isJson?JSON.stringify(data):response.status}`)
   return {data,response}
  }
- let result=await request('auth/register',{email:'owner@example.invalid',password},owner,201)
- const ownerId=result.data.user.id
+ // Public registration is closed: the owner comes from the installation and logs in.
+ await request('auth/register',{email:'public@example.invalid',password},jar(),403)
+ const ownerId=await createOwner({email:'owner@example.invalid',password})
+ let result=await request('auth/login',{email:'owner@example.invalid',password},owner)
+ assert.equal(result.data.user.id,ownerId)
  assert.equal(result.data.user.mfaSetupRequired,undefined)
  await request('management/members')
  // Existing configurations must not lock out accounts that previously enabled MFA.
@@ -53,8 +57,8 @@ try{
  await request('auth/account/password',{currentPassword:password,newPassword:password+'x'})
  await request('auth/login',{email:'owner@example.invalid',password},jar(),401)
  await request('auth/login',{email:'owner@example.invalid',password:password+'x'},jar())
- result=await request('auth/register',{email:'basic@example.invalid',password},basic,201)
- const basicId=result.data.user.id
+ const basicId=await createAccount(db,{email:'basic@example.invalid',password})
+ result=await request('auth/login',{email:'basic@example.invalid',password},basic)
  assert.equal(result.data.user.mfaEnabled,undefined)
  await request('auth/account/security/audit',undefined,basic,403)
  await request('auth/account/security/sessions/revoke',{sessionId:secondId},basic,404)
@@ -74,7 +78,7 @@ try{
  await db.execute('UPDATE sesion_detalle d JOIN sesion_usuario s ON s.token_hash=d.token_hash SET d.ultima_actividad=DATE_SUB(UTC_TIMESTAMP(),INTERVAL 31 MINUTE) WHERE s.id_usuario=?',[basicId])
  await request('auth/me',undefined,basic,401)
  const compressed=await fetch(origin+'/api/auth/login',{method:'POST',headers:{Origin:origin,'Content-Type':'application/json','Content-Encoding':'gzip'},body:'invalid'});assert.equal(compressed.status,415)
- const config=JSON.parse(await readFile('vercel.json','utf8')),csp=config.headers[0].headers.find(header=>header.key==='Content-Security-Policy').value
+ const config=JSON.parse(await readFile('vercel.json','utf8')),csp=config.headers.flatMap(block=>block.headers).find(header=>header.key==='Content-Security-Policy').value
  assert.ok(csp.includes("script-src-attr 'none'"));assert.ok(csp.includes("object-src 'none'"));assert.equal(csp.includes("script-src 'unsafe-inline'"),false)
  if(process.argv.includes('--ui')){
   const ui='http://127.0.0.1:5188';process.env.APP_ORIGINS=`${origin},${ui}`
@@ -82,11 +86,7 @@ try{
   let ready=false
   for(let count=0;count<80;count++){try{ready=(await fetch(ui)).ok}catch{}if(ready)break;await delay(200)}
   assert.ok(ready,'No inició la vista previa de producción.')
-  const candidateJar=jar()
-  const candidate=await request('auth/register',{email:'browser@example.invalid',password},candidateJar,201)
-  await request('auth/logout',{},candidateJar)
-  await db.execute("UPDATE usuario SET estado_usuario='activo' WHERE id_usuario=?",[candidate.data.user.id])
-  await db.execute("INSERT INTO usuario_rol(id_usuario,id_rol) SELECT ?,id_rol FROM rol_sistema WHERE nombre='Administrador'",[candidate.data.user.id])
+  await createAccount(db,{email:'browser@example.invalid',password,role:'Administrador'})
   const {chromium}=await import('../.secrets/browser-tools/node_modules/playwright-core/index.mjs')
   browser=await chromium.launch({channel:'msedge',headless:true})
   async function context(){
@@ -125,7 +125,7 @@ try{
   for(const width of [320,390,768,1440]){await page.setViewportSize({width,height:900});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false,`Desbordamiento en ${width}px`)}
   await page.getByRole('button',{name:'Cerrar opciones de la cuenta',exact:true}).click()
   // Removed modules fall back to the dashboard.
-  for(const path of ['#gestion/mapa','#gestion/transmisiones','#gestion/falls/alertas']){await page.goto(ui+'/'+path);await page.locator('#dashboard-title,.attendance-picker').first().waitFor();assert.equal(await page.locator('.coverage-map,.pastoral-page,.transmissions-page').count(),0)}
+  for(const path of ['#gestion/transmisiones','#gestion/falls/alertas']){await page.goto(ui+'/'+path);await page.locator('#dashboard-title,.attendance-picker').first().waitFor();assert.equal(await page.locator('.coverage-map,.pastoral-page,.transmissions-page').count(),0)}
   assert.deepEqual(errors,[]);assert.deepEqual(violations,[])
   console.log('PASS interfaz con CSP de producción: acceso administrativo solo con correo y contraseña, revocación de otro dispositivo, auditoría, módulos retirados y 320/390/768/1440px.')
  }

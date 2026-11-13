@@ -3,6 +3,8 @@ import { randomUUID } from 'node:crypto'
 import { createRequire } from 'node:module'
 import mysql from 'mysql2/promise'
 import express from 'express'
+import { spawn } from 'node:child_process'
+import { setTimeout as delay } from 'node:timers/promises'
 import { applyMigrations } from '../server/migration-runner.js'
 import { jsonBody } from '../server/body-parser.js'
 
@@ -12,13 +14,14 @@ process.env.DB_NAME = testDatabase
 const { databaseConfig } = await import('../server/config.js')
 const { database, ...config } = databaseConfig
 const connection = await mysql.createConnection(config)
-const ui = process.env.UI_ORIGIN || 'http://127.0.0.1:5173'
-let pool, server, browser
+const ui = process.env.UI_ORIGIN || 'http://127.0.0.1:5183'
+let pool, server, browser, preview
 try {
   await connection.query(`CREATE DATABASE \`${testDatabase}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci`)
   await connection.query(`USE \`${testDatabase}\``)
   await applyMigrations(connection)
   pool = (await import('../server/db.js')).pool
+  const { createAccount, createOwner } = await import('./test-accounts.mjs')
   const { authRouter } = await import('../server/auth.js')
   const { managementRouter, publicRouter } = await import('../server/management.js')
   const app = express()
@@ -35,6 +38,10 @@ try {
     assert.equal(response.status, expected, `${path}: ${JSON.stringify(data)}`)
     return { data, cookie: response.headers.get('set-cookie')?.split(';')[0] }
   }
+  if (!process.env.UI_ORIGIN) {
+    preview = spawn(process.execPath, ['node_modules/vite/bin/vite.js', 'preview', '--host', '127.0.0.1', '--port', '5183', '--strictPort'], { windowsHide: true, stdio: 'ignore' })
+    for (let i = 0; i < 80; i++) { try { if ((await fetch(ui)).ok) break } catch {} await delay(150) }
+  }
   const require = createRequire(import.meta.url)
   const { chromium } = require('../.secrets/browser-tools/node_modules/playwright-core')
   browser = await chromium.launch({ headless: true, channel: 'msedge' })
@@ -42,9 +49,16 @@ try {
   const photos = await fixture.evaluate(() => ['#ff650b', '#298ddd'].map(color => { const canvas = document.createElement('canvas'); canvas.width = canvas.height = 512; const ctx = canvas.getContext('2d'); ctx.fillStyle = color; ctx.fillRect(0, 0, 512, 512); return canvas.toDataURL('image/jpeg', .85) }))
   const upload = { name: 'perfil.jpg', mimeType: 'image/jpeg', buffer: Buffer.from(photos[1].split(',')[1], 'base64') }
   await fixture.close()
-  const admin = await api('register', { email: 'owner@example.invalid', password, photo: photos[0] }, '', 201)
-  const pending = await api('register', { email: 'pending@example.invalid', password }, '', 201)
-  const other = await api('register', { email: 'other@example.invalid', password }, '', 201)
+  // Public registration is closed: the owner comes from the installation and adds a photo to the
+  // account; the other two accounts (pending activation) are created in the test database.
+  await api('register', { email: 'public@example.invalid', password }, '', 403)
+  await createOwner({ email: 'owner@example.invalid', password })
+  await createAccount(connection, { email: 'pending@example.invalid', password })
+  await createAccount(connection, { email: 'other@example.invalid', password })
+  const admin = await api('login', { email: 'owner@example.invalid', password })
+  admin.data.user = (await api('account/photo', { photo: photos[0] }, admin.cookie)).data.user
+  const pending = await api('login', { email: 'pending@example.invalid', password })
+  const other = await api('login', { email: 'other@example.invalid', password })
   assert.ok(admin.data.user.photoUrl)
   assert.equal(pending.data.user.photoUrl, null)
   async function readPhoto(cookie, expected = 200, query = '') {
@@ -64,7 +78,7 @@ try {
   await api('account/photo', {}, pending.cookie, 400)
   for (const photo of ['https://untrusted.invalid/avatar.jpg', 'data:image/svg+xml;base64,PHN2Zy8+', 'data:image/jpeg;base64,YmFk']) await api('account/photo', { photo }, pending.cookie, 400)
   await api('account/photo', { photo: 'data:image/jpeg;base64,' + 'a'.repeat(350000) }, pending.cookie, 413)
-  await api('register', { email: 'rejected-photo@example.invalid', password, photo: 'bad' }, '', 400)
+  await api('register', { email: 'rejected-photo@example.invalid', password, photo: 'bad' }, '', 403)
   assert.equal((await pool.execute("SELECT id_usuario FROM usuario WHERE correo_login='rejected-photo@example.invalid'"))[0].length, 0)
   const savedPhoto = await api('account/photo', { photo: photos[1], id: admin.data.user.id, roles: ['Administrador'] }, pending.cookie)
   assert.equal(savedPhoto.data.user.state, 'pendiente')
@@ -82,7 +96,7 @@ try {
   assert.equal(savedPending.data.user.state, 'pendiente')
   assert.deepEqual(savedPending.data.user.roles, [])
   assert.deepEqual(savedPending.data.user.permissions, {})
-  assert.equal((await api('me', undefined, admin.cookie)).data.user.name, null)
+  assert.equal((await api('me', undefined, admin.cookie)).data.user.name, 'Propietario', 'Editar otra cuenta no cambia el nombre del propietario')
   await api('account/profile', { name: ' ', email: pending.data.user.email }, pending.cookie, 400)
   await api('account/profile', { name: 'A'.repeat(101), email: pending.data.user.email }, pending.cookie, 400)
   await api('account/profile', { name: 'María', email: 'invalid' }, pending.cookie, 400)
@@ -246,22 +260,17 @@ try {
   await page.getByRole('button', { name: 'Mi cuenta', exact: true }).tap()
   await page.getByRole('menuitem', { name: 'Cerrar sesión', exact: true }).tap()
   await page.waitForURL(`${ui}/#login`)
+  // The old self-registration address opens the login and offers no account creation.
   await page.goto(`${ui}/#registro`)
-  await page.getByLabel('Foto de perfil', { exact: true }).setInputFiles(upload)
-  await page.getByLabel('Correo electrónico', { exact: true }).fill('photo-registration@example.invalid')
-  await page.getByLabel('Contraseña', { exact: true }).fill(password)
-  await page.getByLabel('Confirmar contraseña', { exact: true }).fill(password)
-  await page.getByRole('button', { name: 'Crear cuenta', exact: true }).click()
-  await page.waitForURL(`${ui}/#gestion`)
-  await page.waitForFunction(() => document.querySelector('.panel-avatar img')?.naturalWidth === 512)
-  const registered = await page.evaluate(async () => (await (await fetch('/api/auth/me')).json()).user)
-  assert.equal(registered.state, 'pendiente')
-  assert.deepEqual(registered.permissions, {})
-  console.log('PASS photos browser: file validation, upload/preview/update/removal, avatar persists after login, self registration, unsaved forms preserved and 1440/390/320px.')
+  await page.waitForURL(`${ui}/#login`)
+  assert.equal(await page.getByRole('button', { name: 'Crear cuenta', exact: true }).count(), 0)
+  assert.equal(await page.getByLabel('Foto de perfil', { exact: true }).count(), 0)
+  console.log('PASS photos browser: file validation, upload/preview/update/removal, avatar persists after login, closed self registration, unsaved forms preserved and 1440/390/320px.')
   assert.deepEqual(errors, [])
   console.log('PASS browser: account dropdown, keyboard/Escape/focus trap, own name/email/password updates, unsaved forms preserved, new credentials, logout, pending account, mobile touch and 1440/390/320px without overflow or React errors')
 } finally {
   if (browser) await browser.close()
+  if (preview) preview.kill()
   if (server) await new Promise(resolve => server.close(resolve))
   if (pool) await pool.end()
   await connection.query(`DROP DATABASE IF EXISTS \`${testDatabase}\``)

@@ -444,7 +444,7 @@ managementRouter.get('/members/:id/history',requirePermission('miembros.ver'),as
   const row=await getMember(req,req.params.id,'miembros.ver')
   // Group names and who made the change, so the record reads "Grupo X · asignado por Y".
   const [items]=await pool.execute(`SELECT h.*,
-      IF(h.concepto='grupo',ga.nombre,NULL) AS grupo_anterior,IF(h.concepto='grupo',gn.nombre,NULL) AS grupo_nuevo,
+      IF(h.concepto='grupo',ga.nombre,NULL) AS grupo_anterior,IF(h.concepto='grupo',gn.nombre,NULL) AS grupo_nuevo,IF(h.concepto='grupo',COALESCE(gn.archivado,0),0) AS grupo_nuevo_eliminado,
       COALESCE(NULLIF(TRIM(p.nombre),''),NULLIF(TRIM(CONCAT_WS(' ',am.nombres,am.apellidos)),'')) AS asignado_por
     FROM historial_miembro h
     LEFT JOIN grupo_comunion ga ON ga.id_grupo=h.id_anterior LEFT JOIN grupo_comunion gn ON gn.id_grupo=h.id_nuevo

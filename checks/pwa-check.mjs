@@ -3,13 +3,22 @@ import { createRequire } from 'node:module'
 import { mkdtempSync, realpathSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { basename, dirname, join } from 'node:path'
+import { spawn } from 'node:child_process'
+import { setTimeout as delay } from 'node:timers/promises'
 const require = createRequire(import.meta.url)
 const { chromium } = require('../.secrets/browser-tools/node_modules/playwright-core')
 const origin = process.env.PWA_ORIGIN || 'http://127.0.0.1:4175'
 const temporaryRoot = realpathSync(tmpdir())
 const profile = mkdtempSync(join(temporaryRoot, 'calvario-pwa-check-'))
-let context
+let context, preview
 try {
+  // Starts the production preview (npm run build first) unless PWA_ORIGIN points at a running one.
+  if (!process.env.PWA_ORIGIN) {
+    preview = spawn(process.execPath, ['node_modules/vite/bin/vite.js', 'preview', '--host', '127.0.0.1', '--port', '4175', '--strictPort'], { windowsHide: true, stdio: 'ignore' })
+    let ready = false
+    for (let i = 0; i < 80 && !ready; i++) { try { ready = (await fetch(origin)).ok } catch {} if (!ready) await delay(150) }
+    assert.ok(ready, 'No inició la vista previa de producción.')
+  }
   context = await chromium.launchPersistentContext(profile, { headless: true, channel: 'msedge', viewport: { width: 390, height: 844 } })
   await context.route('**/api/**', route => route.fulfill({ status: 401, contentType: 'application/json', body: JSON.stringify({ error: 'Inicia sesión para continuar.' }) }))
   const page = await context.newPage()
@@ -46,6 +55,7 @@ try {
   console.log('PASS PWA: Chromium installability, manifest, 192/512px icons, active service worker, API excluded from caches, offline fallback and online retry.')
 } finally {
   if (context) await context.close()
+  if (preview) preview.kill()
   if (dirname(profile) !== temporaryRoot || !basename(profile).startsWith('calvario-pwa-check-')) throw new Error('Perfil temporal fuera del directorio esperado.')
   rmSync(profile, { recursive: true, force: true })
 }

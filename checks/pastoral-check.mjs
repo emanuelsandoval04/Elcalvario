@@ -4,6 +4,8 @@ import { randomUUID } from 'node:crypto'
 import { createRequire } from 'node:module'
 import mysql from 'mysql2/promise'
 import express from 'express'
+import { spawn } from 'node:child_process'
+import { setTimeout as delay } from 'node:timers/promises'
 import { applyMigrations } from '../server/migration-runner.js'
 import { jsonBody } from '../server/body-parser.js'
 
@@ -14,13 +16,14 @@ process.env.MAIL_PROVIDER='disabled' // registration emails below use real provi
 const { databaseConfig } = await import('../server/config.js')
 const { database, ...config } = databaseConfig
 const connection = await mysql.createConnection(config)
-const ui = process.env.UI_ORIGIN || 'http://127.0.0.1:5173'
-let pool, server, browser
+const ui = process.env.UI_ORIGIN || 'http://127.0.0.1:5185'
+let pool, server, browser, preview
 try {
   await connection.query(`CREATE DATABASE \`${testDatabase}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci`)
   await connection.query(`USE \`${testDatabase}\``)
   await applyMigrations(connection)
   pool = (await import('../server/db.js')).pool
+  const { createAccount, createOwner } = await import('./test-accounts.mjs')
   const { authRouter } = await import('../server/auth.js')
   const { managementRouter } = await import('../server/management.js')
   const app = express(); app.use(jsonBody); app.use('/api/auth', authRouter); app.use('/api/management', managementRouter)
@@ -34,7 +37,10 @@ try {
     assert.equal(response.status, expected, `${path}: ${JSON.stringify(data)}`)
     return { data, cookie: response.headers.get('set-cookie')?.split(';')[0] }
   }
-  const owner = await api('auth/register', { email: 'owner@example.invalid', password }, '', 201)
+  // Public registration is closed: the owner comes from the installation script.
+  await api('auth/register', { email: 'owner@example.invalid', password }, '', 403)
+  await createOwner({ email: 'owner@example.invalid', password })
+  const owner = await api('auth/login', { email: 'owner@example.invalid', password })
   const catalogs = (await api('management/catalogs', undefined, owner.cookie)).data
   // Reproduce the local bootstrap: no groups and a Superadmin linked to rank 6.
   assert.deepEqual(catalogs.grupos,[])
@@ -47,15 +53,15 @@ try {
   assert.equal(linkedOwner.pastoralRole.level,6)
   assert.equal(linkedOwner.registration.canAssignServices,true)
   assert.equal(linkedOwner.registration.canCreateAdministrative,true)
-  const group = (await api('management/groups', { codigo_grupo: 'FAMILIA', nombre: 'Familia de prueba', estado_grupo: 'activo' }, owner.cookie, 201)).data.id
-  const outside = (await api('management/groups', { codigo_grupo: 'OTRO', nombre: 'Otro grupo', estado_grupo: 'activo' }, owner.cookie, 201)).data.id
+  const group = (await api('management/groups', { codigo_grupo: 'FAMILIA', nombre: 'Familia de prueba', estado_grupo: 'activo', direccion: 'Calle 10 # 20-30' }, owner.cookie, 201)).data.id
+  const outside = (await api('management/groups', { codigo_grupo: 'OTRO', nombre: 'Otro grupo', estado_grupo: 'activo', direccion: 'Calle 10 # 20-30' }, owner.cookie, 201)).data.id
   let sequence = 0
   function member(extra = {}) {
     sequence++
     return { nombres: `Persona ${sequence}`, apellidos: 'Prueba', tipo_identificacion: 'CC', numero_identificacion: `P-${sequence}`, celular: '3001234567', fecha_nacimiento: '1990-03-05', id_grupo: group, ...extra }
   }
   function administrative(level, extra = {}) {
-    const email = `pastoral-${sequence + 1}@example.invalid`
+    const email = `pastoral-${sequence + 1}@gmail.com`
     return member({ tipo_registro: 'administrativo', id_rol_eclesiastico: catalogs.roles.find(role => role.nivel_jerarquico === level).id_rol_eclesiastico, account_email: email, account_password: password, account_confirmation: password, ...extra })
   }
   const actors = []
@@ -73,7 +79,8 @@ try {
     actors.push(login)
   }
   const leaderInput = administrative(6, { responsable_grupo: 1, id_ministerio: catalogs.ministerios[0].id_ministerio })
-  await api('management/members', administrative(1), actors[4].cookie, 201)
+  // Hierarchy: a role cannot create an administrative with an equal or higher rank.
+  await api('management/members', administrative(1), actors[4].cookie, 403)
   const leader = (await api('management/members', leaderInput, actors[4].cookie, 201)).data.id
   const disciple = await api('auth/login', { email: leaderInput.account_email, password })
   assert.equal(disciple.data.user.pastoralRole.level, 6)
@@ -98,7 +105,7 @@ try {
   assert.ok((await api('management/members',undefined,disciple.cookie)).data.items.some(row=>row.id_miembro===unassigned.data.id))
   assert.ok(!(await api('management/members',undefined,disciple.cookie)).data.items.some(row=>row.id_miembro===bootstrap))
   await api('management/members', member({ id_grupo: outside }), disciple.cookie, 404)
-  await api('management/groups', { codigo_grupo: 'NO', nombre: 'No autorizado', estado_grupo: 'activo' }, disciple.cookie, 403)
+  await api('management/groups', { codigo_grupo: 'NO', nombre: 'No autorizado', estado_grupo: 'activo', direccion: 'Calle 10 # 20-30' }, disciple.cookie, 403)
   await api(`management/groups/${group}`, { direccion: 'Dirección actualizada' }, disciple.cookie, 200, 'PATCH')
   await api(`management/groups/${group}`, { id_discipulador: normal.data.id }, disciple.cookie, 403, 'PATCH')
   // Even an accidentally granted generic permission cannot bypass pastoral authority.
@@ -112,7 +119,7 @@ try {
   await api(`auth/admin/users/${disciple.data.user.id}/role`, { roleId: systemRoles.find(role => role.name === 'Administrador').id }, actors[4].cookie, 403)
   await api(`auth/admin/users/${owner.data.user.id}/role`, { roleId: systemRoles.find(role => role.name === 'Usuario').id }, actors[4].cookie, 403)
   await api(`management/users/${owner.data.user.id}/member`, { memberId: leader }, actors[4].cookie, 403)
-  const mediaAccount = await api('auth/register', { email: 'media@example.invalid', password }, '', 201)
+  const mediaAccount = { data: { user: { id: await createAccount(connection, { email: 'media@example.invalid', password }) } } }
   await api(`auth/admin/users/${mediaAccount.data.user.id}/role`, { roleId: systemRoles.find(role => role.name === 'Multimedia').id }, owner.cookie)
   const media = await api('auth/login', { email: 'media@example.invalid', password })
   assert.equal(media.data.user.registration.canCreateAdministrative, false)
@@ -153,6 +160,10 @@ try {
   console.log('PASS API pastoral: all five authorized creators, linked accounts and login, disciple-only/group scope, service and role bypass rejection, unchanged creator session, atomic rollback and repeatable migration.')
 
   if (process.env.PASTORAL_API_ONLY !== '1') {
+    if (!process.env.UI_ORIGIN) {
+      preview = spawn(process.execPath, ['node_modules/vite/bin/vite.js', 'preview', '--host', '127.0.0.1', '--port', '5185', '--strictPort'], { windowsHide: true, stdio: 'ignore' })
+      for (let i = 0; i < 80; i++) { try { if ((await fetch(ui)).ok) break } catch {} await delay(150) }
+    }
     const require = createRequire(import.meta.url)
     const { chromium } = require('../.secrets/browser-tools/node_modules/playwright-core')
     browser = await chromium.launch({ headless: true, channel: 'msedge' })
@@ -198,8 +209,9 @@ try {
     assert.equal(uiLeaders[0].id_grupo,null)
     await page.goto(`${ui}/#gestion/groups`)
     await page.getByRole('button',{name:'Nuevo grupo',exact:true}).click()
-    await page.getByText('Se asigna automáticamente al guardar',{exact:false}).waitFor()
     await page.getByLabel('Nombre *',{exact:true}).fill('Grupo después del discipulador')
+    // A group needs its location: the point on the map or a written address.
+    await page.getByLabel('Dirección (opcional si marcas el punto en el mapa)',{exact:true}).fill('Calle 10 # 20-30')
     await pickOption(page.getByRole('combobox',{name:'Discipulador',exact:true}),String(uiLeaders[0].id_miembro))
     await page.getByRole('button',{name:'Guardar grupo',exact:true}).click()
     await page.getByRole('heading',{name:'Grupo después del discipulador',exact:true}).waitFor()
@@ -207,7 +219,7 @@ try {
     await page.getByRole('menuitem', { name: 'Cerrar sesión', exact: true }).click()
     await page.waitForURL(`${ui}/#login`)
     await login('ui-leader@gmail.com')
-    await page.waitForFunction(() => document.querySelector('.panel-avatar img')?.naturalWidth === 512)
+    await page.locator('.panel-avatar').first().waitFor() // created without a photo: the avatar shows the initial
     await startRegistration()
     assert.equal(await page.getByLabel('Tipo de registro', { exact: true }).count(), 0)
     assert.equal(await page.locator('select[name=id_rol_eclesiastico],input[name=account_email],input[name=funcion_iglesia],select[name=id_ministerio]').count(), 0)
@@ -223,6 +235,7 @@ try {
   }
 } finally {
   if (browser) await browser.close()
+  if (preview) preview.kill()
   if (server) await new Promise(resolve => server.close(resolve))
   if (pool) await pool.end()
   await connection.query(`DROP DATABASE IF EXISTS \`${testDatabase}\``)

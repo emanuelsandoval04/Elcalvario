@@ -252,10 +252,10 @@ function Records({ resource, user, catalogs, reloadCatalogs, notify }: { resourc
     setEdit(null); notify(result.accountCreated ? `Administrativo y cuenta de acceso creados. Ya puede iniciar sesión con sus credenciales. ${welcomeEmailMessage(result.emailDelivery)}` : resource === 'members' && !has(user, 'miembros.ver') ? values.id_grupo ? 'Discípulo registrado y asignado al Grupo de Comunión Familiar.' : 'Discípulo registrado. El grupo puede asignarse después.' : 'Cambios guardados.'); await load(); await reloadCatalogs()
   }
   async function archive(row: Row) {
-    if (resource === 'groups' && !window.confirm(`¿Archivar el grupo «${row.nombre}»? Sus discípulos quedarán sin grupo y el cambio se guarda en su historial.`)) return
+    if (resource === 'groups' && !window.confirm(`¿Eliminar el grupo «${row.nombre}»? Sus discípulos quedarán sin grupo. Su historial de grupos y las asistencias registradas se conservan.`)) return
     try {
       const result = await api<{ released?: number }>(`${resource}/${row[ids[resource]]}`, {}, 'DELETE'); setDetail(null)
-      notify(resource === 'groups' && result.released ? `Grupo archivado. ${result.released === 1 ? '1 discípulo quedó' : `${result.released} discípulos quedaron`} sin grupo.` : 'Registro archivado. Se conserva su historial.'); await load(); await reloadCatalogs()
+      notify(resource === 'groups' ? `Grupo eliminado.${result.released ? ` ${result.released === 1 ? '1 discípulo quedó' : `${result.released} discípulos quedaron`} sin grupo.` : ''} El historial se conserva.` : 'Registro archivado. Se conserva su historial.'); await load(); await reloadCatalogs()
     } catch (error) { notify(errorMessage(error)) }
   }
   const createLabels = { members: 'Registrar discípulo', groups: 'Nuevo grupo', activities: 'Nuevo evento' }
@@ -312,11 +312,11 @@ function Records({ resource, user, catalogs, reloadCatalogs, notify }: { resourc
         <AdminIcon name="chevron"/>
       </button>
       {resource === 'groups' && row.latitud != null && row.longitud != null && <a className="app-action secondary record-map-link" href={`#gestion/mapa/grupo/${row.id_grupo}`}>Ver en el mapa</a>}
-      {(canEdit(row) || has(user, remove[resource])) && <details className="record-menu"><summary aria-label={`Acciones de ${name}`}>•••</summary><div>{canEdit(row) && <button className="secondary" onClick={() => openEdit(row)}>Editar</button>}{has(user, remove[resource]) && <button className="secondary" onClick={() => void (resource === 'activities' && row.id_serie ? stopRepetition(row) : archive(row))}>{resource === 'activities' && row.id_serie ? 'Eliminar fijo' : 'Archivar'}</button>}</div></details>}
+      {(canEdit(row) || has(user, remove[resource])) && <details className="record-menu"><summary aria-label={`Acciones de ${name}`}>•••</summary><div>{canEdit(row) && <button className="secondary" onClick={() => openEdit(row)}>Editar</button>}{has(user, remove[resource]) && <button className="secondary" onClick={() => void (resource === 'activities' && row.id_serie ? stopRepetition(row) : archive(row))}>{resource === 'activities' && row.id_serie ? 'Eliminar fijo' : resource === 'groups' ? 'Eliminar' : 'Archivar'}</button>}</div></details>}
     </article>})}</div>)}
     {detail && resource === 'activities' && <aside className="manage-editor activity-detail">{detail.imagen && <img className="activity-detail-image" src={String(detail.imagen)} alt=""/>}{detail.tipo_actividad === 'reunion_grupo' && <span className="event-type">Reunión de grupo</span>}<h3>{detail.titulo}</h3><p>{detail.fecha} · {String(detail.hora).slice(0, 5)} · {detail.lugar}</p>{detail.id_serie && <p className="event-repeat-note">{weeklySchedule(Number(detail.dia_semana), String(detail.repeticion_hora || detail.hora), Boolean(detail.repeticion_activa))}{detail.repeticion_fin ? ` · Hasta ${detail.repeticion_fin}` : ''}</p>}<p>{detail.descripcion || 'Sin descripción adicional.'}</p><p>Estado: {detail.estado_actividad}</p><div className="manage-actions">{canEdit(detail) && <button onClick={() => openEdit(detail)}>Editar actividad</button>}{detail.id_serie && has(user, 'eventos.eliminar') && <button className="secondary" disabled={stoppingRepeat} onClick={() => void stopRepetition(detail)}>{stoppingRepeat ? 'Eliminando…' : 'Eliminar evento fijo'}</button>}{(has(user, 'asistencia.registrar') || has(user, 'asistencia.ver')) && <a className="app-action secondary" href={`#gestion/falls/registro/actividad/${detail.id_actividad}`}>Ver asistencia</a>}</div></aside>}
     {detail && resource === 'members' && <MemberDetail key={detail.id_miembro} row={detail} user={user} catalogs={catalogs} reloadCatalogs={reloadCatalogs} notify={notify} onSaved={load} onClose={() => setDetail(null)} />}
-    {detail && resource === 'groups' && <GroupDetail key={detail.id_grupo} row={detail} user={user} onClose={() => setDetail(null)} onEdit={canEdit(detail) ? () => openEdit(detail) : undefined} members={has(user, 'miembros.ver') ? members : null} groupNames={new Map(items.map(item => [Number(item.id_grupo), String(item.nombre)]))} notify={notify} onMembersChanged={async () => { await load(true); await reloadCatalogs() }} />}
+    {detail && resource === 'groups' && <GroupDetail key={detail.id_grupo} row={detail} user={user} onClose={() => setDetail(null)} onEdit={canEdit(detail) ? () => openEdit(detail) : undefined} onDelete={has(user, 'grupos.eliminar') ? () => void archive(detail) : undefined} members={has(user, 'miembros.ver') ? members : null} groupNames={new Map(items.map(item => [Number(item.id_grupo), String(item.nombre)]))} notify={notify} onMembersChanged={async () => { await load(true); await reloadCatalogs() }} />}
   </section>
 }
 
@@ -364,12 +364,12 @@ const historyDate = (value: string | number | null) => { const date = new Date(S
 function MemberGroupHistory({ items }: { items: Row[] }) {
   const assignments = items.filter(item => item.concepto === 'grupo' && item.id_nuevo)
   return <section className="member-group-history" aria-labelledby="member-group-history-title"><h4 id="member-group-history-title">Historial de grupos</h4>
-    {assignments.length ? <ul>{assignments.map(item => <li key={item.id_historial}><strong>{item.grupo_nuevo || 'Grupo eliminado'}</strong><span>Asignado por {item.asignado_por || 'una cuenta que ya no existe'}</span>{historyDate(item.fecha_cambio) && <time dateTime={String(item.fecha_cambio)}>{historyDate(item.fecha_cambio)}</time>}</li>)}</ul>
+    {assignments.length ? <ul>{assignments.map(item => <li key={item.id_historial}><strong>{item.grupo_nuevo || 'Grupo eliminado'}{item.grupo_nuevo && Number(item.grupo_nuevo_eliminado) ? <span className="history-removed">Grupo eliminado</span> : null}</strong><span>Asignado por {item.asignado_por || 'una cuenta que ya no existe'}</span>{historyDate(item.fecha_cambio) && <time dateTime={String(item.fecha_cambio)}>{historyDate(item.fecha_cambio)}</time>}</li>)}</ul>
       : <p>Aún no tiene asignaciones de grupo registradas.</p>}
   </section>
 }
 
-function GroupDetail({ row, user, onClose, onEdit, members, groupNames, notify, onMembersChanged }: { row: Row; user: AuthUser; onClose: () => void; onEdit?: () => void; members: Row[] | null; groupNames: Map<number, string>; notify: Message; onMembersChanged: () => Promise<void> }) {
+function GroupDetail({ row, user, onClose, onEdit, onDelete, members, groupNames, notify, onMembersChanged }: { row: Row; user: AuthUser; onClose: () => void; onEdit?: () => void; onDelete?: () => void; members: Row[] | null; groupNames: Map<number, string>; notify: Message; onMembersChanged: () => Promise<void> }) {
   const mapQuery = row.latitud != null && row.longitud != null ? `${row.latitud},${row.longitud}` : row.direccion ? `${row.direccion}, ${row.barrio || ''}, Villavicencio, Meta` : null
   return <aside className="manage-editor group-detail"><div className="group-detail-banner" aria-hidden="true"><AdminIcon name="groups"/><span>LA FE NOS REÚNE</span></div><div className="manage-section-heading"><h3>{row.nombre}</h3><button className="secondary" onClick={onClose}>Cerrar ficha</button></div>
     <p style={{ whiteSpace: 'pre-line' }}><strong>Barrio o barrios:</strong> {row.barrio || 'Sin asignar'}</p>
@@ -378,6 +378,7 @@ function GroupDetail({ row, user, onClose, onEdit, members, groupNames, notify, 
     {!row.id_discipulador && onEdit && <button type="button" className="secondary" onClick={onEdit}>Asignar discipulador</button>}
     {members && <GroupMembers group={row} members={members} groupNames={groupNames} canAdd={has(user, 'grupos.editar') && has(user, 'miembros.editar')} canRemove={has(user, 'grupos.editar') && has(user, 'miembros.editar') && user.permissions['miembros.editar'] === 'todos'} notify={notify} onChanged={onMembersChanged}/>}
     <div className="group-detail-actions">{has(user, 'miembros.ver') && <a className="app-action secondary" href={`#gestion/members/grupo/${row.id_grupo}`}><span className="dashboard-card-icon"><AdminIcon name="members"/></span>Ver discípulos<AdminIcon name="chevron"/></a>}{onEdit && <button type="button" className="secondary" onClick={onEdit}><span className="dashboard-card-icon"><AdminIcon name="groups"/></span>Editar grupo<AdminIcon name="chevron"/></button>}{row.latitud != null && row.longitud != null ? <a className="app-action secondary" href={`#gestion/mapa/grupo/${row.id_grupo}`}><span className="dashboard-card-icon"><AdminIcon name="mapa"/></span>Ver en el mapa<AdminIcon name="chevron"/></a> : mapQuery && <a className="app-action secondary" href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(mapQuery)}`} target="_blank" rel="noopener noreferrer"><span className="dashboard-card-icon"><AdminIcon name="home"/></span>Buscar dirección en Google Maps<AdminIcon name="chevron"/></a>}</div>
+    {onDelete && <div className="group-delete"><p>Al eliminar el grupo, sus discípulos quedan sin grupo. Su historial de grupos y las asistencias se conservan.</p><button type="button" className="secondary danger" onClick={onDelete}>Eliminar grupo</button></div>}
   </aside>
 }
 
@@ -458,14 +459,24 @@ function Attendance({ user, notify }: { user: AuthUser; notify: Message }) {
     catch (error) { notify(errorMessage(error)) }
   }
   // Ending the event: whoever is still pending is saved as absent without justification.
+  // With nobody pending it simply confirms that everything is saved. If the list changed meanwhile
+  // (a QR check-in, another device), it reloads the list and tries once more.
   async function finish() {
-    if (saving || !outstanding.length) return
-    if (!window.confirm(`Quedan ${outstanding.length === 1 ? '1 persona sin marcar; quedará' : `${outstanding.length} personas sin marcar; quedarán`} como ausente sin justificación. ¿Finalizar el evento?`)) return
+    if (saving) return
+    if (outstanding.length && !window.confirm(`Quedan ${outstanding.length === 1 ? '1 persona sin marcar; quedará' : `${outstanding.length} personas sin marcar; quedarán`} como ausente sin justificación. ¿Finalizar el evento?`)) return
     setSaving(true)
+    const save = (version: string) => api<{ created: number; absent: number }>('attendance/save', { activityId: Number(activityId), rosterVersion: version, states: {} })
     try {
-      const result = await api<{ created: number; absent: number }>('attendance/save', { activityId: Number(activityId), rosterVersion, states: {} })
+      let result = { created: 0, absent: 0 }
+      if (roster.length) {
+        try { result = await save(rosterVersion) }
+        catch (error) {
+          if (!(error instanceof Error) || !error.message.includes('El listado de discípulos cambió')) throw error
+          result = await save((await api<{ version?: string }>(`attendance/roster?activityId=${activityId}`)).version || '')
+        }
+      }
       await load()
-      notify(`Evento finalizado. ${result.absent === 1 ? '1 persona quedó' : `${result.absent} personas quedaron`} como ausente sin justificación.`)
+      notify(result.absent ? `Evento finalizado. ${result.absent === 1 ? '1 persona quedó' : `${result.absent} personas quedaron`} como ausente sin justificación.` : 'Evento finalizado. Todas las asistencias quedaron guardadas.')
     } catch (error) { notify(errorMessage(error)); await load() } finally { setSaving(false) }
   }
   return <section className="attendance-page"><p className="section-caption">Consulta encuentros actuales y anteriores, guarda la asistencia o descarga el registro de un evento.</p><AttendanceActivityPicker value={activityId} selected={selected} disabled={saving||loading} onChange={activity=>{setSelectedActivity(activity);setActivityId(activity?String(activity.id_actividad):'')}}/>
@@ -493,9 +504,9 @@ function Attendance({ user, notify }: { user: AuthUser; notify: Message }) {
       <div className="manage-records attendance-records">{records.map(row => <article key={row.id_asistencia}><span className="attendance-state-icon" data-state={row.estado_asistencia} aria-hidden="true"><AttendanceIcon state={String(row.estado_asistencia)}/></span><div><strong>{row.nombre || row.nombre_visitante || 'Visitante'}</strong><p>{states[String(row.estado_asistencia)] || row.estado_asistencia} · {row.origen_registro === 'autoregistro_qr' ? 'Con código QR' : row.metodo_registro === 'qr' ? 'QR' : 'Marcado por el equipo'}{row.documento_visitante ? ` · Doc. ${row.documento_visitante}` : ''}</p></div>
         {has(user, 'asistencia.corregir') && row.id_miembro && <span className="attendance-marks attendance-corrections" role="group" aria-label={`Corregir asistencia de ${row.nombre}`}>{(['presente', 'ausente', 'justificado'] as const).map(state => <button key={state} type="button" className="attendance-mark" data-state={state} aria-pressed={String(row.estado_asistencia) === state} aria-label={`${states[state]}: ${row.nombre}`} title={states[state]} onClick={() => void correct(row, state)}><AttendanceIcon state={state}/></button>)}</span>}
       </article>)}</div>
-      {has(user, 'asistencia.registrar') && selected && selected.estado_actividad !== 'cancelada' && roster.length > 0 && <div className="attendance-finish">
-        <p className="attendance-save-note">Al finalizar, quienes sigan por confirmar quedarán como ausentes sin justificación. Si alguien se registra después con el código QR, pasa a presente.</p>
-        <button className="attendance-save" disabled={saving || loading || !outstanding.length} onClick={() => void finish()}>{saving ? 'Finalizando…' : 'Finalizar evento y guardar asistencia'}</button>
+      {has(user, 'asistencia.registrar') && selected && selected.estado_actividad !== 'cancelada' && (roster.length > 0 || records.length > 0) && <div className="attendance-finish">
+        <p className="attendance-save-note">{outstanding.length ? 'Al finalizar, quienes sigan por confirmar quedarán como ausentes sin justificación. Si alguien se registra después con el código QR, pasa a presente.' : 'Todas las asistencias ya están guardadas. Puedes finalizar el evento.'}</p>
+        <button type="button" className="attendance-save" disabled={saving || loading} onClick={() => void finish()}>{saving ? 'Finalizando…' : 'Finalizar evento y guardar asistencia'}</button>
       </div>}
     </>}
   </section>

@@ -108,6 +108,8 @@ try {
   assert.equal(archiveGroup.data.released, 2)
   assert.deepEqual((await db.query('SELECT id_grupo FROM miembro WHERE id_miembro IN (?,?)', [pedro, sara]))[0].map(row => row.id_grupo), [null, null], 'Archivar un grupo deja a sus discípulos sin grupo')
   assert.deepEqual((await request(`management/members/${pedro}/history`, { cookie: owner.cookie })).data.items.map(item => [item.grupo_anterior, item.grupo_nuevo]).slice(0, 1), [['Grupo por cerrar', null]])
+  const kept = (await request(`management/members/${pedro}/history`, { cookie: owner.cookie })).data.items.find(item => item.id_nuevo === closing.id)
+  assert.deepEqual([kept.grupo_nuevo, Number(kept.grupo_nuevo_eliminado)], ['Grupo por cerrar', 1], 'El historial conserva el grupo eliminado y lo marca')
   const archiveMember = (id, status) => request(`management/members/${id}`, { cookie: owner.cookie, method: 'DELETE', body: {}, status })
   assert.match((await archiveMember(leaderA, 409)).data.error, /cuenta de acceso/)
   assert.match((await archiveMember(leaderB, 409)).data.error, /Familia Fe/)
