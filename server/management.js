@@ -318,7 +318,8 @@ managementRouter.post('/members',(req,res,next)=>can(req,'miembros.registrar') |
 })
 managementRouter.patch('/members/:id',requirePermission('miembros.editar'),async (req,res) => {
   // The email rule (common providers) is checked below only when the email changes.
-  const values=fields(req.body,{...memberFields,correo:v=>text(v,120)})
+  // "Convertir en discipulador" sends only the cargo, so an empty set of fields is allowed with it.
+  const values=fields(req.body,{...memberFields,correo:v=>text(v,120)},false,leaderFlag(req.body)!==null)
   if (!can(req,'miembros.sensibles') && sensitiveMemberFields.some(key=>Object.hasOwn(values,key))) throw invalid('Sin permiso para datos sensibles.',403)
   const id=identifier(req.params.id)
   await transaction(async connection=>{
@@ -343,6 +344,7 @@ managementRouter.patch('/members/:id',requirePermission('miembros.editar'),async
         leaderToggle=true
       }
     }
+    if(!Object.keys(values).length) throw invalid('No hay cambios para guardar.')
     checkMemberServices(actor,values,old)
     if(!leaderToggle && Object.hasOwn(values,'id_rol_eclesiastico') && values.id_rol_eclesiastico!==old.id_rol_eclesiastico) {
       const [accounts]=await connection.execute('SELECT id_usuario FROM usuario WHERE id_miembro=?',[id])

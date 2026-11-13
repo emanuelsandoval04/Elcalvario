@@ -143,3 +143,8 @@ div.form-switch { display: grid !important; padding: 0; border: 0; background: n
 .group-detail .group-delete p{margin:0;flex:1 1 240px;color:var(--text-muted,#5b6472);font-size:.9rem}
 .admin-workspace .management-shell .group-delete button.danger{color:#b42318;border-color:#f3c4bf;background:#fff5f4}
 .admin-workspace .management-shell .group-delete button.danger:hover{background:#fde8e6}
+
+/* Convert a registered disciple into a discipulador. */
+.member-promote { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:10px; margin:4px 0 14px; padding:12px 14px; border:1px dashed #c9d6e8; border-radius:12px; background:#f7faff; }
+.member-promote p { margin:0; flex:1 1 220px; color:#2f5f9e; font-size:.9rem; }
+@media (max-width:480px) { .member-promote button { flex:1 1 100%; } }

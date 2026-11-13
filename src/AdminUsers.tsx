@@ -1,6 +1,6 @@
 import AppSelect from './AppSelect'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { hasPermission, useAuthSession } from './auth'
+import { hasPermission, memberCode, useAuthSession } from './auth'
 import type { AuthUser } from './auth'
 import './admin.css'
 import { managementRequest } from './management-api'
@@ -40,7 +40,9 @@ export default function AdminUsers() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState<number | null>(null)
   const [message, setMessage] = useState('')
-  const [members, setMembers] = useState<{ id_miembro: number; nombres: string; apellidos: string | null }[]>([])
+  const [members, setMembers] = useState<{ id_miembro: number; nombres: string; apellidos: string | null; codigo_miembro?: number | null; correo?: string | null; es_discipulador?: number; tiene_cuenta?: number; grupos_a_cargo?: string | null }[]>([])
+  // Account form prefilled for a discipulador without login (name, email, linked record and role).
+  const [prefill, setPrefill] = useState<{ name: string; email: string; memberId: string; roleId: string } | null>(null)
   const [links, setLinks] = useState<Record<number, string>>({})
   const [search, setSearch] = useState('')
   const [filters, setFilters] = useState({ q: '', state: '', page: 1 })
@@ -62,6 +64,16 @@ export default function AdminUsers() {
   const canProfiles = hasPermission(sessionUser, 'gestion.acceder') && hasPermission(sessionUser, 'permisos.gestionar')
   const section = canProfiles && (profilesOpen || !canAccounts) ? 'profiles' : 'users'
   const removalDialog = useRef<HTMLDialogElement>(null)
+  // Discipuladores without a login account wait here. Giving them one is optional.
+  const canLinkRecords = hasPermission(sessionUser, 'gestion.acceder') && sessionUser?.permissions['miembros.ver'] === 'todos'
+  const pendingLeaders = canLinkRecords ? members.filter(member => Number(member.es_discipulador) && !Number(member.tiene_cuenta)) : []
+  function openAccountFor(member: typeof members[number]) {
+    const leaderRole = roles.find(role => role.name === 'Discipulador')
+    setCreateError(''); setPhoto(null)
+    setPrefill({ name: `${member.nombres} ${member.apellidos || ''}`.trim(), email: member.correo || '', memberId: String(member.id_miembro), roleId: leaderRole ? String(leaderRole.id) : '' })
+    setCreating(true)
+    requestAnimationFrame(() => document.getElementById('create-account-title')?.scrollIntoView({ block: 'start' }))
+  }
   const loadVersion = useRef(0)
   // The server only lists roles below the actor's rank; an account holding any other role outranks the actor.
   const protectedOwner = (user: ManagedUser) => !sessionUser?.roles.includes('Administrador') && user.roles.some(name => !roles.some(role => role.name === name))
@@ -159,7 +171,7 @@ export default function AdminUsers() {
     setCreateBusy(true); setCreateError(''); setMessage('')
     try {
       const result = await adminRequest('', { name: values.get('name'), email: values.get('email'), password: values.get('password'), confirmation: values.get('confirmation'), roleId: Number(values.get('roleId')), memberId: values.get('memberId') ? Number(values.get('memberId')) : null, photo })
-      setCreating(false); setPhoto(null)
+      setCreating(false); setPhoto(null); setPrefill(null)
       await load()
       window.dispatchEvent(new Event('calvario-users-updated'))
       setMessage(`Cuenta creada para ${values.get('email')}. Ya puede iniciar sesión con el correo y la contraseña asignados. ${welcomeEmailMessage(result.emailDelivery)}`)
@@ -179,23 +191,29 @@ export default function AdminUsers() {
         <div className="access-layout" data-profiles={canProfiles && canAccounts} data-section={section}>
         {canAccounts && <div className="access-users">
         <div className="admin-users-heading"><div><h2>Administración de cuentas</h2><p>Crea accesos y asigna roles. Abre los permisos junto a cada perfil para configurar sus herramientas.</p></div>
-          {!creating && <button className="admin-save" disabled={loading || saving !== null} onClick={() => { setCreateError(''); setPhoto(null); setCreating(true) }}><AdminIcon name="plus"/>Crear cuenta</button>}
+          {!creating && <button className="admin-save" disabled={loading || saving !== null} onClick={() => { setCreateError(''); setPhoto(null); setPrefill(null); setCreating(true) }}><AdminIcon name="plus"/>Crear cuenta</button>}
         </div>
-        {creating && <ValidatedForm className="admin-create-account" aria-labelledby="create-account-title" onSubmit={createAccount}>
-          <h2 id="create-account-title">Crear cuenta</h2>
+        {pendingLeaders.length > 0 && !creating && <section className="pending-leaders" aria-labelledby="pending-leaders-title">
+          <div className="pending-leaders-heading"><h2 id="pending-leaders-title">Discipuladores sin cuenta de inicio de sesión <span>{pendingLeaders.length}</span></h2>
+            <p>Pueden seguir como discipuladores sin cuenta. Si quieres que entren a la plataforma, créales una aquí: quedará vinculada a su ficha.</p></div>
+          <ul>{pendingLeaders.map(member => <li key={member.id_miembro}><div><strong>{memberCode(member.codigo_miembro ?? null) && <span className="member-code">{memberCode(member.codigo_miembro ?? null)}</span>}{member.nombres} {member.apellidos || ''}</strong><span>{member.grupos_a_cargo ? `Grupos a cargo: ${member.grupos_a_cargo}` : 'Sin grupo a cargo por ahora'}</span></div>
+            <button type="button" className="admin-save admin-secondary" disabled={loading || saving !== null} onClick={() => openAccountFor(member)}>Asignar cuenta</button></li>)}</ul>
+        </section>}
+        {creating && <ValidatedForm key={prefill?.memberId || 'new'} className="admin-create-account" aria-labelledby="create-account-title" onSubmit={createAccount}>
+          <h2 id="create-account-title">{prefill ? `Crear cuenta para ${prefill.name}` : 'Crear cuenta'}</h2>
           <p>Asigna los datos de acceso y un rol. La cuenta quedará activa y enviaremos un correo con sus credenciales, vinculación y funciones.</p>
           <fieldset disabled={createBusy}>
-            <label>Nombre completo<input name="name" required maxLength={100} autoComplete="off" /></label>
-            <label>Correo de acceso<input name="email" type="email" required maxLength={120} autoComplete="off" /></label>
+            <label>Nombre completo<input name="name" required maxLength={100} autoComplete="off" defaultValue={prefill?.name} /></label>
+            <label>Correo de acceso<input name="email" type="email" required maxLength={120} autoComplete="off" defaultValue={prefill?.email} /></label>
             <label>Contraseña de acceso<input name="password" type="password" required minLength={10} maxLength={128} autoComplete="new-password" placeholder="Mínimo 10 caracteres" /></label>
             <label>Confirmar contraseña de acceso<input name="confirmation" type="password" required minLength={10} maxLength={128} autoComplete="new-password" /></label>
-            <label>Rol de la cuenta<AppSelect name="roleId" defaultValue="" required><option value="" disabled>Selecciona un rol…</option>{roles.map(role => <option key={role.id} value={role.id}>{role.name}</option>)}</AppSelect></label>
-            {hasPermission(sessionUser, 'gestion.acceder') && sessionUser?.permissions['miembros.ver'] === 'todos' && <label>Ficha del discípulo (opcional)<AppSelect name="memberId" defaultValue=""><option value="">Sin vincular</option>{members.map(member => <option key={member.id_miembro} value={member.id_miembro}>{member.nombres} {member.apellidos || ''} · ID {member.id_miembro}</option>)}</AppSelect></label>}
+            <label>Rol de la cuenta<AppSelect name="roleId" defaultValue={prefill?.roleId || ''} required><option value="" disabled>Selecciona un rol…</option>{roles.map(role => <option key={role.id} value={role.id}>{role.name}</option>)}</AppSelect></label>
+            {hasPermission(sessionUser, 'gestion.acceder') && sessionUser?.permissions['miembros.ver'] === 'todos' && <label>Ficha del discípulo (opcional)<AppSelect name="memberId" defaultValue={prefill?.memberId || ''}><option value="">Sin vincular</option>{members.map(member => <option key={member.id_miembro} value={member.id_miembro}>{member.nombres} {member.apellidos || ''} · ID {member.id_miembro}</option>)}</AppSelect></label>}
             <ProfilePhoto value={photo} onChange={setPhoto} onBusyChange={setPhotoBusy} disabled={createBusy} />
           </fieldset>
           {hasPermission(sessionUser, 'gestion.acceder') && hasPermission(sessionUser, 'miembros.editar') && <p>Completa los demás datos personales en <a href="#gestion/members">Discípulos</a> y vincula aquí su ficha.</p>}
           {createError && <p role="alert">{createError}</p>}
-          <div className="admin-create-actions"><button type="button" className="admin-save admin-secondary" disabled={createBusy || photoBusy} onClick={() => { setCreating(false); setPhoto(null) }}>Cancelar</button><button type="submit" className="admin-save" disabled={createBusy || photoBusy}>{createBusy ? 'Creando cuenta…' : 'Guardar cuenta'}</button></div>
+          <div className="admin-create-actions"><button type="button" className="admin-save admin-secondary" disabled={createBusy || photoBusy} onClick={() => { setCreating(false); setPhoto(null); setPrefill(null) }}>Cancelar</button><button type="submit" className="admin-save" disabled={createBusy || photoBusy}>{createBusy ? 'Creando cuenta…' : 'Guardar cuenta'}</button></div>
         </ValidatedForm>}
         <form className="admin-user-filters" onSubmit={event => { event.preventDefault(); setFilters(previous => ({ ...previous, q: search.trim(), page: 1 })) }}>
           <label className="admin-user-search">Buscar por correo o ID<span className="admin-search-input"><AdminIcon name="search"/><input type="search" maxLength={120} placeholder="correo@ejemplo.com o ADM-0001" value={search} disabled={saving !== null} onChange={event => setSearch(event.target.value)}/></span></label>

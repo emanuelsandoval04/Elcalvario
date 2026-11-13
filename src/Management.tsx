@@ -338,10 +338,23 @@ function MemberDetail({ row, user, catalogs, reloadCatalogs, notify, onSaved, on
     } catch (error) { notify(errorMessage(error)) }
   }
   useEffect(() => { void loadDetails() }, [row.id_miembro])
+  // A registered disciple can become a discipulador (pastoral role "Discipuladores"). A login account
+  // is optional: they appear in Usuarios y roles as pending one, and nothing changes if none is given.
+  const [promoting, setPromoting] = useState(false)
+  const canPromote = Boolean(user.registration?.canAssignServices) && has(user, 'miembros.editar') && !leader && !Number(row.tiene_cuenta) && !row.id_rol_eclesiastico && row.estado_miembro !== 'retirado'
+  async function promote() {
+    const name = `${row.nombres} ${row.apellidos || ''}`.trim()
+    if (promoting || !window.confirm(`¿Convertir a ${name} en discipulador?\n\nTendrá el cargo de Discipulador y podrá tener Grupos de Comunión a cargo. Quedará en Usuarios y roles como discipulador pendiente de cuenta de inicio de sesión; asignarle una cuenta es opcional.`)) return
+    setPromoting(true)
+    try { await api(`members/${row.id_miembro}`, { cargo_discipulador: 1 }, 'PATCH'); notify(`${name} ahora es discipulador. Puedes asignarle una cuenta en Usuarios y roles cuando quieras.`); await onSaved() }
+    catch (error) { notify(errorMessage(error)) }
+    finally { setPromoting(false) }
+  }
   const labels: Record<string, string> = { nombres: 'Nombres', apellidos: 'Apellidos', tipo_identificacion: 'Tipo de identificación', numero_identificacion: 'Identificación', celular: 'Celular', correo: 'Correo', fecha_nacimiento: 'Nacimiento / cumpleaños', funcion_iglesia: 'Función', grupo_sanguineo_rh: 'Grupo sanguíneo / RH', eps: 'EPS', contacto_emergencia_nombre: 'Contacto de emergencia', contacto_emergencia_celular: 'Celular de emergencia', id_grupo: 'ID de grupo', id_rol_eclesiastico: 'ID de rol eclesiástico', id_cobertura_pastoral: 'ID de cobertura pastoral', codigo_qr: 'Identificador QR', fecha_creacion: 'Creación', fecha_actualizacion: 'Actualización' }
   // The record carries the color of the disciple's training book.
   return <aside className="manage-editor member-detail" style={row.libro_color ? { borderTop: `5px solid ${row.libro_color}` } : undefined}><div className="manage-section-heading"><h3>{row.libro_color && <span className="member-book-dot member-book-dot-large" style={{ background: String(row.libro_color) }} title={`Libro: ${row.libro_actual}`} aria-hidden="true"/>}Ficha de {row.nombres}</h3><button className="secondary" onClick={onClose}>Cerrar ficha</button></div>
-    {Boolean(Number(row.es_discipulador)) && <p className="member-leader-note"><strong>Discipulador</strong>{row.grupos_a_cargo ? ` de: ${row.grupos_a_cargo}` : ' (sin grupo a cargo por ahora)'}</p>}
+    {Boolean(Number(row.es_discipulador)) && <p className="member-leader-note"><strong>Discipulador</strong>{row.grupos_a_cargo ? ` de: ${row.grupos_a_cargo}` : ' (sin grupo a cargo por ahora)'}{!Number(row.tiene_cuenta) && ' · Sin cuenta de inicio de sesión'}</p>}
+    {canPromote && <div className="member-promote"><p>Convierte a esta persona en discipulador para que pueda tener Grupos de Comunión a cargo.</p><button type="button" disabled={promoting} onClick={() => void promote()}>{promoting ? 'Convirtiendo…' : 'Convertir en discipulador'}</button></div>}
     {leader && <div className="tool-toggle leader-sections" role="tablist" aria-label="Secciones de la ficha">{([['info', 'Información'], ['grupos', `Grupos a cargo (${row.grupos_a_cargo ? String(row.grupos_a_cargo).split(', ').length : 0})`]] as const).map(([value, label]) => <button key={value} type="button" role="tab" aria-selected={section === value} aria-pressed={section === value} onClick={() => setSection(value)}>{label}</button>)}</div>}
     {leader && section === 'grupos' ? <LeaderGroups leader={row} user={user} notify={notify} onChanged={onSaved}/> : <>
     <MemberBooks key={`${row.id_miembro}-${row.id_libro || ''}`} row={row} books={catalogs.libros || []} canEdit={canCreateTrainingBooks(user)} onCreated={reloadCatalogs} onSaved={onSaved} notify={notify}/>

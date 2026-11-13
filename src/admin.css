@@ -128,3 +128,17 @@
   .admin-workspace .admin-users-panel .admin-user-removal .admin-delete { width:100%; }
   .admin-workspace .admin-users-panel .admin-create-actions > .admin-save { flex:1 1 100%; }
 }
+
+/* Discipuladores waiting (optionally) for a login account. */
+.admin-workspace .admin-users-panel .pending-leaders { margin:0 0 24px; padding:20px; border:1px solid #f3dcc2; border-radius:18px; background:#fffaf3; }
+.pending-leaders-heading h2 { display:flex; align-items:center; gap:10px; margin:0 0 6px; font-size:1.05rem; }
+.pending-leaders-heading h2 span { min-width:26px; padding:2px 9px; border-radius:999px; background:#ff650b; color:#fff; font-size:.8rem; text-align:center; }
+.pending-leaders-heading p { margin:0 0 14px; color:#5b6472; font-size:.9rem; }
+.pending-leaders ul { display:grid; gap:10px; margin:0; padding:0; list-style:none; }
+.pending-leaders li { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:10px; padding:12px 14px; border:1px solid #efe4d6; border-radius:12px; background:#fff; }
+.pending-leaders li > div { display:grid; gap:2px; min-width:0; flex:1 1 220px; }
+.pending-leaders li strong { overflow-wrap:anywhere; }
+.pending-leaders li strong .member-code { margin-right:8px; }
+.pending-leaders li span { color:#5b6472; font-size:.85rem; }
+.pending-leaders li button { flex:0 0 auto; }
+@media (max-width:480px) { .pending-leaders li button { flex:1 1 100%; } }

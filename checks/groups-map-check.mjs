@@ -8,6 +8,7 @@ import { applyMigrations } from '../server/migration-runner.js'
 
 const database = `calvario_groups_map_test_${randomUUID().replaceAll('-', '')}`
 process.env.DB_NAME = database
+process.env.MAIL_PROVIDER = 'disabled' // accounts below use real provider domains: never send mail from this check
 const { databaseConfig } = await import('../server/config.js')
 assert.ok(['localhost', '127.0.0.1', '::1'].includes(databaseConfig.host), 'Esta prueba solo admite MySQL local y una base temporal.')
 const { database: ignored, ...configuration } = databaseConfig
@@ -77,6 +78,10 @@ try {
   await request(`management/members/${pedro}`, { cookie: owner.cookie, method: 'PATCH', body: { cargo_discipulador: 0, nombres: 'Pedro' } })
   people = Object.fromEntries((await request('management/members', { cookie: owner.cookie })).data.items.map(row => [row.nombres, row]))
   assert.equal(Number(people.Pedro.es_discipulador), 0, 'Se puede quitar el cargo de discipulador a quien no tiene cuenta')
+  // "Convertir en discipulador" sends only the cargo; repeating a cargo already held changes nothing.
+  await request(`management/members/${carla}`, { cookie: owner.cookie, method: 'PATCH', status: 400, body: { cargo_discipulador: 1 } })
+  await request(`management/members/${pedro}`, { cookie: owner.cookie, method: 'PATCH', body: { cargo_discipulador: 1 } })
+  await request(`management/members/${pedro}`, { cookie: owner.cookie, method: 'PATCH', body: { cargo_discipulador: 0 } })
   const [[ownerMember]] = await db.query('SELECT id_miembro FROM usuario WHERE correo_login=?', ['owner@example.invalid'])
   if (ownerMember.id_miembro) await request(`management/members/${ownerMember.id_miembro}`, { cookie: owner.cookie, method: 'PATCH', status: 409, body: { cargo_discipulador: 0, nombres: 'Propietario' } })
   const [[basicRole]] = await db.query("SELECT id_rol FROM rol_sistema WHERE nombre='Usuario'")
@@ -180,8 +185,43 @@ try {
     await page.getByRole('link', { name: 'Abrir el grupo Familia del Norte' }).click()
     await page.getByRole('heading', { name: 'Familia del Norte', exact: true }).waitFor()
     assert.ok(page.url().includes('#gestion/groups/ficha/'))
+
+    // A registered disciple becomes a discipulador from the record, after a confirmation.
+    await page.goto(`${ui}/#gestion/members`)
+    await page.getByRole('button', { name: 'Ver ficha de Pedro Prueba', exact: true }).click()
+    let question = ''
+    page.once('dialog', dialog => { question = dialog.message(); void dialog.accept() })
+    await page.getByRole('button', { name: 'Convertir en discipulador', exact: true }).click()
+    await page.locator('.member-leader-note', { hasText: 'Sin cuenta de inicio de sesión' }).waitFor()
+    assert.match(question, /Convertir a Pedro Prueba en discipulador/)
+    assert.match(question, /pendiente de cuenta de inicio de sesión/)
+    assert.equal(await page.getByRole('button', { name: 'Convertir en discipulador', exact: true }).count(), 0)
+    assert.equal(Number((await request('management/members', { cookie: owner.cookie })).data.items.find(row => row.id_miembro === pedro).cargo_discipulador), 1)
+    // Usuarios y roles lists the discipuladores without login; giving them one is optional.
+    await page.goto(`${ui}/#usuarios`)
+    const pendingLeaders = page.locator('.pending-leaders')
+    await pendingLeaders.getByText('Pedro Prueba', { exact: false }).waitFor()
+    const pendingNames = async () => (await pendingLeaders.locator('li strong').allInnerTexts()).map(text => text.replace(/^\d{4}/, '').trim()).sort()
+    assert.deepEqual(await pendingNames(), ['Ana Líder', 'Carla Prueba', 'Pedro Prueba'])
+    for (const width of [390, 320]) { await page.setViewportSize({ width, height: 900 }); assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false, `Pendientes a ${width}px`) }
+    await page.setViewportSize({ width: 1280, height: 1000 })
+    await pendingLeaders.locator('li', { hasText: 'Pedro Prueba' }).getByRole('button', { name: 'Asignar cuenta', exact: true }).click()
+    await page.getByRole('heading', { name: 'Crear cuenta para Pedro Prueba', exact: true }).waitFor()
+    const [[leaderSystemRole]] = await db.query("SELECT id_rol FROM rol_sistema WHERE nombre='Discipulador'")
+    assert.equal(await page.locator('input[name=name]').inputValue(), 'Pedro Prueba')
+    assert.equal(await page.locator('select[name=memberId]').inputValue(), String(pedro), 'La cuenta queda vinculada a su ficha')
+    assert.equal(await page.locator('select[name=roleId]').inputValue(), String(leaderSystemRole.id_rol), 'Con el rol Discipulador')
+    await page.getByLabel('Correo de acceso', { exact: true }).fill('pedro.lider@gmail.com')
+    await page.getByLabel('Contraseña de acceso', { exact: true }).fill(password)
+    await page.getByLabel('Confirmar contraseña de acceso', { exact: true }).fill(password)
+    await page.getByRole('button', { name: 'Guardar cuenta', exact: true }).click()
+    await page.getByRole('status').filter({ hasText: 'Cuenta creada para pedro.lider@gmail.com' }).waitFor()
+    await pendingLeaders.locator('li', { hasText: 'Pedro Prueba' }).waitFor({ state: 'detached' })
+    assert.deepEqual(await pendingNames(), ['Ana Líder', 'Carla Prueba'], 'Los demás siguen pendientes sin que pase nada')
+    const [[pedroAccount]] = await db.query('SELECT u.id_miembro,r.nombre AS rol FROM usuario u JOIN usuario_rol ur ON ur.id_usuario=u.id_usuario JOIN rol_sistema r ON r.id_rol=ur.id_rol WHERE u.correo_login=?', ['pedro.lider@gmail.com'])
+    assert.deepEqual([pedroAccount.id_miembro, pedroAccount.rol], [pedro, 'Discipulador'])
     assert.deepEqual(errors, [])
-    console.log('PASS UI: discipulador selector limited to discipuladores, card in the map opens the group, form map with click and drag into hidden fields, point-or-address rule, "Ver en el mapa" on located cards, fitted bounds, colored pins with the open one highlighted, info with name/type/disciples/address and 320-1280px.')
+    console.log('PASS UI: discipulador selector limited to discipuladores, card in the map opens the group, form map with click and drag into hidden fields, point-or-address rule, "Ver en el mapa" on located cards, fitted bounds, colored pins with the open one highlighted, info with name/type/disciples/address and 320-1280px; convert a disciple into discipulador with confirmation, pending discipuladores in Usuarios y roles and a prefilled linked account.')
   }
 } finally {
   await browser?.close()
